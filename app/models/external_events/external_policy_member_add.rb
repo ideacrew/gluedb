@@ -128,17 +128,27 @@ module ExternalEvents
       end
     end
 
+    def handle_aptc_changes(policy)
+        new_aptc_date = policy.enrollees.map(&:coverage_start).uniq.sort.last
+        tot_res_amt = policy.tot_res_amt
+        pre_amt_tot = policy.pre_amt_tot
+        aptc_amt = policy.applied_aptc
+        policy.set_aptc_effective_on(new_aptc_date, aptc_amt, pre_amt_tot, tot_res_amt)
+        policy.save!
+    end
+
     def persist
       pol = policy_to_update
       pol.update_attributes!({
         :pre_amt_tot => extract_pre_amt_tot,
         :tot_res_amt => extract_tot_res_amt
-      }.merge(extract_other_financials))
+      }.merge(extract_other_financials))      
       pol = Policy.find(pol._id)
       @policy_node.enrollees.each do |en|
         build_enrollee(pol, en)
       end
       Observers::PolicyUpdated.notify(pol)
+      handle_aptc_changes(pol) unless pol.is_shop?
       true
     end
   end
