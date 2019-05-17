@@ -1,21 +1,22 @@
-set :application, "DCHBX GlueDB"
+set :application, "CT GlueDB"
 # set :deploy_via, :remote_cache
 # set :sudo, "sudo -u nginx"
 set :scm, :git
-set :repository,  "https://github.com/dchbx/gluedb.git"
-set :branch,      "master"
+set :repository,  "https://github.com/ideacrew/ct_edidb.git"
+set :branch,      "dc_edidb"
 set :rails_env,   "production"
 set :deploy_to,   "/var/www/deployments/gluedb"
 set :deploy_via, :copy
 
 
 set :user, "nginx"
+set :ssh_options, {:forward_agent => true}
 set :use_sudo, false
 set :default_shell, "bash -l"
 
-role :web, "10.83.85.127"
-role :app, "10.83.85.127"
-role :db,  "10.83.85.127", :primary => true        # This is where Rails migrations will run
+role :web, "172.30.1.37"
+role :app, "172.30.1.37"
+role :db,  "172.30.1.37", :primary => true        # This is where Rails migrations will run
 
 default_run_options[:pty] = true  # prompt for sudo password, if needed
 after "deploy:restart", "deploy:cleanup_old"  # keep only last 5 releases
@@ -41,6 +42,12 @@ namespace :deploy do
     run "rm -rf #{release_path}/log"
     run "ln -s #{deploy_to}/shared/log #{release_path}/log"
     run "ln -s #{deploy_to}/shared/eye #{release_path}/eye"
+    run "rm -f #{release_path}/config/initializers/devise.rb"
+    run "ln -s #{deploy_to}/shared/config/initializers/devise.rb #{release_path}/config/initializers/devise.rb"
+    run "rm -f #{release_path}/config/environments/production.rb"
+    run "rm -f #{release_path}/config/unicorn.rb"
+    run "ln -s #{deploy_to}/shared/config/environments/production.rb #{release_path}/config/environments/production.rb"
+    run "ln -s #{deploy_to}/shared/config/unicorn.rb #{release_path}/config/unicorn.rb"
   end
 
   desc "Restart nginx and unicorn"
