@@ -16,21 +16,12 @@ class VocabUpload
   validates_presence_of :submitted_by
   validates_presence_of :vocab
 
-  validate :redmine_ticket_or_csl
-
   def initialize(options={})
     options.each_pair do |k,v|
       if ALLOWED_ATTRIBUTES.include?(k.to_sym)
         self.send("#{k}=", v)
       end
     end
-  end
-
-  def redmine_ticket_or_csl
-    if redmine_ticket.blank? && csl_number.blank?
-      errors.add(:base, "You must specify either a redmine ticket or CSL number.")
-    end
-    true
   end
 
   def save(listener)
