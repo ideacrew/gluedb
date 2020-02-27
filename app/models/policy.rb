@@ -663,6 +663,7 @@ class Policy
     self.enrollees.each do |en|
       if en.coverage_end.blank? || (en.coverage_end.present? && (en.coverage_end > term_date))
         en.coverage_end = term_date
+        en.coverage_end = en.coverage_start if term_date < en.coverage_start
         en.coverage_status = "inactive"
         en.employment_status_code = "terminated"
       end

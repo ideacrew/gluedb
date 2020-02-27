@@ -479,3 +479,171 @@ describe EnrollmentAction::ActionPublishHelper, "told to assign an assistance ef
     expect(assistance_date_result.content).to eq "20081024"
   end
 end
+
+describe EnrollmentAction::ActionPublishHelper, "told to set affected and enrolles end dates, when member node exists" do
+  let(:xml_namespace) { { :cv => "http://openhbx.org/api/terms/1.0" } }
+  let(:end_date) { Date.new(2019,11,30) }
+
+  let(:member_end_hash) { {"1"=> end_date, "2" => end_date } }
+  let(:source_event_xml) { <<-EVENTXML
+  <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+    <affected_members>
+      <affected_member>
+        <member>
+          <id><id>1</id></id>
+        </member>
+        <benefit>
+          <premium_amount>465.13</premium_amount>
+          <begin_date>2019101</begin_date>
+           <end_date>2019121}</end_date>
+        </benefit>
+      </affected_member>
+      <affected_member>
+        <member>
+          <id><id>2</id></id>
+        </member>
+        <benefit>
+          <premium_amount>465.13</premium_amount>
+          <begin_date>2019101</begin_date>
+           <end_date>2019121</end_date>
+        </benefit>
+      </affected_member>
+    </affected_members>
+  <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+  <policy>
+  <enrollees>
+    <enrollee>
+      <member>
+        <id><id>1</id></id>
+      </member>
+      <benefit>
+        <premium_amount>111.11</premium_amount>
+        <begin_date>2019101</begin_date>
+        <end_date>2019121</end_date>
+      </benefit>
+    </enrollee>
+    <enrollee>
+      <member>
+        <id><id>2</id></id>
+      </member>
+      <benefit>
+        <premium_amount>222.22</premium_amount>
+         <begin_date>2019101</begin_date>
+        <end_date>2019121</end_date>
+      </benefit>
+    </enrollee>
+  </enrollees>
+  <enrollment>
+  <individual_market>
+    <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
+  </individual_market>
+  <shop_market>
+    <total_employer_responsible_amount>98.76</total_employer_responsible_amount>
+  </shop_market>
+  <premium_total_amount>56.78</premium_total_amount>
+  <total_responsible_amount>123.45</total_responsible_amount>
+  </enrollment>
+  </policy>
+  </enrollment>
+  </enrollment_event_body>
+  EVENTXML
+  }
+
+  let(:transformed_target_xml) {
+    action_publish_helper.set_member_end_date(member_end_hash)
+    Nokogiri::XML(action_publish_helper.to_xml)
+  }
+  let(:action_publish_helper) { ::EnrollmentAction::ActionPublishHelper.new(source_event_xml) }
+
+  it "sets the correct end date" do
+    transformed_target_xml.xpath("//cv:enrollment_event_body/cv:affected_members/cv:affected_member", xml_namespace).each do |node|
+      node.xpath("cv:benefit/cv:end_date", xml_namespace).each do |d_node|
+        expect(d_node.content).to eq "20191130"
+      end
+    end
+
+    transformed_target_xml.xpath("//cv:enrollment_event_body/cv:enrollment/cv:policy/cv:enrollees/cv:enrollee", xml_namespace).each do |node|
+      node.xpath("cv:benefit/cv:end_date", xml_namespace).each do |d_node|
+        expect(d_node.content).to eq "20191130"
+      end
+    end
+  end
+end
+
+describe EnrollmentAction::ActionPublishHelper, "told to remove enrolles, when unmatched member node exists" do
+  let(:xml_namespace) { { :cv => "http://openhbx.org/api/terms/1.0" } }
+  let(:keep_member_ids) {["1"] }
+  let(:source_event_xml) { <<-EVENTXML
+  <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+    <affected_members>
+      <affected_member>
+        <member>
+          <id><id>1</id></id>
+        </member>
+        <benefit>
+          <premium_amount>465.13</premium_amount>
+          <begin_date>2019101</begin_date>
+           <end_date>2019121}</end_date>
+        </benefit>
+      </affected_member>
+      <affected_member>
+        <member>
+          <id><id>2</id></id>
+        </member>
+        <benefit>
+          <premium_amount>465.13</premium_amount>
+          <begin_date>2019101</begin_date>
+           <end_date>2019121</end_date>
+        </benefit>
+      </affected_member>
+    </affected_members>
+  <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+  <policy>
+  <enrollees>
+    <enrollee>
+      <member>
+        <id><id>1</id></id>
+      </member>
+      <benefit>
+        <premium_amount>111.11</premium_amount>
+        <begin_date>2019101</begin_date>
+        <end_date>2019121</end_date>
+      </benefit>
+    </enrollee>
+    <enrollee>
+      <member>
+        <id><id>2</id></id>
+      </member>
+      <benefit>
+        <premium_amount>222.22</premium_amount>
+         <begin_date>2019101</begin_date>
+        <end_date>2019121</end_date>
+      </benefit>
+    </enrollee>
+  </enrollees>
+  <enrollment>
+  <individual_market>
+    <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
+  </individual_market>
+  <shop_market>
+    <total_employer_responsible_amount>98.76</total_employer_responsible_amount>
+  </shop_market>
+  <premium_total_amount>56.78</premium_total_amount>
+  <total_responsible_amount>123.45</total_responsible_amount>
+  </enrollment>
+  </policy>
+  </enrollment>
+  </enrollment_event_body>
+  EVENTXML
+  }
+  let(:transformed_target_xml) {
+    action_publish_helper.filter_enrollee_members(keep_member_ids)
+    Nokogiri::XML(action_publish_helper.to_xml)
+  }
+  let(:action_publish_helper) { ::EnrollmentAction::ActionPublishHelper.new(source_event_xml) }
+
+  it "should remove member node" do
+    expect(transformed_target_xml.xpath("//cv:enrollment_event_body/cv:enrollment/cv:policy/cv:enrollees/cv:enrollee", xml_namespace).count).to eq 1
+    expect(transformed_target_xml.xpath("//cv:enrollment_event_body/cv:enrollment/cv:policy/cv:enrollees/cv:enrollee", xml_namespace).detect {|node| node.xpath("cv:member/cv:id/cv:id", xml_namespace).text == "2" }.present?).to eq false
+  end
+end

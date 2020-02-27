@@ -599,3 +599,28 @@ describe Policy, :dbclean => :after_each do
   end
 
 end
+
+describe '.terminate_as_of', :dbclean => :after_each do
+  let(:coverage_start) { Date.new(2014, 1, 1) }
+  let(:enrollee) { build(:subscriber_enrollee, coverage_start: coverage_start) }
+  let(:policy) { build(:policy, enrollees: [ enrollee ]) }
+  before { policy.save! }
+
+  context 'when end date after start date' do
+    let(:coverage_end) { Date.new(2014, 1, 31) }
+    it 'should terminate the policy with given end date' do
+      policy.terminate_as_of(coverage_end)
+      expect(policy.policy_end).to eq coverage_end
+      expect(policy.aasm_state).to eq "terminated"
+    end
+  end
+
+  context 'when end date before start date' do
+    let(:coverage_end) { Date.new(2013, 12, 1) }
+    it 'should cancel the policy with start date.' do
+      policy.terminate_as_of(coverage_end)
+      expect(policy.policy_end).to eq coverage_start
+      expect(policy.aasm_state).to eq "canceled"
+    end
+  end
+end
