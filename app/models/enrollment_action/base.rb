@@ -44,6 +44,7 @@ module EnrollmentAction
         ::EnrollmentAction::AssistanceChange,
         ::EnrollmentAction::InitialEnrollment,
         ::EnrollmentAction::TerminatePolicyWithEarlierDate,
+        ::EnrollmentAction::ConcurrentPolicyCancelAndTerm,
         ::EnrollmentAction::CarefirstTermination,
         ::EnrollmentAction::Termination,
         ::EnrollmentAction::ReselectionOfExistingCoverage
