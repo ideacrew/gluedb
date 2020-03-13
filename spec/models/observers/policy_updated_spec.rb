@@ -5,7 +5,7 @@ describe Observers::PolicyUpdated do
   let(:current_year) { ((today.beginning_of_year)..today.end_of_year) }
   let(:coverage_year_first) { (Time.mktime(2018, 1, 1)..Time.mktime(2018, 12, 31) )}
   let(:coverage_year_too_old) { (Time.mktime(2017, 1, 1)..Time.mktime(2017, 12, 31) )}
-
+  let(:plan) { build(:plan, metal_level: "platinum")}
 
   context "given a shop policy" do
     let(:policy) do
@@ -35,6 +35,22 @@ describe Observers::PolicyUpdated do
     end
   end
 
+  context 'given a health policy with catastrophic plan' do
+    let(:policy) do
+      instance_double(
+        Policy,
+        is_shop?: false,
+        kind: 'individual',
+        plan: plan
+      )
+    end
+    let(:plan) { build(:plan, metal_level: "catastrophic")}
+
+    it "does nothing" do
+      Observers::PolicyUpdated.notify(policy, today)
+    end
+  end
+
   context "given a dental policy" do
     let(:policy) do
       instance_double(
@@ -57,7 +73,8 @@ describe Observers::PolicyUpdated do
         is_shop?: false,
         kind: 'individual',
         coverage_year: current_year,
-        coverage_type: "health"
+        coverage_type: "health",
+        plan: plan
       )
     end
 
@@ -73,7 +90,8 @@ describe Observers::PolicyUpdated do
         is_shop?: false,
         kind: 'individual',
         coverage_year: coverage_year_too_old,
-        coverage_type: "health"
+        coverage_type: "health",
+        plan: plan
       )
     end
 
@@ -98,7 +116,8 @@ describe Observers::PolicyUpdated do
         is_shop?: false,
         kind: 'individual',
         coverage_year: coverage_year_first,
-        coverage_type: "health"
+        coverage_type: "health",
+        plan: plan
       )
     end
 
