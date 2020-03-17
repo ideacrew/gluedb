@@ -40,13 +40,13 @@ module FederalReports
 
     def self.get_void_canceled_policy_ids_of_subscriber(policy)
       policy.subscriber.person.policies.select do |pol|
-        base_conditional(pol) && pol.aasm_state == 'canceled'
+        base_conditional(pol) && pol.aasm_state == 'canceled' && (policy.policy_start.year == pol.policy_start.year)
       end.map(&:id)
     end
   
     def self.get_void_active_policy_ids_of_subscriber(policy)
       policy.subscriber.person.policies.select do |pol|
-        base_conditional(pol) && pol.aasm_state.in?(['submitted','terminated'])
+        base_conditional(pol) && pol.aasm_state.in?(['submitted','terminated','resubmitted']) && (policy.policy_start.year == pol.policy_start.year)
       end.map(&:id)
     end
   end 
