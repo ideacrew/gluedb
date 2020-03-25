@@ -53,7 +53,7 @@ module Listeners
       employer_id = m_headers["employer_id"].to_s
       plan_year_id = m_headers["plan_year_id"].to_s
       event_name = delivery_info.routing_key.split("employer.").last
-      trading_partner_publishable = m_headers["is_trading_partner_publishable"].present? ? m_headers["is_trading_partner_publishable"] : true
+      trading_partner_publishable = (m_headers["is_trading_partner_publishable"] == "true" || m_headers["is_trading_partner_publishable"] == true) ? true : false
       if !event_name.blank?
         if (event_name =~ /nfp\./) || (event_name =~ /nfp_/)
           channel.ack(delivery_info.delivery_tag, false)
