@@ -170,7 +170,14 @@ module ExternalEvents
       @policy_node.enrollees.each do |en|
         term_enrollee(pol, en)
       end
-      Observers::PolicyUpdated.notify(pol)
+      if pol.policy_end.present?
+        year = pol.policy_end.year.to_s
+        unless pol.policy_end == "12/31/#{year}".to_date && pol.check_for_voluntary_policy_termination
+          Observers::PolicyUpdated.notify(pol)
+        end
+      else
+        Observers::PolicyUpdated.notify(pol)
+      end
       true
     end
   end

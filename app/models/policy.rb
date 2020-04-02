@@ -705,6 +705,15 @@ class Policy
     self.save
   end
 
+  def check_for_voluntary_policy_termination
+    before_updated_policy = self.versions.last
+    if before_updated_policy.present?
+      before_updated_policy.term_for_np == false && before_updated_policy.policy_end.nil?
+    else
+      false
+    end
+  end
+
   def terminate_member_id_on(member_id, term_date)
     enrollee_to_term = self.enrollees.detect { |en| en.m_id == member_id }
     return true unless enrollee_to_term

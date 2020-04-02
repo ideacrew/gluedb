@@ -30,7 +30,7 @@ describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent se
   let(:enrollee_primary) { instance_double(::Openhbx::Cv2::Enrollee, :member => member_primary) }
   let(:plan) { instance_double(Plan, :id => 1) }
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary]) }
-  let(:old_policy) { instance_double(Policy, :active_member_ids => [1, 2]) }
+  let(:old_policy) { instance_double(Policy, :active_member_ids => [1, 2], policy_end: member_end_date) }
   let(:primary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:policy_updater) { instance_double(ExternalEvents::ExternalPolicy) }
 
@@ -62,6 +62,7 @@ describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent se
     allow(policy_updater).to receive(:persist).and_return(true)
     allow(old_policy).to receive(:terminate_member_id_on).with(2, member_end_date).and_return(true)
     allow(subject.action).to receive(:kind).and_return(action_event)
+    allow(old_policy).to receive(:check_for_voluntary_policy_termination).and_return(false)
     allow(Observers::PolicyUpdated).to receive(:notify).with(old_policy)
   end
 

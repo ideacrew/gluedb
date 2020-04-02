@@ -27,7 +27,14 @@ module EnrollmentAction
           rc.terminate_member_id_on(drop_d_id, action.subscriber_start - 1.day)
         end
         return false unless dependent_drop_results.all?
-        Observers::PolicyUpdated.notify(rc)
+        if rc.policy_end.year.present?
+          year = rc.policy_end.year.to_s
+          unless rc.policy_end == "12/31/#{year}".to_date && rc.check_for_voluntary_policy_termination
+            Observers::PolicyUpdated.notify(rc)
+          end
+        else
+          Observers::PolicyUpdated.notify(rc)
+        end
       end
       @terminated_policy_information = termination_info
       members = action.policy_cv.enrollees.map(&:member)

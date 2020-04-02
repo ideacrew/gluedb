@@ -33,7 +33,7 @@ describe EnrollmentAction::TerminatePolicyWithEarlierDate, "given a valid enroll
   let(:member) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1]) }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: Date.today) }
 
   context "when policy found" do
 
@@ -47,6 +47,7 @@ describe EnrollmentAction::TerminatePolicyWithEarlierDate, "given a valid enroll
     before do
       allow(termination_event).to receive(:subscriber_end).and_return(Date.today)
       allow(termination_event.existing_policy).to receive(:terminate_as_of).with(termination_event.subscriber_end).and_return(true)
+      allow(policy).to receive(:check_for_voluntary_policy_termination).and_return(false)
       allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
     end
 

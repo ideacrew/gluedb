@@ -625,3 +625,37 @@ describe '.terminate_as_of', :dbclean => :after_each do
     end
   end
 end
+
+describe '.check_for_voluntary_policy_termination', :dbclean => :after_each do
+  let(:coverage_start) {Date.new(2019, 1, 1)}
+  let(:coverage_end) {coverage_start.end_of_year}
+  let(:policy) { FactoryGirl.create(:policy, coverage_start: coverage_start, coverage_end: nil) }
+
+  context 'when policy voluntarily terminates' do
+    it 'should terminate the policy with 12/31/PY end date' do
+      expect(policy.aasm_state).to eq "submitted"
+      policy.terminate_as_of(coverage_end)
+      result = policy.check_for_voluntary_policy_termination
+      expect(result).to eq true
+      expect(policy.aasm_state).to eq "terminated"
+    end
+  end
+
+  context 'when policy not voluntarily terminates' do
+    let!(:policy1) { FactoryGirl.create(:policy, coverage_start: coverage_start, coverage_end: coverage_end, aasm_state: "terminated") }
+    let!(:policy2) { FactoryGirl.create(:policy, coverage_start: coverage_start, coverage_end: coverage_end, term_for_np: true, aasm_state: "terminated") }
+
+    it 'should cancel the policy with start date' do
+      policy1.terminate_as_of(coverage_start)
+      result = policy1.check_for_voluntary_policy_termination
+      expect(result).to eq false
+      expect(policy1.aasm_state).to eq "canceled"
+    end
+
+    it 'should have old version policy NPT flag to true' do
+      policy2.update_attributes!(term_for_np: false)
+      result = policy2.check_for_voluntary_policy_termination
+      expect(result).to eq false
+    end
+  end
+end

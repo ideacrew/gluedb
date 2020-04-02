@@ -25,7 +25,14 @@ module EnrollmentAction
       termination_date = select_termination_date
       policy_to_term = termination.existing_policy
       result = policy_to_term.terminate_as_of(termination_date)
-      Observers::PolicyUpdated.notify(policy_to_term)
+      if policy_to_term.policy_end.present?
+        year = policy_to_term.policy_end.year.to_s
+        unless policy_to_term.policy_end == "12/31/#{year}".to_date && policy_to_term.check_for_voluntary_policy_termination
+          Observers::PolicyUpdated.notify(policy_to_term)
+        end
+      else
+        Observers::PolicyUpdated.notify(policy_to_term)
+      end
       result
     end
 

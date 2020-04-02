@@ -30,7 +30,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set, bei
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary])}
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary, enrollee_new]) }
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2], :terminate_as_of => subscriber_end) }
+  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2], :terminate_as_of => subscriber_end, :policy_end => subscriber_end) }
   let(:primary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:secondary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:new_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
@@ -68,6 +68,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set, bei
     allow(policy_updater).to receive(:persist).and_return(true)
     allow(subject.action).to receive(:existing_policy).and_return(false)
     allow(subject.action).to receive(:kind).and_return(action_event)
+    allow(policy).to receive(:check_for_voluntary_policy_termination).and_return(false)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 

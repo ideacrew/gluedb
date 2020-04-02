@@ -52,7 +52,7 @@ describe EnrollmentAction::CarrierSwitchRenewal, "given a qualified enrollment s
     ) }
 
   let(:policy_updater) { instance_double(ExternalEvents::ExternalPolicy) }
-  let(:other_carrier_term_candidate) { instance_double(Policy, :active_member_ids => terminated_member_ids) }
+  let(:other_carrier_term_candidate) { instance_double(Policy, :active_member_ids => terminated_member_ids, :policy_end => subscriber_end) }
 
   subject do
     EnrollmentAction::CarrierSwitchRenewal.new(nil, action_event)
@@ -67,6 +67,7 @@ describe EnrollmentAction::CarrierSwitchRenewal, "given a qualified enrollment s
     allow(other_carrier_term_candidate).to receive(:terminate_as_of).with(subscriber_end).and_return(true)
     allow(subject.action).to receive(:existing_policy).and_return(false)
     allow(subject.action).to receive(:kind).and_return(action_event)
+    allow(other_carrier_term_candidate).to receive(:check_for_voluntary_policy_termination).and_return(false)
     allow(Observers::PolicyUpdated).to receive(:notify).with(other_carrier_term_candidate)
   end
 
