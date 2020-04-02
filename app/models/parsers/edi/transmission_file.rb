@@ -178,7 +178,14 @@ module Parsers
           policy.merge_enrollee(enrollee, policy_loop.action)
         end
         policy.save!
-        Observers::PolicyUpdated.notify(policy)
+        if policy.policy_end.present?
+          year = policy.policy_end.year.to_s
+          unless policy.policy_end == "12/31/#{year}".to_date && policy.check_for_voluntary_policy_termination
+            Observers::PolicyUpdated.notify(policy)
+          end
+        else
+          Observers::PolicyUpdated.notify(policy)
+        end
         policy
       end
 

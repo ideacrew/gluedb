@@ -37,6 +37,7 @@ describe Parsers::Edi::IncomingTransaction do
             :hbx_enrollment_ids => JSON.dump(policy.hbx_enrollment_ids)
           }
     }, "")
+    allow(policy).to receive(:check_for_voluntary_policy_termination).and_return(false)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 

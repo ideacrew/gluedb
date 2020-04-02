@@ -77,7 +77,14 @@ module Parsers
         save_val = @policy.save
         if is_policy_term
           # Broadcast the term
-          Observers::PolicyUpdated.notify(@policy)
+          if @policy.policy_end.present?
+            year = @policy.policy_end.year.to_s
+            unless @policy.policy_end == "12/31/#{year}".to_date && @policy.check_for_voluntary_policy_termination
+              Observers::PolicyUpdated.notify(@policy)
+            end
+          else
+            Observers::PolicyUpdated.notify(@policy)
+          end
           reason_headers = if is_non_payment
                              {:qualifying_reason => "urn:openhbx:terms:v1:benefit_maintenance#non_payment"}
                            else
@@ -97,7 +104,14 @@ module Parsers
           end
         elsif is_policy_cancel
           # Broadcast the cancel
-          Observers::PolicyUpdated.notify(@policy)
+          if @policy.policy_end.present?
+            year = @policy.policy_end.year.to_s
+            unless @policy.policy_end == "12/31/#{year}".to_date && @policy.check_for_voluntary_policy_termination
+              Observers::PolicyUpdated.notify(@policy)
+            end
+          else
+            Observers::PolicyUpdated.notify(@policy)
+          end
           reason_headers = if is_non_payment
                              {:qualifying_reason => "urn:openhbx:terms:v1:benefit_maintenance#non_payment"}
                            else
