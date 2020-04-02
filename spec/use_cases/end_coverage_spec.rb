@@ -59,6 +59,7 @@ describe EndCoverage, :dbclean => :after_each do
   before do
     allow(subscriber).to receive(:member) { subscriber_member }
     allow(member).to receive(:member) { member_member }
+    allow(policy).to receive(:check_for_voluntary_policy_termination).and_return(false)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 
