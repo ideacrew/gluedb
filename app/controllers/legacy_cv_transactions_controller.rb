@@ -1,12 +1,12 @@
 class LegacyCvTransactionsController < ApplicationController
   def show
-    authorize! :manage, User
+    authorize! :read, Policy
     @legacy_cv_transaction = Protocols::LegacyCv::LegacyCvTransaction.find(params[:id])
     @person = @legacy_cv_transaction.policy.subscriber.person 
   end
 
    def index
-    authorize! :manage, User
+    authorize! :read, Policy
     @q = params[:q]
     @qf = params[:qf]
     @qd = params[:qd]

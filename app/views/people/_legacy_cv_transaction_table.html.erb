@@ -9,7 +9,7 @@
         <th>State</th>
         <th>Submitted at</th>
         <th>Reason</th>
-        <% if can? :read, current_user %>
+        <% if can? :read, Policy %>
           <th>Action</th>
         <% end %>
       </tr>
@@ -22,7 +22,7 @@
         <td><%= trans.submitted_at.try(:strftime, "%m/%d/%Y")%></td>
         <td><%= trans.reason %></td>
         <td>
-          <% if can? :read, current_user %>
+          <% if can? :read, Policy %>
             <%= link_to 'View Details', legacy_cv_transaction_path(trans) %>
           <% end %>
         </td>
