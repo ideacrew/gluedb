@@ -21,9 +21,9 @@ require 'rails_helper'
       end
     end
 
-     context "not logged in as admin" do
+     context "logged in as a service user" do
       before(:each) do
-        user = FactoryGirl.create(:user)
+        user = FactoryGirl.create(:user, :role => "service")
         sign_in(user)
       end
 
@@ -51,9 +51,9 @@ require 'rails_helper'
       end
     end
 
-     context "not logged in as admin" do
+     context "logged in as a service user" do
       before(:each) do
-        user = FactoryGirl.create(:user)
+        user = FactoryGirl.create(:user, :role => "service")
         sign_in(user)
       end
 
