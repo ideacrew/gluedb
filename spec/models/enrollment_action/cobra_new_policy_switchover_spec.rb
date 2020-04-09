@@ -118,7 +118,7 @@ describe EnrollmentAction::CobraNewPolicySwitchover, "given an enrollment event 
   let(:primary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
 
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary]) }
-  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1], :policy_end => termination_date) }
+  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1]) }
 
   let(:plan_change_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -146,7 +146,6 @@ describe EnrollmentAction::CobraNewPolicySwitchover, "given an enrollment event 
     allow(policy_updater).to receive(:persist).and_return(true)
     allow(subject.action).to receive(:existing_policy).and_return(false)
     allow(subject.action).to receive(:kind).and_return(plan_change_event)
-    allow(policy).to receive(:check_for_voluntary_policy_termination).and_return(false)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 
