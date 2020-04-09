@@ -13,14 +13,7 @@ module EnrollmentAction
       if termination.existing_policy
         @existing_policy = termination.existing_policy
         result = @existing_policy.terminate_as_of(termination.subscriber_end)
-        if @existing_policy.policy_end.present?
-          year = @existing_policy.policy_end.year.to_s
-          unless @existing_policy.policy_end == "12/31/#{year}".to_date && @existing_policy.check_for_voluntary_policy_termination
-            Observers::PolicyUpdated.notify(@existing_policy)
-          end
-        else
-          Observers::PolicyUpdated.notify(@existing_policy)
-        end
+        Observers::PolicyUpdated.notify(@existing_policy)
         result
       else
         false
