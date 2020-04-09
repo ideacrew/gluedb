@@ -9,13 +9,10 @@ This includes cases where we need to switch carriers and do end up transmitting 
 1. COR
    1. *carrier_switch.rb
    2. *carrier_switch_renewal.rb
-   3. cobra_switchover.rb
-   4. dependent_drop.rb
-   5.  market_change.rb
-   6.  new_policy_reinstate.rb
-   10. renewal_dependent_add.rb
-   11. renewal_dependent_drop.rb
-   12. termination.rb
+   3. *dependent_drop.rb
+   4. market_change.rb
+   5. renewal_dependent_drop.rb
+   6. *termination.rb
 2. UI Initiated Changes
 3. EDI Import
 
@@ -26,15 +23,18 @@ This includes cases where we need to switch carriers and do end up transmitting 
 3. COR
    1. assistance_change.rb - triggers no kinds of termination
    2. active_renewal.rb - triggers no kinds of termination
-   3. cobra_reinstate.rb - triggers no kinds of termination
-   4. dependent_add.rb - triggers no kinds of termination
-   5. initial_enrollment.rb - triggers no kinds of termination
-   6. passive_renewal.rb - triggers no kinds of termination
-   7.  plan_change.rb - can't happen at end of year, must happen during the year
-   8.  plan_change_dependent_add.rb - can't happen at end of year, must happen during the year
-   9.  plan_change_dependent_drop.rb - can't happen at end of year, must happen during the year
-   10. terminate_policy_with_earlier_date.rb - not possible for the termination date to be the same as the latest possible termination date (which is the end of the year)
-   11. reinstate.rb - triggers no kinds of termination
-   12. reselection_of_existing_coverage.rb - triggers no kinds of termination
-   13. cobra_new_policy_reinstate.rb - cobra doesn't apply to IVL
-   14. cobra_new_policy_switchover.rb - cobra doesn't apply to IVL
+   3.  cobra_new_policy_reinstate.rb - cobra doesn't apply to IVL
+   4.  cobra_new_policy_switchover.rb - cobra doesn't apply to IVL
+   5. cobra_switchover.rb - cobra doesn't apply to IVL
+   6. cobra_reinstate.rb - triggers no kinds of termination
+   7. dependent_add.rb - triggers no kinds of termination
+   8. initial_enrollment.rb - triggers no kinds of termination
+   9.  new_policy_reinstate.rb
+   10. passive_renewal.rb - triggers no kinds of termination
+   11. plan_change.rb - can't happen at end of year, must happen during the year
+   12. plan_change_dependent_add.rb - can't happen at end of year, must happen during the year
+   13. plan_change_dependent_drop.rb - can't happen at end of year, must happen during the year
+   14. renewal_dependent_add.rb - triggers no kinds of termination
+   15. terminate_policy_with_earlier_date.rb - not possible for the termination date to be the same as the latest possible termination date (which is the end of the year)
+   16. reinstate.rb - triggers no kinds of termination
+   17. reselection_of_existing_coverage.rb - triggers no kinds of termination
