@@ -96,7 +96,7 @@ describe EnrollmentAction::PlanChangeDependentDrop, "given a valid enrollment se
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [primary_enrollee, secondary_enrollee, dropped_enrollee])}
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [primary_enrollee, secondary_enrollee]) }
   let(:plan) { instance_double(Plan, id: 1) }
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1, 2, 3], :policy_end => Date.today - 1.day) }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1, 2, 3]) }
   let(:db_record) { instance_double(ExternalEvents::ExternalMember, persist: true) }
   let(:dependent_drop_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -128,7 +128,6 @@ describe EnrollmentAction::PlanChangeDependentDrop, "given a valid enrollment se
     allow(subject.action).to receive(:existing_policy).and_return(false)
     allow(subject).to receive(:select_termination_date).and_return(expected_termination_date)
     allow(subject.action).to receive(:kind).and_return(dependent_drop_event)
-    allow(policy).to receive(:check_for_voluntary_policy_termination).and_return(false)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 
