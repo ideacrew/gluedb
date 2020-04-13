@@ -1,6 +1,7 @@
 module EnrollmentAction
   class CarrierSwitchRenewal < Base
     extend RenewalComparisonHelper
+    include NotificationExemptionHelper
 
     attr_accessor :terminated_policy_information
 
@@ -19,15 +20,11 @@ module EnrollmentAction
         [t_pol, t_pol.active_member_ids]
       end
       termination_results = termination_candidates.map do |rc|
-        if rc.policy_end.present?
-          year = rc.policy_end.year.to_s
-          unless rc.policy_end == "12/31/#{year}".to_date && rc.check_for_voluntary_policy_termination
-            Observers::PolicyUpdated.notify(rc)
-          end
-        else
+        term_result = rc.terminate_as_of(action.subscriber_start - 1.day)
+        unless termination_event_exempt_from_notification?(rc, action.subscriber_start - 1.day)
           Observers::PolicyUpdated.notify(rc)
         end
-        rc.terminate_as_of(action.subscriber_start - 1.day)
+        term_result
       end
       return false unless termination_results.all?
       other_carrier_renewal_candidates = self.class.other_carrier_renewal_candidates(action)
