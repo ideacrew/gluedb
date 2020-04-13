@@ -6,7 +6,7 @@ This includes cases where we need to switch carriers and do end up transmitting 
 
 # Cases To Correct
 
-1. COR
+1. ~~COR~~
    1. ~~carrier_switch.rb~~
    2. ~~carrier_switch_renewal.rb~~
    3. ~~dependent_drop.rb~~
@@ -14,7 +14,7 @@ This includes cases where we need to switch carriers and do end up transmitting 
    5. ~~renewal_dependent_drop.rb~~
    6. ~~termination.rb~~
 2. ~~UI Initiated Changes~~
-3. EDI Import
+3. ~~EDI Import~~
 
 # Cases to Ignore and Why
 
