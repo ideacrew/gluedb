@@ -59,7 +59,6 @@ describe EndCoverage, :dbclean => :after_each do
   before do
     allow(subscriber).to receive(:member) { subscriber_member }
     allow(member).to receive(:member) { member_member }
-    allow(policy).to receive(:check_for_voluntary_policy_termination).and_return(false)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 
@@ -131,6 +130,15 @@ describe EndCoverage, :dbclean => :after_each do
       let(:affected_enrollee_ids) { [] }
       it "doesn't execute the resulting action" do
         expect(action).not_to receive(:execute)
+        end_coverage.execute(request)
+      end
+    end
+
+    context "on an IVL policy terminated 12/31" do
+      let(:coverage_end) { Date.new(coverage_start.year, 12, 31) }
+
+      it "doesn't notify" do
+        expect(Observers::PolicyUpdated).not_to receive(:notify).with(policy)
         end_coverage.execute(request)
       end
     end

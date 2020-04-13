@@ -1,4 +1,6 @@
 class EndCoverage
+  include EnrollmentAction::NotificationExemptionHelper
+
   def initialize(action_factory, policy_repo = Policy)
     @policy_repo = policy_repo
     @action_factory = action_factory
@@ -14,6 +16,7 @@ class EndCoverage
     enrollees_not_already_canceled = @policy.enrollees.select { |e| !e.canceled? }
 
     update_policy(affected_enrollee_ids)
+    notify_if_qualifies(request, @policy)
 
     action = @action_factory.create_for(request)
     action_request = {
@@ -25,14 +28,6 @@ class EndCoverage
       current_user: request[:current_user]
     }
     result = action.execute(action_request)
-    if @policy.policy_end.present?
-      year = @policy.policy_end.year.to_s
-      unless @policy.policy_end == "12/31/#{year}".to_date && @policy.check_for_voluntary_policy_termination
-        Observers::PolicyUpdated.notify(@policy)
-      end
-    else
-      Observers::PolicyUpdated.notify(@policy)
-    end
     result
   end
 
@@ -181,6 +176,16 @@ class EndCoverage
       enrollee.coverage_end = enrollee.coverage_start
     else
       enrollee.coverage_end = date
+    end
+  end
+
+  def notify_if_qualifies(request, policy)
+    if(request[:operation] == 'cancel')
+      Observers::PolicyUpdated.notify(policy)
+    else
+      unless termination_event_exempt_from_notification?(policy, request[:coverage_end])
+        Observers::PolicyUpdated.notify(policy)
+      end
     end
   end
 
