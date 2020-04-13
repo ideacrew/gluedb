@@ -1,6 +1,8 @@
 module EnrollmentAction
   class CarrierSwitch < Base
     extend PlanComparisonHelper
+    include NotificationExemptionHelper
+
     def self.qualifies?(chunk)
       return false unless chunk.length > 1
       carriers_are_different?(chunk)
@@ -20,12 +22,7 @@ module EnrollmentAction
       return false unless ep.persist
       policy_to_term = termination.existing_policy
       result = policy_to_term.terminate_as_of(termination.subscriber_end)
-      if policy_to_term.policy_end.present?
-        year = policy_to_term.policy_end.year.to_s
-        unless policy_to_term.policy_end == "12/31/#{year}".to_date && policy_to_term.check_for_voluntary_policy_termination
-          Observers::PolicyUpdated.notify(policy_to_term)
-        end
-      else
+      unless termination_event_exempt_from_notification?(policy_to_term, termination.subscriber_end)
         Observers::PolicyUpdated.notify(policy_to_term)
       end
       result

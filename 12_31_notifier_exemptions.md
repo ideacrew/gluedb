@@ -7,7 +7,7 @@ This includes cases where we need to switch carriers and do end up transmitting 
 # Cases To Correct
 
 1. COR
-   1. *carrier_switch.rb
+   1. ~~carrier_switch.rb~~
    2. *carrier_switch_renewal.rb
    3. *dependent_drop.rb
    4. *market_change.rb
