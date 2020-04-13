@@ -10,7 +10,7 @@ This includes cases where we need to switch carriers and do end up transmitting 
    1. ~~carrier_switch.rb~~
    2. ~~carrier_switch_renewal.rb~~
    3. ~~dependent_drop.rb~~
-   4. *market_change.rb
+   4. ~~market_change.rb~~
    5. ~~renewal_dependent_drop.rb~~
    6. ~~termination.rb~~
 2. UI Initiated Changes
