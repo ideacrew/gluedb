@@ -12,7 +12,7 @@ This includes cases where we need to switch carriers and do end up transmitting 
    3. *dependent_drop.rb
    4. *market_change.rb
    5. *renewal_dependent_drop.rb
-   6. *termination.rb
+   6. ~~termination.rb~~
 2. UI Initiated Changes
 3. EDI Import
 
