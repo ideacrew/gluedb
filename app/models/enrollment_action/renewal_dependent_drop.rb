@@ -1,6 +1,7 @@
 module EnrollmentAction
   class RenewalDependentDrop < Base
     extend RenewalComparisonHelper
+    include NotificationExemptionHelper
 
     attr_accessor :terminated_policy_information
 
@@ -27,12 +28,7 @@ module EnrollmentAction
           rc.terminate_member_id_on(drop_d_id, action.subscriber_start - 1.day)
         end
         return false unless dependent_drop_results.all?
-        if rc.policy_end.year.present?
-          year = rc.policy_end.year.to_s
-          unless rc.policy_end == "12/31/#{year}".to_date && rc.check_for_voluntary_policy_termination
-            Observers::PolicyUpdated.notify(rc)
-          end
-        else
+        unless termination_event_exempt_from_notification?(rc, action.subscriber_start - 1.day)
           Observers::PolicyUpdated.notify(rc)
         end
       end
