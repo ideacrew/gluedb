@@ -8,6 +8,23 @@ module Generators::Reports
     let!(:silver_plan)        { FactoryGirl.create(:plan, hios_plan_id: slcsp_hios[:slcsp]) }
     let(:calender_year)       { 2018 }
     let(:record_sequence_num) { 532211 }
+    let(:ns) {{
+      "xmlns:air5.0" => "urn:us:gov:treasury:irs:ext:aca:air:ty19a",
+      "xmlns:irs" => "urn:us:gov:treasury:irs:common",
+      "xmlns:batchreq" => "urn:us:gov:treasury:irs:msg:form1095atransmissionupstreammessage",
+      "xmlns:batchresp"=> "urn:us:gov:treasury:irs:msg:form1095atransmissionexchrespmessage",
+      "xmlns:reqack"=> "urn:us:gov:treasury:irs:msg:form1095atransmissionexchackngmessage",
+      "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance"
+    }}
+
+    let(:old_ns) {{
+      "xmlns:air5.0" => "urn:us:gov:treasury:irs:ext:aca:air:ty18a",
+      "xmlns:irs" => "urn:us:gov:treasury:irs:common",
+      "xmlns:batchreq" => "urn:us:gov:treasury:irs:msg:form1095atransmissionupstreammessage",
+      "xmlns:batchresp"=> "urn:us:gov:treasury:irs:msg:form1095atransmissionexchrespmessage",
+      "xmlns:reqack"=> "urn:us:gov:treasury:irs:msg:form1095atransmissionexchackngmessage",
+      "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance"
+    }}
     
     let(:irs_settings) { 
       settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access 
@@ -62,6 +79,20 @@ module Generators::Reports
 
     before do
       allow(irs_input.notice).to receive(:issuer_name).and_return('Carefirst') 
+    end
+
+    context "fetch_ns" do
+      it 'calender_year is 2018' do
+        yearly_xml = Generators::Reports::IrsYearlyXml.new(irs_input.notice)
+        yearly_xml.notice_params = {calender_year: calender_year}
+        expect(yearly_xml.fetch_ns).to eq old_ns
+      end
+
+      it 'calender_year is 2019' do
+        yearly_xml = Generators::Reports::IrsYearlyXml.new(irs_input.notice)
+        yearly_xml.notice_params = {calender_year: "2019"}
+        expect(yearly_xml.fetch_ns).to eq ns
+      end
     end
 
     it 'should generate h41 xml' do

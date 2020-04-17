@@ -654,7 +654,7 @@ module Generators::Reports
 
     def merge_and_validate_xmls(folder_count)
       folder_num = prepend_zeros(folder_count.to_s, 5)
-      xml_merge = Generators::Reports::IrsYearlyXmlMerger.new("#{@irs_xml_path + @h41_folder_name}", folder_num)
+      xml_merge = Generators::Reports::IrsYearlyXmlMerger.new("#{@irs_xml_path + @h41_folder_name}", folder_num, notice_params)
       xml_merge.irs_yearly_xml_folder = @irs_xml_path
       xml_merge.process
       xml_merge.validate

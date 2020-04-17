@@ -5,6 +5,15 @@ module Generators::Reports
     attr_accessor :record_sequence_num, :corrected_record_sequence_num, :voided_record_sequence_num, :notice_params
 
     NS = {
+      "xmlns:air5.0" => "urn:us:gov:treasury:irs:ext:aca:air:ty19a",
+      "xmlns:irs" => "urn:us:gov:treasury:irs:common",
+      "xmlns:batchreq" => "urn:us:gov:treasury:irs:msg:form1095atransmissionupstreammessage",
+      "xmlns:batchresp"=> "urn:us:gov:treasury:irs:msg:form1095atransmissionexchrespmessage",
+      "xmlns:reqack"=> "urn:us:gov:treasury:irs:msg:form1095atransmissionexchackngmessage",
+      "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance"
+    }
+
+    NS_OLD = {
       "xmlns:air5.0" => "urn:us:gov:treasury:irs:ext:aca:air:ty18a",
       "xmlns:irs" => "urn:us:gov:treasury:irs:common",
       "xmlns:batchreq" => "urn:us:gov:treasury:irs:msg:form1095atransmissionupstreammessage",
@@ -19,9 +28,13 @@ module Generators::Reports
       @notice_params = options
     end
 
+    def fetch_ns
+      (notice_params[:calender_year].to_s == "2018") ? NS_OLD : NS
+    end
+
     def serialize
       Nokogiri::XML::Builder.new { |xml|
-        xml['batchreq'].Form1095ATransmissionUpstream(NS) do |xml|
+        xml['batchreq'].Form1095ATransmissionUpstream(fetch_ns) do |xml|
           xml['air5.0'].Form1095AUpstreamDetail(:recordType => "", :lineNum => "0") do |xml|
             serialize_headers(xml)
             serialize_policy(xml)
