@@ -1,5 +1,5 @@
 GIT
-  remote: git@github.com:dchbx/designmodo-flatuipro-rails.git
+  remote: https://github.com/dchbx/designmodo-flatuipro-rails.git
   revision: cf4e651a49bb3ba712efd90531d864a294616914
   specs:
     designmodo-flatuipro-rails (1.3.0.0.branch)
@@ -8,7 +8,7 @@ GIT
       less-rails-bootstrap (>= 3.2.0)
 
 GIT
-  remote: git@github.com:dchbx/edi_codec.git
+  remote: https://github.com/dchbx/edi_codec.git
   revision: 9d0bbe3658a766c1b0cf8ee29f22083734087f47
   specs:
     edi_codec (0.1.2)
@@ -474,4 +474,4 @@ DEPENDENCIES
   virtus (~> 1.0.5)
 
 BUNDLED WITH
-   1.16.2
+   1.17.3
