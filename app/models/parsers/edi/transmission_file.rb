@@ -152,7 +152,7 @@ module Parsers
       # FIXME: pull sep reason
       def persist_policy(etf, carrier_id, plan_id, eg_id, employer_id, rp_id, broker_id)
         reporting_categories = etf.subscriber_loop.reporting_catergories
-
+        @before_updated_policy = Policy.where(hbx_enrollment_ids: eg_id).first
         new_policy = Policy.new(
           :plan_id => plan_id,
           :enrollment_group_id => eg_id,
@@ -178,7 +178,39 @@ module Parsers
           policy.merge_enrollee(enrollee, policy_loop.action)
         end
         policy.save!
+        unless termination_event_exempt_from_notification?(policy)
+          Observers::PolicyUpdated.notify(policy)
+        end
         policy
+      end
+
+      def termination_event_exempt_from_notification?(policy)
+        if @before_updated_policy.present?
+          @updated_policy = policy
+          #Policy End Date change - null to 12/31 AND no NPT indicator change (don't notify)
+          #Dependent Only End Date Change - null to 12/31 AND no NPT status change (don't notify)
+          is_npt_flag_same? && is_dependent_coverage_end_change_to_end_of_year?
+        end
+      end
+
+      def is_npt_flag_same?
+        @updated_policy.term_for_np == @before_updated_policy.term_for_np
+      end
+
+      def is_dependent_coverage_end_change_to_end_of_year?
+        @updated_policy.enrollees.each do |updated_enrollee|
+          @before_updated_policy.enrollees.each do |before_updated_enrollee|
+            next if updated_enrollee.id != before_updated_enrollee.id
+            unless before_updated_enrollee.coverage_end.nil? && check_enrollee_coverage_end(updated_enrollee)
+              return false
+            end
+          end
+        end
+        true
+      end
+
+      def check_enrollee_coverage_end(updated_enrollee)
+        (updated_enrollee.coverage_end.try(:day) == 31) && (updated_enrollee.coverage_end.try(:month) == 12)
       end
 
       def build_enrollee(person, policy)

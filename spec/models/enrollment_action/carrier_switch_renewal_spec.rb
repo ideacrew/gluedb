@@ -115,6 +115,7 @@ describe EnrollmentAction::CarrierSwitchRenewal, "given a qualified enrollment s
     let(:subscriber_end) { Date.new(2015, 12, 31) }
 
     it "notifies of the termination" do
+      allow(subject).to receive(:check_for_npt_flag_end_date).with(other_carrier_term_candidate).and_return(true)
       expect(Observers::PolicyUpdated).not_to receive(:notify).with(other_carrier_term_candidate)
       subject.persist
     end

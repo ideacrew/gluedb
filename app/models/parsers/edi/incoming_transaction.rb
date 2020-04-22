@@ -125,7 +125,7 @@ module Parsers
         return false if is_cancel
         return false if npt_changed
         return false unless is_term
-        (policy.policy_end.day == 31) && (policy.policy_end.month == 31)
+        (policy.policy_end.day == 31) && (policy.policy_end.month == 12)
       end
 
       def policy_found(policy)

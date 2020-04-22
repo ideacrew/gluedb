@@ -87,6 +87,7 @@ describe EnrollmentAction::Termination, "given a valid IVL enrollment, ending 12
   before :each do
     allow(termination_event.existing_policy).to receive(:terminate_as_of).and_return(true)
     allow(termination_event).to receive(:subscriber_end).and_return(Date.new(Date.today.year, 12, 31))
+    allow(subject).to receive(:check_for_npt_flag_end_date).with(policy).and_return(true)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 
