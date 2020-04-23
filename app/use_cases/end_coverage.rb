@@ -191,8 +191,12 @@ class EndCoverage
   end
 
   def parse_coverage_end(requested_coverage_end)
-    # TODO: Add formatting check and parseing
-    requested_coverage_end
+    return requested_coverage_end if requested_coverage_end.kind_of?(Date)
+    if requested_coverage_end.split('/').first.size == 2
+      Date.strptime(requested_coverage_end,"%m/%d/%Y")
+    elsif requested_coverage_end.split('-').first.size == 2
+      Date.strptime(requested_coverage_end,"%m-%d-%Y")
+    end
   end
 
   class PremiumCalcError < StandardError
