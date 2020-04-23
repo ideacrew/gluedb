@@ -183,10 +183,16 @@ class EndCoverage
     if(request[:operation] == 'cancel')
       Observers::PolicyUpdated.notify(policy)
     else
-      unless termination_event_exempt_from_notification?(policy, request[:coverage_end])
+      coverage_end_date = parse_coverage_end(request[:coverage_end])
+      unless termination_event_exempt_from_notification?(policy, coverage_end_date)
         Observers::PolicyUpdated.notify(policy)
       end
     end
+  end
+
+  def parse_coverage_end(requested_coverage_end)
+    # TODO: Add formatting check and parseing
+    requested_coverage_end
   end
 
   class PremiumCalcError < StandardError
