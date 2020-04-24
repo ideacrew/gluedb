@@ -840,6 +840,27 @@ class Policy
     end
   end
 
+  def self.update_or_create_policy_from_edi(
+      update_policy_record,
+      transmission_file_util,
+      etf_loop,
+      transaction_set_kind
+    )
+    updated_or_created_policy = Policy.find_or_update_policy(update_policy_record)
+    if transaction_set_kind == "effectuation"
+      updated_or_created_policy.aasm_state = 'effectuated'
+    end
+
+    etf_loop.people.each do |person_loop|
+      policy_loop = person_loop.policy_loops.first
+      enrollee = transmission_file_util.build_enrollee(person_loop, policy_loop)
+      updated_or_created_policy.merge_enrollee(enrollee, policy_loop.action)
+    end
+
+    updated_or_created_policy.save!
+    updated_or_created_policy
+  end
+
   protected
   def generate_enrollment_group_id
     self.eg_id = self.eg_id || self._id.to_s
