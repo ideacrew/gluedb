@@ -25,12 +25,13 @@ describe EnrollmentAction::RenewalDependentDrop, "given an enrollment event set 
 end
 
 describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent set, being persisted" do
+  let(:is_shop) { true }
   let(:member_primary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
   let(:member_secondary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 2) }
   let(:enrollee_primary) { instance_double(::Openhbx::Cv2::Enrollee, :member => member_primary) }
   let(:plan) { instance_double(Plan, :id => 1) }
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary]) }
-  let(:old_policy) { instance_double(Policy, :active_member_ids => [1, 2]) }
+  let(:old_policy) { instance_double(Policy, :active_member_ids => [1, 2], policy_end: member_end_date, :is_shop? => is_shop) }
   let(:primary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:policy_updater) { instance_double(ExternalEvents::ExternalPolicy) }
 
@@ -68,11 +69,6 @@ describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent se
   it "creates the new policy" do
     expect(subject.persist).to be_truthy
   end
-
-  it "notifies of the termination" do
-    expect(Observers::PolicyUpdated).to receive(:notify).with(old_policy)
-    subject.persist
-  end
   
   it "terminates the dropped member" do
     expect(old_policy).to receive(:terminate_member_id_on).with(2, member_end_date).and_return(true)
@@ -82,6 +78,29 @@ describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent se
   it "assigns the termination information for the dropped dependent" do
     subject.persist
     expect(subject.terminated_policy_information).to eq [[old_policy, [2]]]
+  end
+
+  describe "given IVL with end date of not 12/31" do
+    let(:is_shop) { false }
+    let(:subscriber_start) { Date.new(2015, 6, 1) }
+    let(:member_end_date) { Date.new(2015, 5, 31) }
+
+    it "notifies of the termination" do
+      expect(Observers::PolicyUpdated).to receive(:notify).with(old_policy)
+      subject.persist
+    end
+  end
+
+  describe "given IVL with end date of 12/31" do
+    let(:is_shop) { false }
+
+    let(:subscriber_start) { Date.new(2016, 1, 1) }
+    let(:member_end_date) { Date.new(2015, 12, 31) }
+
+    it "notifies of the termination" do
+      expect(Observers::PolicyUpdated).not_to receive(:notify).with(old_policy)
+      subject.persist
+    end
   end
 end
 

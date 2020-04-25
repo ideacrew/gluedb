@@ -840,6 +840,83 @@ class Policy
     end
   end
 
+  def self.update_or_create_policy_from_edi(
+      before_updated_policy = nil,
+      update_policy_record,
+      transmission_file_util,
+      etf_loop,
+      transaction_set_kind
+    )
+    updated_or_created_policy = Policy.find_or_update_policy(update_policy_record)
+    if transaction_set_kind == "effectuation"
+      updated_or_created_policy.aasm_state = 'effectuated'
+    end
+
+    etf_loop.people.each do |person_loop|
+      policy_loop = person_loop.policy_loops.first
+      enrollee = transmission_file_util.build_enrollee(person_loop, policy_loop)
+      updated_or_created_policy.merge_enrollee(enrollee, policy_loop.action)
+    end
+    updated_or_created_policy.save!
+    unless termination_event_exempt_from_notification?(before_updated_policy, updated_or_created_policy)
+      Observers::PolicyUpdated.notify(updated_or_created_policy)
+    end
+    updated_or_created_policy
+  end
+
+  def self.termination_event_exempt_from_notification?(before_updated_policy, updated_policy)
+    if before_updated_policy.present?
+      return true if initial_eligibility_check?(updated_policy)
+      #Policy End Date change - null to 12/31 AND no NPT indicator change (don't notify)
+      #Dependent Only End Date Change - null to 12/31 AND no NPT status change (don't notify)
+
+      if is_npt_flag_same?(before_updated_policy, updated_policy)
+        is_enrollee_coverage_end_change_to_end_of_year?(before_updated_policy, updated_policy)
+      else
+        false #we notify
+      end
+    else
+      false #we notify
+    end
+  end
+
+  def self.initial_eligibility_check?(updated_policy)
+    updated_policy.kind == 'coverall' || updated_policy.is_shop? || updated_policy.coverage_type.to_s.downcase != "health" || updated_policy.plan.metal_level == "catastrophic" || updated_policy.coverage_year.first.year == Time.now.year || updated_policy.coverage_year.first.year < 2018
+  end
+
+  def self.is_npt_flag_same?(before_updated_policy, updated_policy)
+    before_updated_policy.term_for_np == updated_policy.term_for_np
+  end
+
+  def self.is_enrollee_coverage_end_change_to_end_of_year?(before_updated_policy, updated_policy)
+    updated_policy.enrollees.each do |updated_enrollee|
+      before_updated_policy.enrollees.each do |before_updated_enrollee|
+        next if updated_enrollee.id != before_updated_enrollee.id
+
+        if check_enrollee_coverage_end?(updated_enrollee)
+          unless before_updated_enrollee.coverage_end.nil?
+            unless before_updated_enrollee.coverage_end == updated_enrollee.coverage_end
+              return false #we notify
+            end
+          end
+        else
+          if updated_enrollee.coverage_end.present? && before_updated_enrollee.coverage_end.nil?
+            return  false #we notify
+          else
+            unless before_updated_enrollee.coverage_end == updated_enrollee.coverage_end
+              return false  #we notify
+            end
+          end
+        end
+      end
+    end
+    true #we don't notify
+  end
+
+  def self.check_enrollee_coverage_end?(updated_enrollee)
+    (updated_enrollee.coverage_end.try(:day) == 31) && (updated_enrollee.coverage_end.try(:month) == 12)
+  end
+
   protected
   def generate_enrollment_group_id
     self.eg_id = self.eg_id || self._id.to_s

@@ -23,6 +23,7 @@ describe EnrollmentAction::MarketChange, "Market Change" do
 end
 
 describe EnrollmentAction::MarketChange, "given a qualified enrollment set, being persisted" do
+  let(:is_shop) { true }
   let(:member_primary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
   let(:member_secondary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 2) }
   let(:member_new) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 3) }
@@ -33,7 +34,7 @@ describe EnrollmentAction::MarketChange, "given a qualified enrollment set, bein
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary])}
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary, enrollee_new]) }
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2], :terminate_as_of => subscriber_end) }
+  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2], :terminate_as_of => subscriber_end, :is_shop? => is_shop) }
   let(:primary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:secondary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:new_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
@@ -75,12 +76,47 @@ describe EnrollmentAction::MarketChange, "given a qualified enrollment set, bein
   end
 
   it "notifies of the termination" do
+    allow(policy).to receive(:term_for_np).and_return(false)
     expect(Observers::PolicyUpdated).to receive(:notify).with(policy)
     subject.persist
   end
 
   it "successfully creates the new policy" do
+    allow(policy).to receive(:term_for_np).and_return(false)
     expect(subject.persist).to be_truthy
+  end
+
+  describe "given IVL with end date of not 12/31" do
+    let(:is_shop) { false }
+    let(:subscriber_end) { Date.new(2015, 5, 31) }
+
+    it "notifies of the termination" do
+      allow(policy).to receive(:term_for_np).and_return(true)
+      expect(Observers::PolicyUpdated).to receive(:notify).with(policy)
+      subject.persist
+    end
+  end
+
+  describe "given IVL with end date of 12/31" do
+    let(:is_shop) { false }
+    let(:subscriber_end) { Date.new(2015, 12, 31) }
+
+    it "doesn't notify of the termination" do
+      allow(policy).to receive(:term_for_np).and_return(true)
+      expect(Observers::PolicyUpdated).not_to receive(:notify).with(policy)
+      subject.persist
+    end
+  end
+
+  describe "given IVL with end date of 12/31, but a changed NPT" do
+    let(:is_shop) { false }
+    let(:subscriber_end) { Date.new(2015, 12, 31) }
+
+    it "notifies of the termination" do
+      allow(policy).to receive(:term_for_np).and_return(true, false)
+      expect(Observers::PolicyUpdated).to receive(:notify).with(policy)
+      subject.persist
+    end
   end
 end
 

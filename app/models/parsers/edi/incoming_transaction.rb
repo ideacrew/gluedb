@@ -39,6 +39,7 @@ module Parsers
         is_policy_term = false
         is_policy_cancel = false
         is_non_payment = false
+        old_npt_flag = @policy.term_for_np
         @etf.people.each do |person_loop|
           begin
             enrollee = @policy.enrollee_for_member_id(person_loop.member_id)
@@ -75,9 +76,11 @@ module Parsers
           end
         end
         save_val = @policy.save
+        unless exempt_from_notification?(@policy, is_policy_cancel, is_policy_term, old_npt_flag == is_non_payment)
+          Observers::PolicyUpdated.notify(@policy)
+        end
         if is_policy_term
           # Broadcast the term
-          Observers::PolicyUpdated.notify(@policy)
           reason_headers = if is_non_payment
                              {:qualifying_reason => "urn:openhbx:terms:v1:benefit_maintenance#non_payment"}
                            else
@@ -97,7 +100,6 @@ module Parsers
           end
         elsif is_policy_cancel
           # Broadcast the cancel
-          Observers::PolicyUpdated.notify(@policy)
           reason_headers = if is_non_payment
                              {:qualifying_reason => "urn:openhbx:terms:v1:benefit_maintenance#non_payment"}
                            else
@@ -117,6 +119,13 @@ module Parsers
           end
         end
         save_val
+      end
+
+      def exempt_from_notification?(policy, is_cancel, is_term, npt_changed)
+        return false if is_cancel
+        return false if npt_changed
+        return false unless is_term
+        (policy.policy_end.day == 31) && (policy.policy_end.month == 12)
       end
 
       def policy_found(policy)

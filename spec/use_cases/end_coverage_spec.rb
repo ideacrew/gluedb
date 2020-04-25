@@ -134,6 +134,15 @@ describe EndCoverage, :dbclean => :after_each do
       end
     end
 
+    context "on an IVL policy terminated 12/31" do
+      let(:coverage_end) { Date.new(coverage_start.year, 12, 31) }
+
+      it "doesn't notify" do
+        expect(Observers::PolicyUpdated).not_to receive(:notify).with(policy)
+        end_coverage.execute(request)
+      end
+    end
+
     context "on shop 2016 enrollments" do
       let(:affected_enrollee_ids) { [ subscriber.m_id ] }
       let(:operation) { 'cancel' }
