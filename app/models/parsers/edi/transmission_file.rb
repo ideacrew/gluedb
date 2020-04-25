@@ -152,6 +152,7 @@ module Parsers
       # FIXME: pull sep reason
       def persist_policy(etf, carrier_id, plan_id, eg_id, employer_id, rp_id, broker_id)
         reporting_categories = etf.subscriber_loop.reporting_catergories
+        existing_policy = Policy.where(enrollment_hbx_ids: eg_id).first
         new_policy = Policy.new(
           :plan_id => plan_id,
           :enrollment_group_id => eg_id,
@@ -167,27 +168,12 @@ module Parsers
           :enrollees => []
         )
         Policy.update_or_create_policy_from_edi(
+          existing_policy,
           new_policy,
           self,
           etf,
           transaction_set_kind(etf)
         )
-      end
-
-      def is_dependent_coverage_end_change_to_end_of_year?
-        @updated_policy.enrollees.each do |updated_enrollee|
-          @before_updated_policy.enrollees.each do |before_updated_enrollee|
-            next if updated_enrollee.id != before_updated_enrollee.id
-            unless before_updated_enrollee.coverage_end.nil? && check_enrollee_coverage_end(updated_enrollee)
-              return false
-            end
-          end
-        end
-        true
-      end
-
-      def check_enrollee_coverage_end(updated_enrollee)
-        (updated_enrollee.coverage_end.try(:day) == 31) && (updated_enrollee.coverage_end.try(:month) == 12)
       end
 
       def build_enrollee(person, policy)

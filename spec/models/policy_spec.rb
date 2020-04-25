@@ -292,6 +292,7 @@ describe Policy, :dbclean => :after_each do
         expect(found_policy.persisted?).to eq true
       end
     end
+
   end
 
   describe '#check_for_cancel_or_term' do
@@ -622,6 +623,178 @@ describe '.terminate_as_of', :dbclean => :after_each do
       policy.terminate_as_of(coverage_end)
       expect(policy.policy_end).to eq coverage_start
       expect(policy.aasm_state).to eq "canceled"
+    end
+  end
+end
+
+describe '.termination_event_exempt_from_notification?', :dbclean => :after_each do
+  let(:eg_id) { '1' }
+  let(:carrier_id) { '2' }
+  let(:plan_id) { '3' }
+  let(:plan_hios_id) { "a hios id" }
+  let(:plan) { Plan.create!(:name => "test_plan", :hios_plan_id => plan_hios_id, carrier_id: carrier_id, :coverage_type => "health") }
+  let(:policy) {Policy.new(enrollment_group_id: eg_id, carrier_id: carrier_id, plan: plan, coverage_start: coverage_start, coverage_end: nil, kind: 'individual', enrollees: [enrollee1, enrollee2])}
+  let(:responsible_party_id) { '1' }
+  let(:broker_id) { '3' }
+  let(:applied_aptc) { 1.0 }
+  let(:tot_res_amt) { 1.0 }
+  let(:pre_amt_tot) { 1.0 }
+  let!(:child)   {
+    person = FactoryGirl.create :person, dob: Date.new(1998, 9, 6)
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let!(:primary) {
+    person = FactoryGirl.create :person, dob: Date.new(1970, 5, 1)
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:coverage_start) {Date.new(2019, 1, 1)}
+  let(:coverage_end) {coverage_start.end_of_year}
+  let(:enrollee1) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: coverage_start)}
+  let(:enrollee2) { Enrollee.new(m_id: child.authority_member.hbx_member_id, rel_code: 'child', coverage_start: coverage_start)}
+
+  before do
+    policy.responsible_party_id = responsible_party_id
+    policy.broker_id = broker_id
+    policy.applied_aptc = applied_aptc
+    policy.tot_res_amt = tot_res_amt
+    policy.pre_amt_tot = pre_amt_tot
+  end
+
+  context 'given no policy exists' do
+    it 'saves the policy and do notify' do
+      found_policy = Policy.find_or_update_policy(policy)
+      expect(found_policy.persisted?).to eq true
+      exempt_notification = Policy.termination_event_exempt_from_notification?(nil, found_policy)
+      expect(exempt_notification).to eq false
+    end
+  end
+
+  context "given:
+  - policy exists
+  - ivl policy
+  - health policy
+  - existing policy has nil end date(subscriber.coverage_end = nil)
+  - finds and updates the policy
+  - no change in (term_for_np) NPT flag
+  " do
+
+    it "with updated_policy end date to 12/31/PY and don't notify" do
+      existing_policy = Policy.create!(eg_id: eg_id, carrier_id: carrier_id, plan: plan, coverage_start: coverage_start, coverage_end: nil, kind: 'individual', enrollees: [enrollee1, enrollee2])
+      found_policy = Policy.find_or_update_policy(policy)
+      found_policy.enrollees.where(rel_code: 'self').first.update_attributes!(coverage_end: coverage_end)
+      found_policy.enrollees.where(rel_code: 'child').first.update_attributes!(coverage_end: coverage_end)
+      exempt_notification = Policy.termination_event_exempt_from_notification?(existing_policy, found_policy)
+
+      expect(found_policy.term_for_np).to eq false
+      expect(existing_policy.term_for_np).to eq false
+      expect(found_policy).to eq existing_policy
+      expect(found_policy.responsible_party_id).to eq responsible_party_id
+      expect(found_policy.is_shop?).to eq false
+      expect(found_policy.coverage_type).to eq "health"
+      expect(exempt_notification).to eq true
+    end
+
+    it "with only dependent end date to 12/31 and don't notify" do
+      existing_policy = Policy.create!(eg_id: eg_id, carrier_id: carrier_id, plan: plan, coverage_start: coverage_start, coverage_end: nil, kind: 'individual', enrollees: [enrollee1, enrollee2])
+      found_policy = Policy.find_or_update_policy(policy)
+      found_policy.enrollees.where(rel_code: 'child').first.update_attributes!(coverage_end: coverage_end)
+      exempt_notification = Policy.termination_event_exempt_from_notification?(existing_policy, found_policy)
+
+      expect(found_policy.term_for_np).to eq false
+      expect(existing_policy.term_for_np).to eq false
+      expect(found_policy).to eq existing_policy
+      expect(found_policy.responsible_party_id).to eq responsible_party_id
+      expect(found_policy.is_shop?).to eq false
+      expect(found_policy.coverage_type).to eq "health"
+      expect(exempt_notification).to eq true
+    end
+
+    it "with only dependent end date from another end_date to 12/31 and do notify" do
+      existing_policy = Policy.create!(eg_id: eg_id, carrier_id: carrier_id, plan: plan, coverage_start: coverage_start, coverage_end: nil, kind: 'individual', enrollees: [enrollee1, enrollee2])
+      found_policy = Policy.find_or_update_policy(policy)
+      existing_policy.enrollees.where(rel_code: 'child').first.update_attributes!(coverage_end: Date.new(2019,7,31))
+      found_policy.enrollees.where(rel_code: 'child').first.update_attributes!(coverage_end: coverage_end)
+      exempt_notification = Policy.termination_event_exempt_from_notification?(existing_policy, found_policy)
+
+      expect(found_policy.term_for_np).to eq false
+      expect(existing_policy.term_for_np).to eq false
+      expect(found_policy).to eq existing_policy
+      expect(found_policy.responsible_party_id).to eq responsible_party_id
+      expect(found_policy.is_shop?).to eq false
+      expect(found_policy.coverage_type).to eq "health"
+      expect(exempt_notification).to eq false
+    end
+
+    it "with only dependent end date not to 12/31 and do notify" do
+      existing_policy = Policy.create!(eg_id: eg_id, carrier_id: carrier_id, plan: plan, coverage_start: coverage_start, coverage_end: nil, kind: 'individual', enrollees: [enrollee1, enrollee2])
+      found_policy = Policy.find_or_update_policy(policy)
+      found_policy.enrollees.where(rel_code: 'child').first.update_attributes!(coverage_end: Date.new(2019,7,31))
+      exempt_notification = Policy.termination_event_exempt_from_notification?(existing_policy, found_policy)
+
+      expect(found_policy.term_for_np).to eq false
+      expect(existing_policy.term_for_np).to eq false
+      expect(found_policy).to eq existing_policy
+      expect(found_policy.responsible_party_id).to eq responsible_party_id
+      expect(found_policy.is_shop?).to eq false
+      expect(found_policy.coverage_type).to eq "health"
+      expect(exempt_notification).to eq false
+    end
+  end
+
+  context "given:
+  - policy exists
+  - ivl policy
+  - health coverage policy
+  - existing policy end_date has 12/31/PY
+  - finds and updates the policy
+  " do
+
+    it "with enrollee end date to 12/31 and don't notify" do
+      existing_policy = Policy.create!(eg_id: eg_id, carrier_id: carrier_id, plan: plan, coverage_start: coverage_start, coverage_end: coverage_end, kind: 'individual', enrollees: [enrollee1, enrollee2])
+      found_policy = Policy.find_or_update_policy(policy)
+      found_policy.enrollees.where(rel_code: 'child').first.update_attributes!(coverage_end: coverage_end)
+      exempt_notification = Policy.termination_event_exempt_from_notification?(existing_policy, found_policy)
+
+      expect(found_policy.term_for_np).to eq false
+      expect(existing_policy.term_for_np).to eq false
+      expect(found_policy).to eq existing_policy
+      expect(found_policy.responsible_party_id).to eq responsible_party_id
+      expect(found_policy.is_shop?).to eq false
+      expect(found_policy.coverage_type).to eq "health"
+      expect(exempt_notification).to eq true
+    end
+
+    it "with only dependent end date not to 12/31 and do notify" do
+      existing_policy = Policy.create!(eg_id: eg_id, carrier_id: carrier_id, plan: plan, coverage_start: coverage_start, coverage_end: coverage_end, kind: 'individual', enrollees: [enrollee1, enrollee2])
+      found_policy = Policy.find_or_update_policy(policy)
+      found_policy.enrollees.where(rel_code: 'child').first.update_attributes!(coverage_end: Date.new(2019,7,31))
+      exempt_notification = Policy.termination_event_exempt_from_notification?(existing_policy, found_policy)
+
+      expect(found_policy.term_for_np).to eq false
+      expect(existing_policy.term_for_np).to eq false
+      expect(found_policy).to eq existing_policy
+      expect(found_policy.responsible_party_id).to eq responsible_party_id
+      expect(found_policy.is_shop?).to eq false
+      expect(found_policy.coverage_type).to eq "health"
+      expect(exempt_notification).to eq false
+    end
+
+    it "with policy end_date to 12/31, npt flag true and do notify" do
+      existing_policy = Policy.create!(eg_id: eg_id, carrier_id: carrier_id, plan: plan, coverage_start: coverage_start, coverage_end: coverage_end, kind: 'individual', enrollees: [enrollee1, enrollee2])
+      found_policy = Policy.find_or_update_policy(policy)
+      found_policy.update_attributes!(term_for_np: true)
+      found_policy.enrollees.where(rel_code: 'self').first.update_attributes!(coverage_end: coverage_end)
+      exempt_notification = Policy.termination_event_exempt_from_notification?(existing_policy, found_policy)
+
+      expect(found_policy.term_for_np).to eq true
+      expect(existing_policy.term_for_np).to eq false
+      expect(found_policy).to eq existing_policy
+      expect(found_policy.responsible_party_id).to eq responsible_party_id
+      expect(found_policy.is_shop?).to eq false
+      expect(found_policy.coverage_type).to eq "health"
+      expect(exempt_notification).to eq false
     end
   end
 end
