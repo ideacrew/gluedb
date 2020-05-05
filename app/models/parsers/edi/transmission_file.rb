@@ -152,7 +152,7 @@ module Parsers
       # FIXME: pull sep reason
       def persist_policy(etf, carrier_id, plan_id, eg_id, employer_id, rp_id, broker_id)
         reporting_categories = etf.subscriber_loop.reporting_catergories
-        existing_policy = Policy.where(enrollment_hbx_ids: eg_id).first
+        existing_policy = Policy.where(hbx_enrollment_ids: eg_id).first
         new_policy = Policy.new(
           :plan_id => plan_id,
           :enrollment_group_id => eg_id,

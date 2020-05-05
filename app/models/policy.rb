@@ -857,19 +857,27 @@ class Policy
       enrollee = transmission_file_util.build_enrollee(person_loop, policy_loop)
       updated_or_created_policy.merge_enrollee(enrollee, policy_loop.action)
     end
+
+    transaction_type =  etf_loop.people.inject([]) do |type, person_loop|
+                          policy_loop = person_loop.policy_loops.first
+                          type << policy_loop.action
+                          type
+                        end
+
     updated_or_created_policy.save!
-    unless termination_event_exempt_from_notification?(before_updated_policy, updated_or_created_policy)
-      Observers::PolicyUpdated.notify(updated_or_created_policy)
+
+    unless policy_eligible_to_notify?(updated_or_created_policy) #if true then we don't want to notify
+      unless transaction_type.include?(:stop) && termination_event_exempt_from_notification?(before_updated_policy, updated_or_created_policy)
+        Observers::PolicyUpdated.notify(updated_or_created_policy) #notify to generate H41's && 1095A's
+      end
     end
     updated_or_created_policy
   end
 
   def self.termination_event_exempt_from_notification?(before_updated_policy, updated_policy)
     if before_updated_policy.present?
-      return true if initial_eligibility_check?(updated_policy)
       #Policy End Date change - null to 12/31 AND no NPT indicator change (don't notify)
       #Dependent Only End Date Change - null to 12/31 AND no NPT status change (don't notify)
-
       if is_npt_flag_same?(before_updated_policy, updated_policy)
         is_enrollee_coverage_end_change_to_end_of_year?(before_updated_policy, updated_policy)
       else
@@ -880,7 +888,7 @@ class Policy
     end
   end
 
-  def self.initial_eligibility_check?(updated_policy)
+  def self.policy_eligible_to_notify?(updated_policy)
     updated_policy.kind == 'coverall' || updated_policy.is_shop? || updated_policy.coverage_type.to_s.downcase != "health" || updated_policy.plan.metal_level == "catastrophic" || updated_policy.coverage_year.first.year == Time.now.year || updated_policy.coverage_year.first.year < 2018
   end
 
