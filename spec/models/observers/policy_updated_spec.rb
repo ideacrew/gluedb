@@ -62,6 +62,7 @@ describe Observers::PolicyUpdated do
           :headers => {
             :policy_id => policy_id,
             :eg_id => eg_id,
+            :submitted_timestamp => Time.now.to_s
           },
           :routing_key => "info.events.policy.federal_reporting_eligibility_updated"
         },
@@ -151,6 +152,7 @@ describe Observers::PolicyUpdated do
           :headers => {
             :policy_id => policy_id,
             :eg_id => eg_id,
+            :submitted_timestamp => Time.now.to_s
           },
           :routing_key => "info.events.policy.federal_reporting_eligibility_updated"
         },

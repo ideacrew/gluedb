@@ -18,7 +18,8 @@ module Observers
           {
             :headers => {
               :policy_id => policy.id,
-              :eg_id => policy.eg_id
+              :eg_id => policy.eg_id,
+              :submitted_timestamp => Time.now.to_s
             },
             :routing_key => "info.events.policy.federal_reporting_eligibility_updated"
           },

@@ -19,7 +19,7 @@ module FederalReports
     def upload_h41(xml_file, bucket_name)
       #file_name = build_h41_unique_identifier(xml_file) TO DO:build a unique id name to the file, this is not currently uploading the file 
       s3_result = Aws::S3Storage.save(xml_file, bucket_name, xml_file, "h41")
-      Aws::S3Storage.publish_to_sftp(xml_file, "PushReportEligibilityUpdatedH41", s3_result[:uri])
+      Aws::S3Storage.publish_to_sftp(@policy, xml_file, "PushReportEligibilityUpdatedH41", s3_result[:uri])
       # ExternalEvents::ExternalFederalReportingNotification.notify(s3_result, @policy)
     end
   

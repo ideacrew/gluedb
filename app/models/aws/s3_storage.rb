@@ -47,12 +47,14 @@ module Aws
     end
 
     # Here's an option to publish to SFTP.
-    def self.publish_to_sftp(filename, transport_process, uri)
+    def self.publish_to_sftp(policy, filename, transport_process, uri)
+      policy_id = policy.id
+      eg_id = policy.eg_id
       conn = AmqpConnectionProvider.start_connection
       eb = Amqp::EventBroadcaster.new(conn)
       aws_key = uri.split("#").last
       filename =  File.basename(filename, ".zip")  
-      props = {:headers => {:artifact_key => aws_key, :file_name => filename, :transport_process => transport_process}, :routing_key => "info.events.transport_artifact.transport_requested"}
+      props = {:headers => {:artifact_key => aws_key, :file_name => filename, :transport_process => transport_process, :policy_id => policy_id, :eg_id => eg_id, :submitted_timestamp => Time.now.to_s}, :routing_key => "info.events.transport_artifact.transport_requested"}
       eb.broadcast(props, "payload")
       conn.close
     end
