@@ -11,7 +11,7 @@ module Listeners
           :routing_key => "#{level}.application.glue.report_eligibility_updated_reducer.#{event_key}",
           :headers => other_headers.merge({
             :return_status => r_code.to_s,
-            :submitted_timestamp => Time.now
+            :submitted_timestamp => Time.now.to_s
           })
         },event_body)
     end
