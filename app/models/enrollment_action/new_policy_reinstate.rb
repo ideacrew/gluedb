@@ -7,7 +7,7 @@ module EnrollmentAction
       return false if chunk.first.is_termination?
       return false if chunk.first.is_cobra?
       return false unless is_continuation_of_coverage_event?(chunk.first)
-      return false if reinstate_capable_carrier?(chunk.first)
+      return false if reinstate_capable_carrier?(chunk.first) #CF is the only one that isn't capable, across both exchanges
       any_market_reinstatement_candidates(chunk.first).any?
     end
 

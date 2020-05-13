@@ -4,6 +4,8 @@ module ExternalEvents
     attr_reader :plan
     attr_reader :kind
 
+    attr_reader :created_policy
+
     include Handlers::EnrollmentEventXmlHelper
 
     # p_node : Openhbx::Cv2::Policy
@@ -234,14 +236,22 @@ module ExternalEvents
       # reinstated policy aasm state need to be resubmitted
       if @policy_node.previous_policy_id.present? && @policy_reinstate
         policy.aasm_state = "resubmitted"
+        #updating NPT flag on previous policy to false
+        previous_policy = Policy.where(:hbx_enrollment_ids  => {"$in" => [@policy_node.previous_policy_id.to_s]}).first
+        if previous_policy.present?
+          previous_policy.update_attributes!(term_for_np: false)
+          Observers::PolicyUpdated.notify(previous_policy)
+        end
       end
 
       build_subscriber(policy)
 
       other_enrollees = @policy_node.enrollees.reject { |en| en.subscriber? }
-      other_enrollees.each do |en|
+      results = other_enrollees.each do |en|
         build_enrollee(policy, en)
       end
+      Observers::PolicyUpdated.notify(policy)
+      results
     end
   end
 end

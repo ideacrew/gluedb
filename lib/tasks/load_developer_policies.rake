@@ -44,6 +44,6 @@ namespace :developer do
       enrollee.coverage_start = Date.new(plan.year, 1, 1)
       enrollee.save
     end
-    puts("Policy with #{Policy.last.enrollees.count} enrollees created.")
+    puts("Policy with #{Policy.last.enrollees.count} enrollees created.") unless Rails.env.test?
   end
 end 

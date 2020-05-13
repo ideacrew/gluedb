@@ -8,6 +8,6 @@ namespace :developer do
     "developer:load_transmissions_transactions",
     "developer:load_legacy_cv_transactions"
   ] do
-    puts("Developer seed load complete.")
+    puts("Developer seed load complete.") unless Rails.env.test?
   end
 end

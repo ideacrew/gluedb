@@ -88,6 +88,12 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
     allow(policy_updater).to receive(:persist).and_return(true)
     allow(subject.action).to receive(:existing_policy).and_return(false)
     allow(subject.action).to receive(:kind).and_return(plan_change_event)
+    allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+  end
+
+  it "notifies of the termination" do
+    expect(Observers::PolicyUpdated).to receive(:notify).with(policy)
+    subject.persist
   end
 
   it "persists the change" do

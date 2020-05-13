@@ -3,12 +3,21 @@ module EnrollmentAction
     XML_NS = { :cv => "http://openhbx.org/api/terms/1.0" }
     attr_reader :event_xml_doc
 
-    delegate :to_xml, :to => :event_xml_doc
-
     include MoneyMath
 
     def initialize(xml_string)
       @event_xml_doc = Nokogiri::XML(xml_string)
+    end
+
+    def to_xml
+      if is_shop?
+        add_employer_contacts_and_office_locations
+      end
+      @event_xml_doc.to_xml
+    end
+
+    def is_shop?
+      event_xml_doc.xpath("//cv:policy/cv:enrollment/cv:shop_market", XML_NS).any?
     end
 
     def filter_affected_members(affected_member_ids)
@@ -285,6 +294,75 @@ module EnrollmentAction
           end
         end
         event_xml_doc
+    end
+
+    def take_rating_tier_from(other_xml)
+      @other_xml_doc = Nokogiri::XML(other_xml)
+      other_rating_node = @other_xml_doc.xpath("//cv:shop_market/cv:composite_rating_tier_name", XML_NS).first
+      if other_rating_node
+        @event_xml_doc.xpath("//cv:shop_market/cv:composite_rating_tier_name", XML_NS).each do |node|
+          node.content = other_rating_node.content
+        end
+      end
+    end
+
+    private
+
+    def add_employer_contacts_and_office_locations
+      employer_id_node = event_xml_doc.at_xpath("//cv:enrollment/cv:shop_market/cv:employer_link/cv:id/cv:id", XML_NS)
+      employer_id = Maybe.new(employer_id_node).content.strip.split("#").last.value
+      if employer_id
+        employer = Employer.where(:hbx_id => employer_id).first
+        if employer
+          cont = ApplicationController.new
+          unless event_xml_doc.xpath("//cv:enrollment/cv:shop_market/cv:employer_link/cv:contacts", XML_NS).any?
+            add_contact_xml_for(cont, employer)
+          end
+          unless event_xml_doc.xpath("//cv:enrollment/cv:shop_market/cv:employer_link/cv:office_locations", XML_NS).any?
+            add_office_location_xml_for(cont, employer)
+          end
+        end
+      end
+    end
+
+    def add_contact_xml_for(controller, employer)
+      contact_xml = controller.render_to_string(
+        :layout => nil,
+        :partial => "enrollment_events/employer_with_contacts",
+        :object => employer,
+        :format => :xml
+      )
+      contact_xml_doc = Nokogiri::XML(contact_xml)
+      contact_xml_node = contact_xml_doc.root
+      if contact_xml_node
+        ol_node = event_xml_doc.xpath("//cv:enrollment/cv:shop_market/cv:employer_link/cv:office_locations", XML_NS).first
+        if ol_node
+          ol_node.add_previous_sibling(contact_xml_node)
+        else
+          el_node = event_xml_doc.xpath("//cv:enrollment/cv:shop_market/cv:employer_link", XML_NS).first
+          el_node.add_child(contact_xml_node)
+        end
+      end
+    end
+
+    def add_office_location_xml_for(controller, employer)
+      ol_xml = controller.render_to_string(
+        :layout => nil,
+        :partial => "enrollment_events/employer_with_office_locations",
+        :object => employer,
+        :format => :xml
+      )
+      ol_xml_doc = Nokogiri::XML(ol_xml)
+      ol_xml_node = ol_xml_doc.root
+      if ol_xml_node
+        contact_xml_node = event_xml_doc.xpath("//cv:enrollment/cv:shop_market/cv:employer_link/cv:contacts", XML_NS).first
+        if contact_xml_node
+          contact_xml_node.add_next_sibling(ol_xml_node)
+        else
+          el_node = event_xml_doc.xpath("//cv:enrollment/cv:shop_market/cv:employer_link", XML_NS).first
+          el_node.add_child(ol_xml_node)
+        end
+      end
     end
   end
 end

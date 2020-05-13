@@ -30,6 +30,6 @@ namespace :developer do
     # trading_profile.profile_code = "2"
     # trading_profile.profile_name = "Receiver Profile"
     # trading_profile.save!
-    puts("Transmission and edi_transaction_set created for first policy.")
+    puts("Transmission and edi_transaction_set created for first policy.") unless Rails.env.test?
   end
 end

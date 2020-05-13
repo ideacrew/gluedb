@@ -21,12 +21,14 @@ module EnrollmentAction
 
     def self.select_action_for(chunk)
       selected_action = [
+        ::EnrollmentAction::SimpleRenewal,
         ::EnrollmentAction::PassiveRenewal,
         ::EnrollmentAction::ActiveRenewal,
         ::EnrollmentAction::NewPolicyReinstate,
         ::EnrollmentAction::Reinstate,
         ::EnrollmentAction::CarrierSwitch,
         ::EnrollmentAction::CarrierSwitchRenewal,
+        ::EnrollmentAction::SimpleProductChange,
         ::EnrollmentAction::MarketChange,
         ::EnrollmentAction::DependentAdd,
         ::EnrollmentAction::DependentDrop,
@@ -43,6 +45,7 @@ module EnrollmentAction
         ::EnrollmentAction::InitialEnrollment,
         ::EnrollmentAction::TerminatePolicyWithEarlierDate,
         ::EnrollmentAction::ConcurrentPolicyCancelAndTerm,
+        ::EnrollmentAction::CarefirstTermination,
         ::EnrollmentAction::Termination,
         ::EnrollmentAction::ReselectionOfExistingCoverage
       ].detect { |kls| kls.qualifies?(chunk) }

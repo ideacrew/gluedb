@@ -1,5 +1,4 @@
 tax_document:
-
   2014:
     slcsp: "94506DC0390006-01"
     new:
@@ -41,12 +40,8 @@ tax_document:
         active_false: "2017-1095A-VOID-ACTIVE-FALSE.pdf"
         active_true: "2017-1095A-VOID-ACTIVE-TRUE.pdf"
     coverage_page_no: 3
-
-  documents_root_path: '/tmp/'
-  documents_folder: 'irs_notices' 
-
   2018:
-    slcsp: "86052DC0400001-01"
+    slcsp: "94506DC0390014-01"
     new:
       template:
         unassisted: "2018-1095A-NEW-UQHP.pdf"
@@ -67,3 +62,6 @@ tax_document:
         active_false: '2019-1095A-VOID-ACTIVE-FALSE.pdf'
         active_true: '2019-1095A-VOID-ACTIVE-TRUE.pdf'
     coverage_page_no: 3
+
+  documents_root_path: '/tmp/'
+  documents_folder: 'irs_notices'

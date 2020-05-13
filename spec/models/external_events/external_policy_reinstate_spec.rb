@@ -33,7 +33,7 @@ describe ExternalEvents::ExternalPolicyReinstate, "given:
 
   let(:expected_policy_update_args) do
       {
-        :aasm_state => "resubmitted"
+        :aasm_state => "resubmitted", :term_for_np=>false
       }
   end
 
@@ -54,6 +54,12 @@ describe ExternalEvents::ExternalPolicyReinstate, "given:
     allow(hbx_enrollment_ids_field_proxy).to receive(:<<).with(policy_id)
     allow(policy).to receive(:reload)
     allow(policy).to receive(:save!)
+    allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+  end
+
+  it "notifies of the update" do
+    expect(Observers::PolicyUpdated).to receive(:notify).with(policy)
+    subject.persist
   end
 
   it "updates the policy attributes" do

@@ -46,6 +46,13 @@ module ChangeSets
       end
     end
 
+    def notify_report_eligible_policies
+      all_policies = member.policies
+      all_policies.reject(&:canceled?).each do |pol|
+        Observers::PolicyUpdated.notify(pol)
+      end
+    end
+
     def now_or_future_active_policies
       @now_or_future_active_polices ||= member_active_policies
     end
@@ -56,8 +63,10 @@ module ChangeSets
 
     def process_first_edi_change
       if home_address_changed?
+        notify_report_eligible_policies
         @home_address_changer.perform_update(record, resource, determine_policies_to_transmit)
       elsif mailing_address_changed?
+        notify_report_eligible_policies
         @mailing_address_changer.perform_update(record, resource, determine_policies_to_transmit)
       elsif names_changed?
         process_name_change
@@ -66,16 +75,22 @@ module ChangeSets
       elsif gender_changed?
         process_gender_change
       elsif work_email_changed?
+        notify_report_eligible_policies
         @work_email_changer.perform_update(record, resource, determine_policies_to_transmit, !multiple_contact_changes?)
       elsif work_phone_changed?
+        notify_report_eligible_policies
         @work_phone_changer.perform_update(record, resource, determine_policies_to_transmit, !multiple_contact_changes?)
       elsif mobile_phone_changed?
+        notify_report_eligible_policies
         @mobile_phone_changer.perform_update(record, resource, determine_policies_to_transmit, !multiple_contact_changes?)
       elsif home_phone_changed?
+        notify_report_eligible_policies
         @home_phone_changer.perform_update(record, resource, determine_policies_to_transmit, !multiple_contact_changes?)
       elsif home_email_changed?
+        notify_report_eligible_policies
         @home_email_changer.perform_update(record, resource, determine_policies_to_transmit, !multiple_contact_changes?)
       elsif dob_changed?
+        notify_report_eligible_policies
         @dob_changer.perform_update(member, resource, now_or_future_active_policies)
       elsif relationships_changed?
         process_relationship_change
@@ -89,20 +104,24 @@ module ChangeSets
     end
 
     def process_relationship_change
+      notify_report_eligible_policies
       @relationship_changer.perform_update(member, resource, now_or_future_active_policies)
     end
 
     def process_name_change
+      notify_report_eligible_policies
       cs = ::ChangeSets::PersonNameChangeSet.new
       cs.perform_update(record, resource, determine_policies_to_transmit)
     end
 
     def process_ssn_change
+      notify_report_eligible_policies
       cs = ::ChangeSets::PersonSsnChangeSet.new
       cs.perform_update(member, resource, determine_policies_to_transmit)
     end
 
     def process_gender_change
+      notify_report_eligible_policies
       cs = ::ChangeSets::PersonGenderChangeSet.new
       cs.perform_update(member, resource, determine_policies_to_transmit)
     end

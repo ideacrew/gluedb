@@ -8,6 +8,6 @@ namespace :developer do
       password_confirmation: "Password1!",
       approved: true
     )
-    puts("#{User.count} users created.")
+    puts("#{User.count} users created.") unless Rails.env.test?
   end
 end

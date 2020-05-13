@@ -27,7 +27,9 @@ module EnrollmentAction
       ep = ExternalEvents::ExternalPolicy.new(action.policy_cv, action.existing_plan, true, market_from_payload: action.kind)
       return false unless ep.persist
       policy_to_term = termination.existing_policy
-      policy_to_term.terminate_as_of(termination.subscriber_end)
+      result = policy_to_term.terminate_as_of(termination.subscriber_end)
+      Observers::PolicyUpdated.notify(policy_to_term)
+      result
     end
 
     def publish

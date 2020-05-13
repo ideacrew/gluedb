@@ -62,6 +62,12 @@ describe ExternalEvents::ExternalPolicyCobraSwitch, "given:
     allow(hbx_enrollment_ids_field_proxy).to receive(:<<).with(policy_id)
     allow(policy).to receive(:reload)
     allow(policy).to receive(:save!)
+    allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+  end
+
+  it "notifies of the cobra change" do
+    expect(Observers::PolicyUpdated).to receive(:notify).with(policy)
+    subject.persist
   end
 
   it "updates the policy attributes" do

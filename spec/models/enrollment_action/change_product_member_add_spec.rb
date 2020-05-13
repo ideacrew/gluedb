@@ -85,6 +85,12 @@ describe EnrollmentAction::PlanChangeDependentAdd, "given a qualified enrollment
     allow(subject.action).to receive(:existing_policy).and_return(false)
     allow(subject.action).to receive(:kind).and_return(dependent_add_event)
     allow(subject).to receive(:select_termination_date).and_return(expected_termination_date)
+    allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+  end
+
+  it "notifies of the termination" do
+    expect(Observers::PolicyUpdated).to receive(:notify).with(policy)
+    subject.persist
   end
 
   it "successfully creates the new policy" do

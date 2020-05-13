@@ -37,6 +37,6 @@ namespace :developer do
       renewal_plan_id: nil,
       employer_ids: nil,
     )
-    puts("#{Plan.count} plans created.")
+    puts("#{Plan.count} plans created.") unless Rails.env.test?
   end
 end

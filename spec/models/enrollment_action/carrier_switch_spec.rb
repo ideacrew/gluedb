@@ -30,7 +30,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set, bei
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary])}
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary, enrollee_new]) }
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2], :terminate_as_of => subscriber_end) }
+  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2], :terminate_as_of => subscriber_end, :policy_end => subscriber_end, :is_shop? => true) }
   let(:primary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:secondary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:new_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
@@ -59,6 +59,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set, bei
   end
 
   before :each do
+    allow(policy).to receive(:term_for_np).and_return(false)
     allow(ExternalEvents::ExternalMember).to receive(:new).with(member_primary).and_return(primary_db_record)
     allow(ExternalEvents::ExternalMember).to receive(:new).with(member_secondary).and_return(secondary_db_record)
     allow(ExternalEvents::ExternalMember).to receive(:new).with(member_new).and_return(new_db_record)
@@ -68,10 +69,16 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set, bei
     allow(policy_updater).to receive(:persist).and_return(true)
     allow(subject.action).to receive(:existing_policy).and_return(false)
     allow(subject.action).to receive(:kind).and_return(action_event)
+    allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 
   it "successfully creates the new policy" do
     expect(subject.persist).to be_truthy
+  end
+
+  it "notifies of the policy change" do
+    expect(Observers::PolicyUpdated).to receive(:notify).with(policy)
+    subject.persist
   end
 end
 

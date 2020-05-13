@@ -24,7 +24,9 @@ module EnrollmentAction
       return false unless ep.persist
       termination_date = select_termination_date
       policy_to_term = termination.existing_policy
-      policy_to_term.terminate_as_of(termination_date)
+      result = policy_to_term.terminate_as_of(termination_date)
+      Observers::PolicyUpdated.notify(policy_to_term)
+      result
     end
 
     def dropped_dependents
