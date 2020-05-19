@@ -124,6 +124,7 @@ describe ExternalEvents::ExternalPolicyMemberDrop, "given:
         :tot_res_amt => tot_res_amt_bigdecimal_value,
         :applied_aptc => aptc_bigdecimal_value
       ).and_return(true)
+      allow(subject).to receive(:populate_aptc_credit_changes).and_return(true)
     end
 
     it "notifies" do
@@ -143,6 +144,7 @@ describe ExternalEvents::ExternalPolicyMemberDrop, "given:
         :tot_res_amt => tot_res_amt_bigdecimal_value,
         :applied_aptc => aptc_bigdecimal_value
       ).and_return(true)
+      allow(subject).to receive(:populate_aptc_credit_changes).and_return(true)
     end
 
     it "doesn't notify" do
