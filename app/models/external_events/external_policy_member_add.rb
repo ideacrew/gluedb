@@ -139,7 +139,6 @@ module ExternalEvents
 
     def persist
       pol = policy_to_update
-      populate_aptc_credit_changes(pol) unless (pol.is_shop? && pol.aptc_credits.empty?)
       pol.update_attributes!({
         :pre_amt_tot => extract_pre_amt_tot,
         :tot_res_amt => extract_tot_res_amt
