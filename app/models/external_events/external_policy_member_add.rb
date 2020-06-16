@@ -25,6 +25,14 @@ module ExternalEvents
       BigDecimal.new(Maybe.new(p_enrollment).total_responsible_amount.strip.value)
     end
 
+    def extract_aptc_value
+      p_enrollment = Maybe.new(@policy_node).policy_enrollment.value
+      return({}) if p_enrollment.blank?
+      applied_aptc_val = Maybe.new(p_enrollment).individual_market.applied_aptc_amount.strip.value
+      return nil if applied_aptc_val.blank?
+      BigDecimal.new(applied_aptc_val)
+    end
+
     def extract_enrollee_premium(enrollee)
       pre_string = Maybe.new(enrollee).benefit.premium_amount.value
       return 0.00 if pre_string.blank?
@@ -130,9 +138,9 @@ module ExternalEvents
 
     def populate_aptc_credit_changes(policy)
         new_aptc_date = policy.enrollees.map(&:coverage_start).uniq.sort.last
-        tot_res_amt = policy.tot_res_amt
-        pre_amt_tot = policy.pre_amt_tot
-        aptc_amt = policy.applied_aptc
+        tot_res_amt = extract_tot_res_amt
+        pre_amt_tot = extract_pre_amt_tot
+        aptc_amt = extract_aptc_value
         policy.set_aptc_effective_on(new_aptc_date, aptc_amt, pre_amt_tot, tot_res_amt)
         policy.save!
     end
