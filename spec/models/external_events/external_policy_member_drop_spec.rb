@@ -316,7 +316,6 @@ describe ExternalEvents::ExternalPolicyMemberDrop, dbclean: :after_each  do
   EVENTXML
   }
 
-  let(:action_publish_helper) { ::EnrollmentAction::ActionPublishHelper.new(target_event_xml) }
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
   let(:headers) { double('headers') }
@@ -433,7 +432,6 @@ describe ExternalEvents::ExternalPolicyMemberDrop, dbclean: :after_each  do
   EVENTXML
   }
 
-  let(:action_publish_helper) { ::EnrollmentAction::ActionPublishHelper.new(target_event_xml) }
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
   let(:headers) { double('headers') }
