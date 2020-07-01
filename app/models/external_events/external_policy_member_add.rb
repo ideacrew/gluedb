@@ -147,6 +147,7 @@ module ExternalEvents
 
     def persist
       pol = policy_to_update
+      existing_aptc = pol.applied_aptc
       pol.update_attributes!({
         :pre_amt_tot => extract_pre_amt_tot,
         :tot_res_amt => extract_tot_res_amt
@@ -156,7 +157,7 @@ module ExternalEvents
         build_enrollee(pol, en)
       end
       Observers::PolicyUpdated.notify(pol)
-      populate_aptc_credit_changes(pol) unless pol.is_shop?
+      populate_aptc_credit_changes(pol) if existing_aptc != extract_aptc_value && !pol.is_shop?
       true
     end
   end
