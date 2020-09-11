@@ -206,7 +206,7 @@ describe EnrollmentAction::RenewalDependentAdd, "#publish" do
     end
 
     it "publishes an event of type initial" do
-      expect(action_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#change_member_add")
+      expect(action_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#initial")
       subject.publish
     end
   end
