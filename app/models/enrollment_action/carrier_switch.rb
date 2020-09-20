@@ -2,6 +2,7 @@ module EnrollmentAction
   class CarrierSwitch < Base
     extend PlanComparisonHelper
     include NotificationExemptionHelper
+    include RenewalComparisonHelper
 
     def self.qualifies?(chunk)
       return false unless chunk.length > 1
@@ -46,7 +47,12 @@ module EnrollmentAction
         return [publish_result, publish_errors]
       end
       action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
-      action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#initial")
+      if !action.is_shop? && same_carrier_renewal_candidates(action).first.plan.id == action.existing_policy.plan.id
+        action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#auto_renew")
+      else
+        action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#initial")
+      end
+
       action_helper.keep_member_ends([])
       publish_edi(amqp_connection, action_helper.to_xml, action.hbx_enrollment_id, action.employer_hbx_id)
     end
