@@ -91,7 +91,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
   let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago) }
 
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, plan: instance_double(Plan, id: 1)) }
 
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -125,6 +125,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
     EnrollmentAction::ActionPublishHelper,
     :to_xml => action_helper_result_xml
   ) }
+  let(:policy2) { instance_double(Policy,plan: instance_double(Plan, id: 2)) }
 
   subject do
     EnrollmentAction::CarrierSwitch.new(termination_event, action_event)
@@ -142,6 +143,8 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
     allow(action_publish_helper).to receive(:set_policy_id).with(1)
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, action_event.hbx_enrollment_id, action_event.employer_hbx_id)
     allow(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
+    allow(subject).to receive(:same_carrier_renewal_candidates).with(action_event).and_return([policy2])
+    allow(action_event).to receive(:is_shop?).and_return(true)
   end
 
   it "publishes an event of enrollment termination" do
@@ -182,5 +185,28 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
   it "corrects the qualifying event type on the termination" do
     expect(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
     subject.publish
+  end
+
+  context "carrier switch with contionus coverage" do
+    before :each do
+      allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(termination_event_xml).and_return(termination_publish_helper)
+      allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(event_xml).and_return(action_publish_helper)
+      allow(termination_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
+      allow(termination_publish_helper).to receive(:set_policy_id).with(1)
+      allow(termination_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
+      allow(subject).to receive(:publish_edi).with(amqp_connection, termination_helper_result_xml, termination_event.existing_policy.eg_id, termination_event.employer_hbx_id).and_return([true, {}])
+      allow(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#initial")
+      allow(action_publish_helper).to receive(:keep_member_ends).with([])
+      allow(action_publish_helper).to receive(:set_policy_id).with(1)
+      allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, action_event.hbx_enrollment_id, action_event.employer_hbx_id)
+      allow(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
+      allow(subject).to receive(:same_carrier_renewal_candidates).with(action_event).and_return([policy])
+      allow(action_event).to receive(:is_shop?).and_return(false)
+    end
+
+    it "publishes renewal event for contionus coverage" do
+      expect(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#auto_renew")
+      subject.publish
+    end
   end
 end
