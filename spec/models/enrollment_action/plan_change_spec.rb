@@ -260,6 +260,8 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
   let(:subscriber) { double }
 
   subject { EnrollmentAction::PlanChange.new(nil, plan_change_event) }
+  let(:policy) { instance_double(Policy,plan: instance_double(Plan, id: 1)) }
+  let(:policy2) { instance_double(Policy,plan: instance_double(Plan, id: 2)) }
 
   before :each do
     allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(event_xml).
@@ -269,9 +271,10 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
       and_return(true)
     allow(action_publish_helper).to receive(:keep_member_ends).with([]).and_return(true)
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, plan_change_event.hbx_enrollment_id, plan_change_event.employer_hbx_id)
-    allow(subject).to receive(:same_carrier_renewal_candidates).with(plan_change_event).and_return([1])
+    allow(subject).to receive(:same_carrier_renewal_candidates).with(plan_change_event).and_return([policy])
     allow(Time).to receive(:now).and_return(now_time)
     allow(plan_change_event).to receive(:subscriber).and_return(subscriber)
+    allow(plan_change_event).to receive(:existing_policy).and_return(policy2)
     allow(subject).to receive(:extract_enrollee_start).with(subscriber).and_return(subscriber_start)
   end
 
@@ -342,6 +345,8 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
   end
 
   let(:subscriber) { double }
+  let(:policy) { instance_double(Policy,plan: instance_double(Plan, id: 1)) }
+  let(:policy2) { instance_double(Policy,plan: instance_double(Plan, id: 2)) }
 
   subject { EnrollmentAction::PlanChange.new(nil, plan_change_event) }
 
@@ -353,8 +358,9 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
       and_return(true)
     allow(action_publish_helper).to receive(:keep_member_ends).with([]).and_return(true)
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, plan_change_event.hbx_enrollment_id, plan_change_event.employer_hbx_id)
-    allow(subject).to receive(:same_carrier_renewal_candidates).with(plan_change_event).and_return([1])
+    allow(subject).to receive(:same_carrier_renewal_candidates).with(plan_change_event).and_return([policy])
     allow(Time).to receive(:now).and_return(now_time)
+    allow(plan_change_event).to receive(:existing_policy).and_return(policy2)
     allow(plan_change_event).to receive(:subscriber).and_return(subscriber)
     allow(subject).to receive(:extract_enrollee_start).with(subscriber).and_return(subscriber_start)
   end
@@ -426,6 +432,8 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
   end
 
   let(:subscriber) { double }
+  let(:policy) { instance_double(Policy,plan: instance_double(Plan, id: 1)) }
+  let(:policy2) { instance_double(Policy,plan: instance_double(Plan, id: 2)) }
 
   subject { EnrollmentAction::PlanChange.new(nil, plan_change_event) }
 
@@ -437,8 +445,9 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
       and_return(true)
     allow(action_publish_helper).to receive(:keep_member_ends).with([]).and_return(true)
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, plan_change_event.hbx_enrollment_id, plan_change_event.employer_hbx_id)
-    allow(subject).to receive(:same_carrier_renewal_candidates).with(plan_change_event).and_return([1])
+    allow(subject).to receive(:same_carrier_renewal_candidates).with(plan_change_event).and_return([policy])
     allow(Time).to receive(:now).and_return(now_time)
+    allow(plan_change_event).to receive(:existing_policy).and_return(policy2)
     allow(plan_change_event).to receive(:subscriber).and_return(subscriber)
     allow(subject).to receive(:extract_enrollee_start).with(subscriber).and_return(subscriber_start)
   end
@@ -457,6 +466,92 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
   it "publishes the xml to edi" do
     expect(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, 1, 1).
       and_return(true)
+    subject.publish
+  end
+end
+
+describe EnrollmentAction::PlanChange, "given an enrollment event set that:
+--  provides a new plan id with continous coverage
+--  with no dependents changed
+--  with no carrier change
+--  is not shop
+--  has renewal candidates
+--  is for 1/1 of next year" do
+
+  let(:amqp_connection) { double }
+  let(:event_xml) { double }
+  let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
+  let(:action_helper_result_xml) { double }
+  let(:action_publish_helper) { instance_double(
+      EnrollmentAction::ActionPublishHelper,
+      :to_xml => action_helper_result_xml
+  ) }
+  let(:plan_change_event) { instance_double(
+      ::ExternalEvents::EnrollmentEventNotification,
+      :event_responder => event_responder,
+      :event_xml => event_xml,
+      :employer_hbx_id => 1,
+      :hbx_enrollment_id => 1,
+      :is_shop? => false
+  ) }
+
+  let(:now_time) do
+    instance_double(
+        Time,
+        {
+            year: 2018,
+            month: 12,
+            day: 20
+        }
+    )
+  end
+
+  let(:subscriber_start) do
+    instance_double(
+        Date,
+        {
+            year: 2019,
+            month: 1,
+            day: 1
+        }
+    )
+  end
+
+  let(:subscriber) { double }
+  let(:policy) { instance_double(Policy,plan: instance_double(Plan, id: 1)) }
+  let(:policy2) { instance_double(Policy,plan: instance_double(Plan, id: 1)) }
+
+  subject { EnrollmentAction::PlanChange.new(nil, plan_change_event) }
+
+  before :each do
+    allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(event_xml).
+                                                        and_return(action_publish_helper)
+    allow(action_publish_helper).to receive(:set_event_action).
+                                        with("urn:openhbx:terms:v1:enrollment#auto_renew").
+                                        and_return(true)
+    allow(action_publish_helper).to receive(:keep_member_ends).with([]).and_return(true)
+    allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, plan_change_event.hbx_enrollment_id, plan_change_event.employer_hbx_id)
+    allow(subject).to receive(:same_carrier_renewal_candidates).with(plan_change_event).and_return([policy])
+    allow(Time).to receive(:now).and_return(now_time)
+    allow(plan_change_event).to receive(:existing_policy).and_return(policy2)
+    allow(plan_change_event).to receive(:subscriber).and_return(subscriber)
+    allow(subject).to receive(:extract_enrollee_start).with(subscriber).and_return(subscriber_start)
+  end
+
+  it "publishes an event of type active_renew" do
+    expect(action_publish_helper).to receive(:set_event_action).
+                                         with("urn:openhbx:terms:v1:enrollment#auto_renew").and_return(true)
+    subject.publish
+  end
+
+  it "clears member end dates" do
+    expect(action_publish_helper).to receive(:keep_member_ends).with([]).and_return(true)
+    subject.publish
+  end
+
+  it "publishes the xml to edi" do
+    expect(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, 1, 1).
+                           and_return(true)
     subject.publish
   end
 end
