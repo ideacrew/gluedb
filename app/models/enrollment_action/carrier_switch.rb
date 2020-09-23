@@ -47,7 +47,7 @@ module EnrollmentAction
         return [publish_result, publish_errors]
       end
       action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
-      if !action.is_shop? && same_carrier_renewal_candidates(action).first.plan.id == action.existing_policy.plan.id
+      if same_carrier_renewal_candidates(action).first.plan.id == action.existing_policy.plan.id
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#auto_renew")
       else
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#initial")
