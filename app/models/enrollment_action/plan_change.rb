@@ -39,11 +39,7 @@ module EnrollmentAction
           if !subscriber_start.blank?
             if (subscriber_start.year == (now_time.year + 1)) && (subscriber_start.day == 1) && (subscriber_start.month == 1)
               if (now_time.month < 12) || ((now_time.month == 12) && (now_time.day < 21))
-                if same_carrier_renewal_candidates(action).first.plan.id == action.existing_policy.plan.id
-                  event_action = "urn:openhbx:terms:v1:enrollment#auto_renew"
-                else
-                  event_action = "urn:openhbx:terms:v1:enrollment#active_renew"
-                end
+                event_action = "urn:openhbx:terms:v1:enrollment#active_renew"
               end
             end
           end
