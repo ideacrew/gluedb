@@ -169,6 +169,8 @@ module Generators::Reports
         coverage_end_month = REPORT_MONTHS
       end
 
+      policy_montly_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calender_year: calender_year)
+
       has_middle_of_month_coverage_end = false
       has_middle_of_month_coverage_begin = false
 
@@ -176,28 +178,16 @@ module Generators::Reports
         has_middle_of_month_coverage_end = true
       end
 
-      # Prorated Begin dates
-      if @policy.subscriber.coverage_start.present? && (@policy.subscriber.coverage_start.beginning_of_month != @policy.subscriber.coverage_start)
-        has_middle_of_month_coverage_begin = true
-      end
+      # Prorated Begin dates    
+       if @policy.subscriber.coverage_start.present? && (@policy.subscriber.coverage_start.beginning_of_month != @policy.subscriber.coverage_start)   
+         has_middle_of_month_coverage_begin = true    
+       end
 
       # Commented to generate premiums only for REPORT_MONTHS
       @notice.monthly_premiums = (@policy_disposition.start_date.month..coverage_end_month).inject([]) do |data, i|
 
-        premium_amount = @policy_disposition.as_of(Date.new(calender_year, i, 1)).ehb_premium
-
-        # if coverage_end_month == i && has_middle_of_month_coverage_end
-        #   premium_amount = as_dollars((@policy_disposition.end_date.day.to_f / @policy_disposition.end_date.end_of_month.day) * premium_amount)
-        # end
-
-        # Prorated Start Dates
-        if @policy_disposition.start_date.month == i && has_middle_of_month_coverage_begin
-          premium_amount = as_dollars(((@policy_disposition.start_date.end_of_month.day.to_f - @policy_disposition.start_date.day.to_f + 1.0) / @policy_disposition.start_date.end_of_month.day) * premium_amount)
-        end
-
-        if coverage_end_month == i && has_middle_of_month_coverage_end
-          premium_amount = as_dollars((@policy_disposition.end_date.day.to_f / @policy_disposition.end_date.end_of_month.day) * premium_amount)
-        end
+        #premium amount calculation and prorated calculation
+        premium_amount = policy_montly_premium_calculator.ehb_premium_for(i).round(2)
 
         if npt_policy
           if @policy.subscriber.coverage_end.present? && ((@policy.subscriber.coverage_end.end_of_month - 1.day) == @policy.subscriber.coverage_end)
