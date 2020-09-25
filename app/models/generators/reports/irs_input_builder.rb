@@ -179,9 +179,9 @@ module Generators::Reports
       end
 
       # Prorated Begin dates    
-       if @policy.subscriber.coverage_start.present? && (@policy.subscriber.coverage_start.beginning_of_month != @policy.subscriber.coverage_start)   
-         has_middle_of_month_coverage_begin = true    
-       end
+      if @policy.subscriber.coverage_start.present? && (@policy.subscriber.coverage_start.beginning_of_month != @policy.subscriber.coverage_start)
+        has_middle_of_month_coverage_begin = true
+      end
 
       # Commented to generate premiums only for REPORT_MONTHS
       @notice.monthly_premiums = (@policy_disposition.start_date.month..coverage_end_month).inject([]) do |data, i|
