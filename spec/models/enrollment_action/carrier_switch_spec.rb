@@ -30,7 +30,8 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set, bei
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary])}
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary, enrollee_new]) }
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2], :terminate_as_of => subscriber_end, :policy_end => subscriber_end, :is_shop? => true) }
+  let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
+  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2], :terminate_as_of => subscriber_end, :policy_end => subscriber_end, :is_shop? => true, carrier: carrier) }
   let(:primary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:secondary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:new_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
@@ -91,7 +92,8 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
   let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago) }
 
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, plan: instance_double(Plan, id: 1)) }
+  let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, plan: instance_double(Plan, id: 1), carrier: carrier) }
 
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,

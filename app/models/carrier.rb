@@ -18,6 +18,7 @@ class Carrier
   field :requires_simple_plan_changes, type: Boolean, default: false
   field :requires_simple_renewal, type: Boolean, default: false
   field :requires_reinstate_for_earlier_termination, type: Boolean, default: false
+  field :termination_cancels_renewal, type: Boolean, default: false
 
   has_many :plans
   has_many :policies

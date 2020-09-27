@@ -28,6 +28,20 @@ describe Carrier, "given nothing" do
 end
 
 describe Carrier, "given:
+  a requirement for canceled renewal causes new coverage
+ ", dbclean: :after_each do
+  subject do
+    Carrier.new({
+                    :termination_cancels_renewal => true
+                })
+  end
+
+  it "requires simple plan changes" do
+    expect(subject.termination_cancels_renewal?).to be_truthy
+  end
+end
+
+describe Carrier, "given:
  a requirement for simple renewal
 ", dbclean: :after_each  do
   subject do

@@ -753,3 +753,162 @@ describe "#drop_if_already_processed" do
     end
   end
 end
+
+describe "#policies_to_cancel", :dbclean => :after_each do
+  let(:eg_id) { '1' }
+  let(:carrier_id) { '2' }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
+  let(:plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
+  let(:dental_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "dental", year: Date.today.next_year.year) }
+  let!(:primary) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:coverage_start) { Date.today.next_year.beginning_of_year }
+  let(:enrollee) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: Date.today.beginning_of_month, coverage_end: Date.today.end_of_month)}
+  let(:enrollee2) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: Date.today.next_year.beginning_of_year, coverage_end: coverage_end)}
+
+  let!(:active_term_policy) {
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, hbx_enrollment_ids: ["123"], carrier_id: carrier_id, plan: active_plan, coverage_start: Date.today.beginning_of_month, coverage_end: Date.today.end_of_month, kind: kind, enrollees: [enrollee])
+    policy.update_attributes(hbx_enrollment_ids: ["123"])
+    policy.save
+    policy
+  }
+  let!(:renewal_policy) {
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind, enrollees: [enrollee2])
+    policy.save
+    policy
+  }
+  let!(:renewal_dental_policy) {
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: dental_plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind, enrollees: [enrollee2])
+    policy.save
+    policy
+  }
+
+  let(:source_event_xml) { <<-EVENTXML
+   <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+   <header>
+     <hbx_id>29035</hbx_id>
+     <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+   </header>
+   <event>
+     <body>
+       <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+         <affected_members>
+           <affected_member>
+             <member>
+               <id><id>1</id></id>
+             </member>
+             <benefit>
+               <premium_amount>465.13</premium_amount>
+               <begin_date>20190101</begin_date>
+             </benefit>
+           </affected_member>
+         </affected_members>
+         <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+           <policy>
+             <id>
+               <id>123</id>
+             </id>
+           <enrollees>
+             <enrollee>
+               <member>
+                 <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+               </member>
+               <is_subscriber>true</is_subscriber>
+               <benefit>
+                 <premium_amount>111.11</premium_amount>
+                 <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+               </benefit>
+             </enrollee>
+           </enrollees>
+           <enrollment>
+           <individual_market>
+             <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
+             <applied_aptc_amount>100.00</applied_aptc_amount>
+           </individual_market>
+           <shop_market>
+             <employer_link>
+               <id><id>urn:openhbx:terms:v1:employer:id##{employer_id}</id></id>
+             </employer_link>
+           </shop_market>
+           <premium_total_amount>56.78</premium_total_amount>
+           <total_responsible_amount>123.45</total_responsible_amount>
+           </enrollment>
+           </policy>
+         </enrollment>
+         </enrollment_event_body>
+     </body>
+   </event>
+ </enrollment_event>
+  EVENTXML
+  }
+  let(:m_tag) { double('m_tag') }
+  let(:t_stamp) { double('t_stamp') }
+  let(:headers) { double('headers') }
+  let(:responder) { instance_double('::ExternalEvents::EventResponder') }
+  let :subject do
+    ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, source_event_xml, headers
+  end
+
+  context "IVL: with renewal policy" do
+    let(:kind) { 'individual' }
+    let(:coverage_end) { nil}
+    let(:employer_id) { nil }
+    let(:employer) { nil}
+    before do
+      allow(subject).to receive(:existing_plan).and_return(active_plan)
+    end
+
+    it "should return renewal policy" do
+      expect(renewal_policy.is_shop?).to eq false
+      expect(subject.policies_to_cancel).to eq([renewal_policy])
+    end
+  end
+
+  context "IVL: without renewal policy" do
+    let(:kind) { 'individual' }
+    let(:coverage_end) { Date.today.next_year.beginning_of_year }
+    let(:employer_id) { nil }
+    let(:employer) { nil}
+    before do
+      allow(subject).to receive(:existing_plan).and_return(active_plan)
+    end
+
+    it "should return empty array" do
+      expect(renewal_policy.is_shop?).to eq false
+      expect(subject.policies_to_cancel).to eq []
+    end
+  end
+
+  context "SHOP: with renewal policy" do
+    let(:kind) { 'shop' }
+    let(:coverage_end) { nil }
+    let(:employer) { FactoryGirl.create(:employer)}
+    let(:employer_id) { employer.hbx_id }
+    before do
+      allow(subject).to receive(:existing_plan).and_return(active_plan)
+    end
+
+    it "should return renewal policy" do
+      expect(renewal_policy.is_shop?).to eq true
+      expect(subject.policies_to_cancel).to eq [renewal_policy]
+    end
+  end
+
+  context "SHOP: without renewal policy" do
+    let(:kind) { 'shop' }
+    let(:coverage_end) { Date.today.next_year.beginning_of_year  }
+    let(:employer) { FactoryGirl.create(:employer)}
+    let(:employer_id) { employer.hbx_id }
+    before do
+      allow(subject).to receive(:existing_plan).and_return(active_plan)
+    end
+
+    it "should return empty array" do
+      expect(renewal_policy.is_shop?).to eq true
+      expect(subject.policies_to_cancel).to eq []
+    end
+  end
+end
