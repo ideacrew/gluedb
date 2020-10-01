@@ -418,15 +418,15 @@ module ExternalEvents
       end
     end
 
-    def policies_to_cancel
+    def renewal_policies_to_cancel
       subscriber = existing_policy.subscriber
       subscriber_person = subscriber.person
       subscriber_person.policies.select do |pol|
-        has_future_active_policy?(pol)
+        has_renewal_policy?(pol)
       end
     end
 
-    def has_future_active_policy?(pol)
+    def has_renewal_policy?(pol)
       if pol.is_shop?
         return false if pol.employer_id.blank?
         return false if find_employer(policy_cv).blank?
@@ -441,7 +441,7 @@ module ExternalEvents
       return false unless existing_plan.coverage_type == pol.plan.coverage_type
       return false unless existing_plan.year + 1 == pol.plan.year
       return false if pol.subscriber.coverage_end.present?
-      pol.subscriber.coverage_start > Date.today
+      pol.subscriber.coverage_start == existing_policy.coverage_year.end + 1
     end
     private
 

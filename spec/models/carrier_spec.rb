@@ -28,7 +28,7 @@ describe Carrier, "given nothing" do
 end
 
 describe Carrier, "given:
-  a requirement for canceled renewal causes new coverage
+  a requirement for termination cancels renewal
  ", dbclean: :after_each do
   subject do
     Carrier.new({

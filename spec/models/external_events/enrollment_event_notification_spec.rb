@@ -754,7 +754,7 @@ describe "#drop_if_already_processed" do
   end
 end
 
-describe "#policies_to_cancel", :dbclean => :after_each do
+describe "#renewal_policies_to_cancel", :dbclean => :after_each do
   let(:eg_id) { '1' }
   let(:carrier_id) { '2' }
   let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
@@ -863,7 +863,7 @@ describe "#policies_to_cancel", :dbclean => :after_each do
 
     it "should return renewal policy" do
       expect(renewal_policy.is_shop?).to eq false
-      expect(subject.policies_to_cancel).to eq([renewal_policy])
+      expect(subject.renewal_policies_to_cancel).to eq([renewal_policy])
     end
   end
 
@@ -878,7 +878,7 @@ describe "#policies_to_cancel", :dbclean => :after_each do
 
     it "should return empty array" do
       expect(renewal_policy.is_shop?).to eq false
-      expect(subject.policies_to_cancel).to eq []
+      expect(subject.renewal_policies_to_cancel).to eq []
     end
   end
 
@@ -886,6 +886,7 @@ describe "#policies_to_cancel", :dbclean => :after_each do
     let(:kind) { 'shop' }
     let(:coverage_end) { nil }
     let(:employer) { FactoryGirl.create(:employer)}
+    let!(:plan_year) { FactoryGirl.create(:plan_year, employer: employer, start_date: Date.new(Date.today.year, 1, 1), end_date: Date.new(Date.today.year, 12, 31))}
     let(:employer_id) { employer.hbx_id }
     before do
       allow(subject).to receive(:existing_plan).and_return(active_plan)
@@ -893,7 +894,7 @@ describe "#policies_to_cancel", :dbclean => :after_each do
 
     it "should return renewal policy" do
       expect(renewal_policy.is_shop?).to eq true
-      expect(subject.policies_to_cancel).to eq [renewal_policy]
+      expect(subject.renewal_policies_to_cancel).to eq [renewal_policy]
     end
   end
 
@@ -908,7 +909,7 @@ describe "#policies_to_cancel", :dbclean => :after_each do
 
     it "should return empty array" do
       expect(renewal_policy.is_shop?).to eq true
-      expect(subject.policies_to_cancel).to eq []
+      expect(subject.renewal_policies_to_cancel).to eq []
     end
   end
 end
