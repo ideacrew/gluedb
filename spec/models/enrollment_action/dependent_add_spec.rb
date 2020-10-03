@@ -113,6 +113,7 @@ describe EnrollmentAction::DependentAdd, "given a qualified enrollment set, bein
     allow(action_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
     allow(action_publish_helper).to receive(:keep_member_ends).with([])
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, termination_event.hbx_enrollment_id, termination_event.employer_hbx_id)
+    allow(subject).to receive(:is_renewal_policy?).and_return(false)
   end
 
   subject do
@@ -136,6 +137,12 @@ describe EnrollmentAction::DependentAdd, "given a qualified enrollment set, bein
 
   it "publishes resulting xml to edi" do
     expect(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, termination_event.hbx_enrollment_id, termination_event.employer_hbx_id)
+    subject.publish
+  end
+
+  it "publishes an event of type add dependents" do
+    allow(subject).to receive(:is_renewal_policy?).and_return(true)
+    expect(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#auto_renew")
     subject.publish
   end
 end
