@@ -82,7 +82,9 @@ describe EnrollmentAction::DependentAdd, "given a qualified enrollment set, bein
   let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago) }
 
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }
+  let(:carrier) { instance_double(Carrier, :renewal_dependent_add_transmitted_as_renewal => true) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, carrier: carrier) }
+  let(:active_policy) { instance_double(Policy) }
 
   let(:dependent_add_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -113,7 +115,8 @@ describe EnrollmentAction::DependentAdd, "given a qualified enrollment set, bein
     allow(action_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
     allow(action_publish_helper).to receive(:keep_member_ends).with([])
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, termination_event.hbx_enrollment_id, termination_event.employer_hbx_id)
-    allow(subject).to receive(:is_renewal_policy?).and_return(false)
+    allow(subject).to receive(:same_carrier_renewal_candidates).with(dependent_add_event).and_return([active_policy])
+    allow(termination_event).to receive(:dep_add_to_renewal_policy?).with(active_policy).and_return(false)
   end
 
   subject do
@@ -141,7 +144,7 @@ describe EnrollmentAction::DependentAdd, "given a qualified enrollment set, bein
   end
 
   it "publishes an event of type add dependents" do
-    allow(subject).to receive(:is_renewal_policy?).and_return(true)
+    allow(termination_event).to receive(:dep_add_to_renewal_policy?).with(active_policy).and_return(true)
     expect(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#auto_renew")
     subject.publish
   end

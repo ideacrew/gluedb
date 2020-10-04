@@ -443,6 +443,17 @@ module ExternalEvents
       return false if pol.subscriber.coverage_end.present?
       pol.subscriber.coverage_start == existing_policy.coverage_year.end + 1
     end
+
+    def dep_add_to_renewal_policy?(renewal_candidate)
+      policy_to_change = existing_policy # renewal policy
+      return false if policy_to_change.is_shop? # only for ivl policy
+      return false unless renewal_candidate.present? # matching renewal_candidate not found
+      return false if (policy_to_change.enrollees.map(&:m_id) - renewal_candidate.enrollees.map(&:m_id)).any? # members should match
+      coverage_dates = policy_to_change.enrollees.map(&:coverage_start).uniq
+      return false unless coverage_dates.count == 1 # all members should have 1/1 date
+      renewal_candidate.coverage_period.end + 1 == coverage_dates.first
+    end
+
     private
 
     def initialize_clone(other)

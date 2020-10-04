@@ -36,7 +36,7 @@ describe Carrier, "given:
                 })
   end
 
-  it "requires simple plan changes" do
+  it "requires termination cancels renewal" do
     expect(subject.termination_cancels_renewal?).to be_truthy
   end
 end
@@ -52,6 +52,20 @@ describe Carrier, "given:
 
   it "requires simple renewal" do
     expect(subject.requires_simple_renewal?).to be_truthy
+  end
+end
+
+describe Carrier, "given:
+  a requirement for renewal dependent add transmitted as renewal
+ ", dbclean: :after_each do
+  subject do
+    Carrier.new({
+                    :renewal_dependent_add_transmitted_as_renewal => true
+                })
+  end
+
+  it "requires renewal dependent add transmitted as renewal" do
+    expect(subject.renewal_dependent_add_transmitted_as_renewal?).to be_truthy
   end
 end
 
