@@ -447,6 +447,11 @@ module ExternalEvents
     def dep_add_to_renewal_policy?(renewal_candidate)
       policy_to_change = existing_policy # renewal policy
       return false if policy_to_change.is_shop? # only for ivl policy
+      return false if renewal_candidate.plan.blank?
+      return false if policy_to_change.plan.blank?
+      return false unless policy_to_change.plan.carrier_id == renewal_candidate.plan.carrier_id
+      return false unless policy_to_change.plan.coverage_type == renewal_candidate.plan.coverage_type
+      return false unless policy_to_change.plan.year == renewal_candidate.plan.year + 1
       return false unless renewal_candidate.present? # matching renewal_candidate not found
       return false if (policy_to_change.enrollees.map(&:m_id) - renewal_candidate.enrollees.map(&:m_id)).any? # members should match
       coverage_dates = policy_to_change.enrollees.map(&:coverage_start).uniq

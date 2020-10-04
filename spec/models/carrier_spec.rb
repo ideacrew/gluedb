@@ -69,6 +69,20 @@ describe Carrier, "given:
   end
 end
 
+describe Carrier, "given:
+  a requirement for plan change renewal dependent add transmitted as renewal
+ ", dbclean: :after_each do
+  subject do
+    Carrier.new({
+                    :plan_change_renewal_dependent_add_transmitted_as_renewal => true
+                })
+  end
+
+  it "requires plan change renewal dependent add transmitted as renewal" do
+    expect(subject.plan_change_renewal_dependent_add_transmitted_as_renewal?).to be_truthy
+  end
+end
+
 describe Carrier, dbclean: :after_each do
   subject(:carrier) { build :carrier }
   [

@@ -20,6 +20,7 @@ class Carrier
   field :requires_reinstate_for_earlier_termination, type: Boolean, default: false
   field :termination_cancels_renewal, type: Boolean, default: false
   field :renewal_dependent_add_transmitted_as_renewal, type: Boolean, default: false
+  field :plan_change_renewal_dependent_add_transmitted_as_renewal, type: Boolean, default: false
 
   has_many :plans
   has_many :policies
