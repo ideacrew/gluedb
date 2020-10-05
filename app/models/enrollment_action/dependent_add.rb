@@ -42,11 +42,12 @@ module EnrollmentAction
       end
       change_publish_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
       change_publish_helper.set_policy_id(policy_to_change.eg_id)
-      change_publish_helper.filter_affected_members(added_dependents)
-      change_publish_helper.set_event_action("urn:openhbx:terms:v1:enrollment#change_member_add")
       renewal_candidate = same_carrier_renewal_candidates(action).first
       if termination.existing_policy.carrier.renewal_dependent_add_transmitted_as_renewal && termination.dep_add_to_renewal_policy?(renewal_candidate)
         change_publish_helper.set_event_action("urn:openhbx:terms:v1:enrollment#auto_renew")
+      else
+        change_publish_helper.filter_affected_members(added_dependents)
+        change_publish_helper.set_event_action("urn:openhbx:terms:v1:enrollment#change_member_add")
       end
       change_publish_helper.set_member_starts(member_date_map)
       change_publish_helper.keep_member_ends([])
