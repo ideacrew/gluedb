@@ -459,6 +459,33 @@ module ExternalEvents
       renewal_candidate.coverage_period.end + 1 == coverage_dates.first
     end
 
+    def is_retro_renewal_policy?
+      contiguous_active_coverage_policy.present?
+    end
+
+    def contiguous_active_coverage_policy
+      subscriber = existing_policy.subscriber
+      subscriber_person = subscriber.person
+      subscriber_person.policies.select do |pol|
+        is_contiguous_policy?(pol)
+      end
+    end
+
+    def is_contiguous_policy?(pol)
+      return false if pol.is_shop?
+      return false if pol.canceled?
+      return false if pol.terminated?
+      return false if pol.subscriber.blank?
+      return false if pol.subscriber.m_id != subscriber_id
+      return false if pol.plan.blank?
+      return false unless existing_plan.carrier_id == pol.plan.carrier_id
+      return false unless existing_plan.coverage_type == pol.plan.coverage_type
+      return false unless pol.plan.year + 1 == existing_plan.year
+      return false if pol.subscriber.coverage_end.present?
+      return false if (all_member_ids - pol.active_member_ids).any?
+      pol.coverage_period.end + 1 == subscriber_start
+    end
+
     private
 
     def initialize_clone(other)
