@@ -21,7 +21,9 @@ class Carrier
   field :termination_cancels_renewal, type: Boolean, default: false
   field :renewal_dependent_add_transmitted_as_renewal, type: Boolean, default: false
   field :plan_change_renewal_dependent_add_transmitted_as_renewal, type: Boolean, default: false
+  field :plan_change_renewal_dependent_drop_transmitted_as_renewal, type: Boolean, default: false
   field :retro_renewal_transmitted_as_renewal, type: Boolean, default: false
+  field :renewal_dependent_drop_transmitted_as_renewal, type: Boolean, default: false
 
   has_many :plans
   has_many :policies
