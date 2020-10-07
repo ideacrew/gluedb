@@ -444,19 +444,34 @@ module ExternalEvents
       pol.subscriber.coverage_start == existing_policy.coverage_year.end + 1
     end
 
-    def dep_add_to_renewal_policy?(renewal_candidate)
-      policy_to_change = existing_policy # renewal policy
-      return false if policy_to_change.is_shop? # only for ivl policy
-      return false if renewal_candidate.plan.blank?
-      return false if policy_to_change.plan.blank?
-      return false unless policy_to_change.plan.carrier_id == renewal_candidate.plan.carrier_id
-      return false unless policy_to_change.plan.coverage_type == renewal_candidate.plan.coverage_type
-      return false unless policy_to_change.plan.year == renewal_candidate.plan.year + 1
+    def dep_add_or_drop_to_renewal_policy?(renewal_candidate, renewal_policy)
+    return false if is_shop? # only for ivl policy
+    return false unless renewal_candidate.present? # matching renewal_candidate not found
+    return false if renewal_candidate.plan.blank?
+    return false if existing_plan.blank?
+    return false unless existing_plan.carrier_id == renewal_candidate.plan.carrier_id
+    return false unless existing_plan.coverage_type == renewal_candidate.plan.coverage_type
+    return false unless existing_plan.year == renewal_candidate.plan.year + 1
+    return false unless subscriber_id == renewal_candidate.subscriber.m_id
+    return false unless subscriber_start == renewal_candidate.coverage_period.end + 1
+    return false if (all_member_ids - renewal_candidate.active_member_ids).any? # members should match
+    return false if policy_cv.enrollees.map { |en| extract_enrollee_start(en) != renewal_candidate.coverage_period.end + 1 }.any? #all members should have 1/1 date
+    (renewal_policy.active_member_ids - all_member_ids).any? || (all_member_ids - renewal_policy.active_member_ids).any? # dep add/drop renewal policy
+    end
+
+    def plan_change_dep_add_or_drop_to_renewal_policy?(renewal_candidate, renewal_policy)
+      return false if is_shop? # only for ivl policy
       return false unless renewal_candidate.present? # matching renewal_candidate not found
-      return false if (policy_to_change.enrollees.map(&:m_id) - renewal_candidate.enrollees.map(&:m_id)).any? # members should match
-      coverage_dates = policy_to_change.enrollees.map(&:coverage_start).uniq
-      return false unless coverage_dates.count == 1 # all members should have 1/1 date
-      renewal_candidate.coverage_period.end + 1 == coverage_dates.first
+      return false if renewal_candidate.plan.blank?
+      return false if existing_plan.blank?
+      return false unless existing_plan.carrier_id == renewal_candidate.plan.carrier_id
+      return false unless existing_plan.coverage_type == renewal_candidate.plan.coverage_type
+      return false unless existing_plan.year == renewal_candidate.plan.year + 1
+      return false unless subscriber_id == renewal_candidate.subscriber.m_id
+      return false unless subscriber_start == renewal_candidate.coverage_period.end + 1
+      return false if (all_member_ids - renewal_candidate.active_member_ids).any? # members should match
+      return false if policy_cv.enrollees.map { |en| extract_enrollee_start(en) != renewal_candidate.coverage_period.end + 1 }.any? #all members should have 1/1 date
+      existing_plan.id != renewal_policy.plan.id && ((renewal_policy.active_member_ids - all_member_ids).any? || (all_member_ids - renewal_policy.active_member_ids).any?) # dep add/drop/plan_chnage renewal policy
     end
 
     def is_retro_renewal_policy?
