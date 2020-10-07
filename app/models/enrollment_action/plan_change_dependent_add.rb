@@ -5,6 +5,8 @@ module EnrollmentAction
     include TerminationDateHelper
     include RenewalComparisonHelper
 
+    attr_accessor :plan_change_dep_adding_to_renewal
+
     def self.qualifies?(chunk)
       return false if chunk.length < 2
       return false if same_plan?(chunk)
@@ -27,6 +29,7 @@ module EnrollmentAction
       end
       ep = ExternalEvents::ExternalPolicy.new(action.policy_cv, action.existing_plan, action.is_cobra?, market_from_payload: action.kind)
       return false unless ep.persist
+      @plan_change_dep_adding_to_renewal = action.existing_plan.carrier.plan_change_renewal_dependent_add_transmitted_as_renewal && action.plan_change_dep_add_or_drop_to_renewal_policy?(renewal_candidate, termination.existing_policy)
       termination_date = select_termination_date
       policy_to_term = termination.existing_policy
       result = policy_to_term.terminate_as_of(termination_date)
@@ -34,12 +37,15 @@ module EnrollmentAction
       result
     end
 
+    def renewal_candidate
+      same_carrier_renewal_candidates(action).first
+    end
+
     def publish
       amqp_connection = termination.event_responder.connection
       action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
-      renewal_candidate = same_carrier_renewal_candidates(action).first
-      if action.existing_policy.carrier.plan_change_renewal_dependent_add_transmitted_as_renewal && action.dep_add_to_renewal_policy?(renewal_candidate)
-        change_publish_helper.set_event_action("urn:openhbx:terms:v1:enrollment#auto_renew")
+      if plan_change_dep_adding_to_renewal
+        action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#auto_renew")
       else
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#change_product_member_add")
         action_helper.filter_affected_members(added_dependents)
