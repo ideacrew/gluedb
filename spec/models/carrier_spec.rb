@@ -36,7 +36,7 @@ describe Carrier, "given:
                 })
   end
 
-  it "requires simple plan changes" do
+  it "requires termination cancels renewal" do
     expect(subject.termination_cancels_renewal?).to be_truthy
   end
 end
@@ -52,6 +52,77 @@ describe Carrier, "given:
 
   it "requires simple renewal" do
     expect(subject.requires_simple_renewal?).to be_truthy
+  end
+end
+
+describe Carrier, "given:
+  a requirement for renewal dependent add transmitted as renewal
+ ", dbclean: :after_each do
+  subject do
+    Carrier.new({
+                    :renewal_dependent_add_transmitted_as_renewal => true
+                })
+  end
+
+  it "requires renewal dependent add transmitted as renewal" do
+    expect(subject.renewal_dependent_add_transmitted_as_renewal?).to be_truthy
+  end
+end
+
+describe Carrier, "given:
+  a requirement for renewal dependent drop transmitted as renewal
+ ", dbclean: :after_each do
+  subject do
+    Carrier.new({
+                    :renewal_dependent_drop_transmitted_as_renewal => true
+                })
+  end
+
+  it "requires renewal dependent drop transmitted as renewal" do
+    expect(subject.renewal_dependent_drop_transmitted_as_renewal).to be_truthy
+  end
+end
+
+describe Carrier, "given:
+  a requirement for plan change renewal dependent add transmitted as renewal
+ ", dbclean: :after_each do
+  subject do
+    Carrier.new({
+                    :plan_change_renewal_dependent_add_transmitted_as_renewal => true
+                })
+  end
+
+  it "requires plan change renewal dependent add transmitted as renewal" do
+    expect(subject.plan_change_renewal_dependent_add_transmitted_as_renewal?).to be_truthy
+  end
+end
+
+describe Carrier, "given:
+  a requirement for plan change renewal dependent drop transmitted as renewal
+ ", dbclean: :after_each do
+  subject do
+    Carrier.new({
+                    :plan_change_renewal_dependent_drop_transmitted_as_renewal => true
+                })
+  end
+
+  it "requires plan change renewal dependent drop transmitted as renewal" do
+    expect(subject.plan_change_renewal_dependent_drop_transmitted_as_renewal?).to be_truthy
+  end
+end
+
+
+describe Carrier, "given:
+  a requirement for retro renewal transmitted as renewal
+ ", dbclean: :after_each do
+  subject do
+    Carrier.new({
+                    :retro_renewal_transmitted_as_renewal => true
+                })
+  end
+
+  it "requires plan change renewal dependent drop transmitted as renewal" do
+    expect(subject.retro_renewal_transmitted_as_renewal?).to be_truthy
   end
 end
 
