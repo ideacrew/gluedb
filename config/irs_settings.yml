@@ -63,7 +63,7 @@ tax_document:
         active_true: '2019-1095A-VOID-ACTIVE-TRUE.pdf'
     coverage_page_no: 3
   2020:
-    slcsp: '86052DC0400001-01'
+    slcsp: '94506DC0390006-01'
     new:
       template:
         unassisted: '2019-1095A-NEW-UQHP.pdf'
