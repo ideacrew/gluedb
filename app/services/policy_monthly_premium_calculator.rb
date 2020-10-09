@@ -28,9 +28,11 @@ module Services
     	policy.enrollees.each do |enrollee|
     	  next if enrollee.canceled? || enrollee.coverage_start.blank?
     	  premium_dates << enrollee.coverage_start if (calender_month_begin..calender_month_end).cover?(enrollee.coverage_start)
-        premium_dates << enrollee.coverage_end if (calender_month_begin..calender_month_end).cover?(enrollee.coverage_end)
+        if (calender_month_begin..calender_month_end).cover?(enrollee.coverage_end) && enrollee.coverage_end != calender_month_end
+          premium_dates << (enrollee.coverage_end + 1.day)
+        end
     	end
-    	sorted_premium_dates = premium_dates.uniq.sort
+      sorted_premium_dates = premium_dates.compact.uniq.sort
     	month_premiums = sorted_premium_dates.each_with_index.collect do |date, index|
     	  next if date == sorted_premium_dates[-1]
     	  {
@@ -56,7 +58,7 @@ module Services
       calender_days = (calender_start_date..calender_end_date).count
       premiums_by_dates.sum do |premium_date_hash|
         (premium_date_hash[:premium]/calender_days)*(premium_date_hash[:premium_start_date]..premium_date_hash[:premium_end_date]).count.to_f
-      end
+      end.round(2)
     end
   end
 end

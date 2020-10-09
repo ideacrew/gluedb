@@ -169,7 +169,7 @@ module Generators::Reports
         coverage_end_month = REPORT_MONTHS
       end
 
-      policy_montly_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calender_year: calender_year)
+      policy_monthly_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calender_year: calender_year)
 
       has_middle_of_month_coverage_end = false
       has_middle_of_month_coverage_begin = false
@@ -178,7 +178,7 @@ module Generators::Reports
         has_middle_of_month_coverage_end = true
       end
 
-      # Prorated Begin dates    
+      # Prorated Begin dates
       if @policy.subscriber.coverage_start.present? && (@policy.subscriber.coverage_start.beginning_of_month != @policy.subscriber.coverage_start)
         has_middle_of_month_coverage_begin = true
       end
@@ -187,7 +187,7 @@ module Generators::Reports
       @notice.monthly_premiums = (@policy_disposition.start_date.month..coverage_end_month).inject([]) do |data, i|
 
         #premium amount calculation and prorated calculation
-        premium_amount = policy_montly_premium_calculator.ehb_premium_for(i).round(2)
+        premium_amount = policy_monthly_premium_calculator.ehb_premium_for(i)
 
         if npt_policy
           if @policy.subscriber.coverage_end.present? && ((@policy.subscriber.coverage_end.end_of_month - 1.day) == @policy.subscriber.coverage_end)
