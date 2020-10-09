@@ -1,9 +1,10 @@
 module Services
   class PolicyMonthlyPremiumCalculator
     
-    def initialize(policy_disposition:, calender_year:)
+    def initialize(policy_disposition:, calender_year:, silver_plan: nil)
     	@policy_disposition = policy_disposition
     	@calender_year = calender_year
+      @silver_plan = silver_plan
     end
 
     def premiums_by_months
@@ -38,7 +39,7 @@ module Services
     	  {
           premium_start_date: date,
           premium_end_date: premium_end_date(sorted_premium_dates, index, calender_month_end),
-    	  	premium: @policy_disposition.as_of(date).ehb_premium
+          premium: @policy_disposition.as_of(date, @silver_plan).ehb_premium
     	  }
     	end.compact
     end

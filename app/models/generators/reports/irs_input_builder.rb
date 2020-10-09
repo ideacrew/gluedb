@@ -171,6 +171,9 @@ module Generators::Reports
 
       policy_monthly_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calender_year: calender_year)
 
+      silver_plan = Plan.where({:year => calender_year, :hios_plan_id => settings[:tax_document][calender_year][:slcsp]}).first
+      policy_slcsp_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calender_year: calender_year, silver_plan: silver_plan)
+
       has_middle_of_month_coverage_end = false
       has_middle_of_month_coverage_begin = false
 
@@ -216,51 +219,15 @@ module Generators::Reports
           end
         end
 
-        # if @policy.id == 65209
-        #   if i > 3
-        #     premium_amount = 0
-        #   end
-        # end
-
         premium_amounts = {
           serial: i,
           premium_amount: premium_amount
         }
 
-        # @notice.has_aptc = if @multi_version_pol.present? # && @multi_version_pol.assisted?
-        #   true ##@multi_version_pol
-        # else
-        #   @policy_disposition.as_of(Date.new(calender_year, i, 1)).applied_aptc > 0
-        # end
-
         @notice.has_aptc = @policy_disposition.as_of(Date.new(calender_year, i, 1)).applied_aptc > 0
 
         if @notice.has_aptc
-          # silver_plan_premium = 0
-          # if SLCSP_CORRECTIONS[@policy.id]
-          #   silver_plan_premium = SLCSP_CORRECTIONS[@policy.id]
-          # else
-          #   silver_plan = Plan.where({ "year" => 2014, "hios_plan_id" => "94506DC0390006-01" }).first
-          #   silver_plan_premium = @policy_disposition.as_of(Date.new(calender_year, i, 1), silver_plan).ehb_premium
-          # end
-
-          # aptc_amt = @multi_version_pol.nil? ? 
-          # @policy_disposition.as_of(Date.new(calender_year, i, 1)).applied_aptc :
-          # @multi_version_pol.aptc_as_of(Date.new(calender_year, i, 1))
-
-          # silver_plan = Plan.where({ "year" => 2014, "hios_plan_id" => "94506DC0390006-01" }).first
-          # silver_plan_premium = @policy_disposition.as_of(Date.new(calender_year, i, 1), silver_plan).ehb_premium
-
-          # silver_plan = Plan.where({ "year" => 2015, "hios_plan_id" => "94506DC0390006-01" }).first
-          # silver_plan_premium = @policy_disposition.as_of(Date.new(calender_year, i, 1), silver_plan).ehb_premium
-
-          # silver_plan = Plan.where({ "year" => 2016, "hios_plan_id" => "94506DC0390006-01" }).first
-          # silver_plan_premium = @policy_disposition.as_of(Date.new(calender_year, i, 1), silver_plan).ehb_premium
-
-          silver_plan = Plan.where({:year => calender_year, :hios_plan_id => settings[:tax_document][calender_year][:slcsp]}).first
-          silver_plan_premium = @policy_disposition.as_of(Date.new(calender_year, i, 1), silver_plan).ehb_premium
-
-
+          silver_plan_premium = policy_slcsp_premium_calculator.ehb_premium_for(i)
           aptc_amt = @policy_disposition.as_of(Date.new(calender_year, i, 1)).applied_aptc
 
           # Prorated Start Dates
