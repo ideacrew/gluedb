@@ -174,6 +174,8 @@ module Generators::Reports
       silver_plan = Plan.where({:year => calender_year, :hios_plan_id => settings[:tax_document][calender_year][:slcsp]}).first
       policy_slcsp_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calender_year: calender_year, silver_plan: silver_plan)
 
+      policy_monthly_aptc_calculator = Services::PolicyMonthlyAptcCalculator.new(policy_disposition: @policy_disposition, calender_year: calender_year)
+
       has_middle_of_month_coverage_end = false
       has_middle_of_month_coverage_begin = false
 
@@ -224,11 +226,11 @@ module Generators::Reports
           premium_amount: premium_amount
         }
 
-        @notice.has_aptc = @policy_disposition.as_of(Date.new(calender_year, i, 1)).applied_aptc > 0
+        @notice.has_aptc = policy_monthly_aptc_calculator.applied_aptc_amount_for(i) > 0
 
         if @notice.has_aptc
           silver_plan_premium = policy_slcsp_premium_calculator.ehb_premium_for(i)
-          aptc_amt = @policy_disposition.as_of(Date.new(calender_year, i, 1)).applied_aptc
+          aptc_amt = policy_monthly_aptc_calculator.applied_aptc_amount_for(i)
 
           # Prorated Start Dates
           if @policy_disposition.start_date.month == i && has_middle_of_month_coverage_begin
