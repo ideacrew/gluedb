@@ -36,7 +36,12 @@ module EnrollmentAction
             puts e.to_s
           end
         end
-        return policy_to_term.terminate_as_of(termination.subscriber_end)
+        policy_to_term.terminate_as_of(termination.subscriber_end)
+        if termination.existing_policy.carrier.termination_cancels_renewal
+          termination.renewal_policies_to_cancel.each do |pol|
+            pol.cancel_via_hbx!
+          end
+        end
       end
       true
     end
