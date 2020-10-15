@@ -203,6 +203,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
       allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, action_event.hbx_enrollment_id, action_event.employer_hbx_id)
       allow(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
       allow(subject).to receive(:same_carrier_renewal_candidates).with(action_event).and_return([policy])
+      allow(action_event).to receive(:is_shop?).and_return(false)
     end
 
     it "publishes renewal event for contionus coverage" do
