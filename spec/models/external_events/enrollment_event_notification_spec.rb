@@ -757,8 +757,8 @@ end
 describe "#renewal_policies_to_cancel", :dbclean => :after_each do
   let(:eg_id) { '1' }
   let(:carrier_id) { '2' }
-  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
   let(:plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, renewal_plan: plan, :coverage_type => "health", year: Date.today.year) }
   let(:dental_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "dental", year: Date.today.next_year.year) }
   let!(:primary) {
     person = FactoryGirl.create :person
@@ -770,13 +770,14 @@ describe "#renewal_policies_to_cancel", :dbclean => :after_each do
   let(:enrollee2) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: Date.today.next_year.beginning_of_year, coverage_end: coverage_end)}
 
   let!(:active_term_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, hbx_enrollment_ids: ["123"], carrier_id: carrier_id, plan: active_plan, coverage_start: Date.today.beginning_of_month, coverage_end: Date.today.end_of_month, kind: kind, enrollees: [enrollee])
-    policy.update_attributes(hbx_enrollment_ids: ["123"])
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, hbx_enrollment_ids: ["123"], carrier_id: carrier_id, plan: active_plan, coverage_start: Date.today.beginning_of_month, coverage_end: Date.today.end_of_month, kind: kind)
+    policy.update_attributes(enrollees: [enrollee], hbx_enrollment_ids: ["123"])
     policy.save
     policy
   }
   let!(:renewal_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind, enrollees: [enrollee2])
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind)
+    policy.update_attributes(enrollees: [enrollee2])
     policy.save
     policy
   }
@@ -892,9 +893,9 @@ describe "#renewal_policies_to_cancel", :dbclean => :after_each do
       allow(subject).to receive(:existing_plan).and_return(active_plan)
     end
 
-    it "should return renewal policy" do
+    it "should not return renewal policy" do
       expect(renewal_policy.is_shop?).to eq true
-      expect(subject.renewal_policies_to_cancel).to eq [renewal_policy]
+      expect(subject.renewal_policies_to_cancel).to eq []
     end
   end
 
@@ -917,8 +918,8 @@ end
 describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
   let(:eg_id) { '1' }
   let(:carrier_id) { '2' }
-  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
   let(:plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, renewal_plan: plan, :coverage_type => "health", year: Date.today.year) }
   let!(:primary) {
     person = FactoryGirl.create :person
     person.update(authority_member_id: person.members.first.hbx_member_id)
@@ -1231,9 +1232,9 @@ end
 describe "#plan_change_dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
   let(:eg_id) { '1' }
   let(:carrier_id) { '2' }
-  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
   let(:plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
   let(:plan2) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, renewal_plan: plan2, :coverage_type => "health", year: Date.today.year) }
   let!(:primary) {
     person = FactoryGirl.create :person
     person.update(authority_member_id: person.members.first.hbx_member_id)
@@ -1547,8 +1548,8 @@ end
 describe "#is_retro_renewal_policy?", :dbclean => :after_each do
   let(:eg_id) { '1' }
   let(:carrier_id) { '2' }
-  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
   let(:plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, renewal_plan: plan, :coverage_type => "health", year: Date.today.year) }
   let!(:primary) {
     person = FactoryGirl.create :person
     person.update(authority_member_id: person.members.first.hbx_member_id)
@@ -1610,6 +1611,16 @@ describe "#is_retro_renewal_policy?", :dbclean => :after_each do
              <enrollee>
                <member>
                  <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+               </member>
+               <is_subscriber>true</is_subscriber>
+               <benefit>
+                 <premium_amount>111.11</premium_amount>
+                 <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+               </benefit>
+             </enrollee>
+             <enrollee>
+               <member>
+                 <id><id>#{dep.authority_member.hbx_member_id}</id></id>
                </member>
                <is_subscriber>true</is_subscriber>
                <benefit>

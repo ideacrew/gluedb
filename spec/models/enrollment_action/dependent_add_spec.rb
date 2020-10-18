@@ -166,8 +166,8 @@ describe "given renewal event, dependent adding to IVL renewal policy", :dbclean
   let(:carrier_id) { '2' }
   let(:kind) { 'individual' }
   let(:carrier) { Carrier.create!(:renewal_dependent_add_transmitted_as_renewal => true) }
-  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
   let(:plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, renewal_plan: plan, :coverage_type => "health", year: Date.today.year) }
   let(:plan2) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
   let!(:primary) {
     person = FactoryGirl.create :person
