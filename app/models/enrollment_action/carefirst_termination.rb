@@ -12,6 +12,8 @@ module EnrollmentAction
     def persist
       if termination.existing_policy
         policy_to_term = termination.existing_policy
+        policy_to_term.reload
+        return false if policy_to_term.aasm_state == "hbx_canceled" && policy_to_term.employer_id == nil
         # Is this even a cancellation, if so, check for custom NPT behaviour,
         # otherwise do nothing
 

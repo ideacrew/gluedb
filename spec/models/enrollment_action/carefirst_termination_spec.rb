@@ -35,7 +35,7 @@ describe EnrollmentAction::CarefirstTermination, "given a valid terminated enrol
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], carrier: carrier) }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], carrier: carrier, reload: true, aasm_state: "submitted", employer_id: '') }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     is_cancel?: false,
@@ -76,10 +76,10 @@ describe EnrollmentAction::CarefirstTermination, "given a valid canceled enrollm
 
   let(:person) {FactoryGirl.create(:person)}
   let(:member) {person.members.first}
-  let!(:policy) { Policy.new(eg_id: '1', enrollees: [enrollee1], plan: plan, carrier: carrier ) }
+  let!(:policy) { Policy.new(eg_id: '1', enrollees: [enrollee1], plan: plan, carrier: carrier, reload: true ) }
   let!(:policy2) { Policy.new(eg_id: '2', enrollees: [enrollee2], plan: plan, carrier: carrier, employer_id: nil, aasm_state: "terminated", term_for_np: true ) }
   let!(:plan) { build(:plan) }
-  let!(:carrier) {build(:carrier)}
+  let!(:carrier) {create(:carrier, termination_cancels_renewal: false)}
   let!(:enrollee1) do
     Enrollee.new(
       m_id: member.hbx_member_id,
@@ -124,7 +124,7 @@ describe EnrollmentAction::CarefirstTermination, "given a valid enrollment", :db
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
   let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago) }
-  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1) }
+  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, reload: true, aasm_state: "submitted", employer_id: '') }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     event_xml: event_xml,
