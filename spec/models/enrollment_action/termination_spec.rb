@@ -45,7 +45,7 @@ describe EnrollmentAction::Termination, "given a valid shop enrollment" do
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: (Date.today - 1.day), is_shop?: true, :carrier => carrier, reload: true, aasm_state: "submitted", employer_id: '') }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: (Date.today - 1.day), is_shop?: true, :carrier => carrier, reload: true, canceled?: false) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     policy_cv: terminated_policy_cv,
@@ -79,7 +79,7 @@ describe EnrollmentAction::Termination, "given a valid IVL enrollment, ending 12
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: ((Date.today - 1.day)), is_shop?: false, :carrier => carrier, reload: true, aasm_state: "submitted", employer_id: '') }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: ((Date.today - 1.day)), is_shop?: false, :carrier => carrier, reload: true, canceled?: false) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     policy_cv: terminated_policy_cv,
@@ -113,7 +113,7 @@ describe EnrollmentAction::Termination, "given a valid IVL enrollment, ending 12
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: ((Date.today - 1.day)), is_shop?: false, carrier: carrier, reload: true, aasm_state: "submitted", employer_id: '') }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: ((Date.today - 1.day)), is_shop?: false, carrier: carrier, reload: true, canceled?: false) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     policy_cv: terminated_policy_cv,
@@ -148,7 +148,7 @@ describe EnrollmentAction::Termination, "given a valid enrollment" do
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
   let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago) }
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, aasm_state: "submitted", employer_id: '', carrier: carrier, reload: true, aasm_state: "submitted", employer_id: '') }
+  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, aasm_state: "submitted", employer_id: '', carrier: carrier, reload: true, canceled?: false) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     event_xml: event_xml,
