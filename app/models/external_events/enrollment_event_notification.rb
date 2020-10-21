@@ -455,6 +455,7 @@ module ExternalEvents
     return false unless subscriber_id == renewal_candidate.subscriber.m_id
     return false unless subscriber_start == renewal_candidate.coverage_period.end + 1
     return false if (all_member_ids - renewal_candidate.active_member_ids).any? # members should match
+    return false if (renewal_candidate.active_member_ids - all_member_ids).any? # members should match
     return false if policy_cv.enrollees.map { |en| extract_enrollee_start(en) != renewal_candidate.coverage_period.end + 1 }.any? #all members should have 1/1 date
     (renewal_policy.active_member_ids - all_member_ids).any? || (all_member_ids - renewal_policy.active_member_ids).any? # dep add/drop renewal policy
     end
@@ -471,6 +472,7 @@ module ExternalEvents
       return false unless subscriber_id == renewal_candidate.subscriber.m_id
       return false unless subscriber_start == renewal_candidate.coverage_period.end + 1
       return false if (all_member_ids - renewal_candidate.active_member_ids).any? # members should match
+      return false if (renewal_candidate.active_member_ids - all_member_ids).any? # members should match
       return false if policy_cv.enrollees.map { |en| extract_enrollee_start(en) != renewal_candidate.coverage_period.end + 1 }.any? #all members should have 1/1 date
       existing_plan.id != renewal_policy.plan.id && ((renewal_policy.active_member_ids - all_member_ids).any? || (all_member_ids - renewal_policy.active_member_ids).any?) # dep add/drop/plan_chnage renewal policy
     end

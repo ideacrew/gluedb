@@ -937,12 +937,19 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
     person
   }
 
+  let!(:dep3) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+
   let(:prim_coverage_start) { Date.today.next_year.beginning_of_year }
   let(:dep_coverage_start) { Date.today.next_year.beginning_of_year }
 
   let(:active_enrollee1) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: Date.today.beginning_of_year, coverage_end: '')}
   let(:active_enrollee2) { Enrollee.new(m_id: dep.authority_member.hbx_member_id, rel_code: 'child', coverage_start: Date.today.beginning_of_month, coverage_end: coverage_end)}
   let(:active_enrollee3) { Enrollee.new(m_id: dep2.authority_member.hbx_member_id, rel_code: 'child', coverage_start: Date.today.beginning_of_month, coverage_end: coverage_end)}
+  let(:active_enrollee4) { Enrollee.new(m_id: dep3.authority_member.hbx_member_id, rel_code: 'child', coverage_start: Date.today.beginning_of_month, coverage_end: coverage_end)}
 
   let(:renewal_enrollee1) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: prim_coverage_start, coverage_end: '')}
   let(:renewal_enrollee2) { Enrollee.new(m_id: dep.authority_member.hbx_member_id, rel_code: 'child', coverage_start: dep_coverage_start, coverage_end: '')}
@@ -1162,13 +1169,31 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
         expect(subject.dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
       end
     end
+
+    context "IVL: dep added to renewal policy and dependent not added to active policy" do
+      let(:kind) { 'individual' }
+      let(:begin_date) { Date.today.next_year.beginning_of_year.strftime("%Y%m%d") }
+      let(:employer_id) { nil }
+      let(:employer) { nil}
+      let(:coverage_end) { nil}
+
+      before do
+        allow(subject).to receive(:existing_plan).and_return(plan)
+        allow(subject).to receive(:is_shop?).and_return(false)
+        active_policy.update_attributes(enrollees: [active_enrollee1, active_enrollee2, active_enrollee3, active_enrollee4])
+      end
+
+      it "should return false" do
+        expect(subject.dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
+      end
+    end
   end
 
   context "Dependent Drop to renewal policy" do
     let :subject do
       ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, source_event_xml2, headers
     end
-    context "IVL: dep added to renewal policy" do
+    context "IVL: dep dropped to renewal policy" do
       let(:kind) { 'individual' }
       let(:begin_date) { Date.today.next_year.beginning_of_year.strftime("%Y%m%d") }
       let(:employer_id) { nil }
@@ -1185,7 +1210,7 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
       end
     end
 
-    context "IVL: dep adding to renewal policy and dependent start date not the renewal start date" do
+    context "IVL: dep dropped to renewal policy and dependent start date not the renewal start date" do
       let(:kind) { 'individual' }
       let(:begin_date) { (Date.today.next_year.beginning_of_year + 1.month).strftime("%Y%m%d") }
       let(:employer_id) { nil }
@@ -1202,7 +1227,7 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
       end
     end
 
-    context "SHOP: dep added to renewal policy" do
+    context "SHOP: dep dropped to renewal policy" do
       let(:kind) { 'shop' }
       let(:begin_date) { Date.today.next_year.beginning_of_year.strftime("%Y%m%d") }
       let(:employer) { FactoryGirl.create(:employer)}
@@ -1215,12 +1240,29 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
       end
     end
 
-    context "SHOP: dep added to renewal policy and dependent start date not the renewal start date" do
+    context "SHOP: dep dropped to renewal policy and dependent start date not the renewal start date" do
       let(:kind) { 'shop' }
       let(:begin_date) { (Date.today.next_year.beginning_of_year + 1.month).strftime("%Y%m%d") }
       let(:employer) { FactoryGirl.create(:employer)}
       let(:employer_id) { employer.hbx_id }
       let(:coverage_end) { nil}
+
+      it "should return false" do
+        expect(subject.dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
+      end
+    end
+
+    context "IVL: dep dropped to renewal policy, and didn't dropped from active policy" do
+      let(:kind) { 'individual' }
+      let(:begin_date) { Date.today.next_year.beginning_of_year.strftime("%Y%m%d") }
+      let(:employer_id) { nil }
+      let(:employer) { nil}
+      let(:coverage_end) { nil}
+
+      before do
+        allow(subject).to receive(:existing_plan).and_return(plan)
+        allow(subject).to receive(:is_shop?).and_return(false)
+      end
 
       it "should return false" do
         expect(subject.dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
