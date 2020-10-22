@@ -757,9 +757,10 @@ end
 describe "#renewal_policies_to_cancel", :dbclean => :after_each do
   let(:eg_id) { '1' }
   let(:carrier_id) { '2' }
-  let(:plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
-  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, renewal_plan: plan, :coverage_type => "health", year: Date.today.year) }
+  let(:plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, hios_plan_id: 123 ,:coverage_type => "health", year: Date.today.next_year.year) }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, hios_plan_id: 123, renewal_plan: plan, :coverage_type => "health", year: Date.today.year) }
   let(:dental_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "dental", year: Date.today.next_year.year) }
+  let(:catastrophic_active_plan) { Plan.create!(:name => "test_plan", metal_level: 'catastrophic', hios_plan_id: '94506DC0390008', carrier_id: carrier_id, renewal_plan: plan, :coverage_type => "health", year: Date.today.year) }
   let!(:primary) {
     person = FactoryGirl.create :person
     person.update(authority_member_id: person.members.first.hbx_member_id)
@@ -860,6 +861,23 @@ describe "#renewal_policies_to_cancel", :dbclean => :after_each do
     let(:employer) { nil}
     before do
       allow(subject).to receive(:existing_plan).and_return(active_plan)
+    end
+
+    it "should return renewal policy" do
+      expect(renewal_policy.is_shop?).to eq false
+      expect(subject.renewal_policies_to_cancel).to eq([renewal_policy])
+    end
+  end
+  
+  context "IVL with catastrophic plan : with renewal policy" do
+    let(:kind) { 'individual' }
+    let(:coverage_end) { nil}
+    let(:employer_id) { nil }
+    let(:employer) { nil}
+    before do
+      allow(subject).to receive(:existing_plan).and_return(catastrophic_active_plan)
+      active_term_policy.plan = catastrophic_active_plan
+      active_term_policy.save
     end
 
     it "should return renewal policy" do

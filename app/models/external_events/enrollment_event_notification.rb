@@ -418,6 +418,15 @@ module ExternalEvents
       end
     end
 
+    def plan_matched?(active_plan, renewal_plan)
+      if active_plan.metal_level == "catastrophic" && active_plan.coverage_type == "health"
+        ['94506DC0390008','86052DC0400004'].include?(active_plan.hios_plan_id.split("-").first) &&
+            (['94506DC0390010','86052DC0400010'].include?(renewal_plan.hios_plan_id.split("-").first) || active_plan.renewal_plan == renewal_plan)
+      else
+        (active_plan.renewal_plan == renewal_plan || active_plan.renewal_plan.hios_plan_id.split("-").first == renewal_plan.hios_plan_id.split("-").first)
+      end
+    end
+
     def renewal_policies_to_cancel
       subscriber = existing_policy.subscriber
       subscriber_person = subscriber.person
@@ -436,7 +445,7 @@ module ExternalEvents
       return false unless existing_plan.carrier_id == pol.plan.carrier_id
       return false unless existing_plan.coverage_type == pol.plan.coverage_type
       return false unless existing_plan.year + 1 == pol.plan.year
-      return false unless (existing_plan.renewal_plan == pol.plan || existing_plan.renewal_plan.hios_plan_id.split("-").first == pol.plan.hios_plan_id.split("-").first)
+      return false unless plan_matched?(existing_plan, pol.plan)
       return false if (pol.active_member_ids - all_member_ids).any?
       return false if (all_member_ids - pol.active_member_ids).any?
       return false if pol.subscriber.coverage_end.present?
@@ -451,7 +460,7 @@ module ExternalEvents
     return false unless existing_plan.carrier_id == renewal_candidate.plan.carrier_id
     return false unless existing_plan.coverage_type == renewal_candidate.plan.coverage_type
     return false unless existing_plan.year == renewal_candidate.plan.year + 1
-    return false unless (existing_plan == renewal_candidate.plan.renewal_plan || existing_plan.hios_plan_id.split("-").first == renewal_candidate.plan.renewal_plan.hios_plan_id.split("-").first)
+    return false unless plan_matched?(renewal_candidate.plan, existing_plan)
     return false unless subscriber_id == renewal_candidate.subscriber.m_id
     return false unless subscriber_start == renewal_candidate.coverage_period.end + 1
     return false if (all_member_ids - renewal_candidate.active_member_ids).any? # members should match
@@ -468,7 +477,7 @@ module ExternalEvents
       return false unless existing_plan.carrier_id == renewal_candidate.plan.carrier_id
       return false unless existing_plan.coverage_type == renewal_candidate.plan.coverage_type
       return false unless existing_plan.year == renewal_candidate.plan.year + 1
-      return false unless (existing_plan == renewal_candidate.plan.renewal_plan || existing_plan.hios_plan_id.split("-").first == renewal_candidate.plan.renewal_plan.hios_plan_id.split("-").first)
+      return false unless plan_matched?(renewal_candidate.plan, existing_plan)
       return false unless subscriber_id == renewal_candidate.subscriber.m_id
       return false unless subscriber_start == renewal_candidate.coverage_period.end + 1
       return false if (all_member_ids - renewal_candidate.active_member_ids).any? # members should match
@@ -499,7 +508,7 @@ module ExternalEvents
       return false unless existing_plan.carrier_id == pol.plan.carrier_id
       return false unless existing_plan.coverage_type == pol.plan.coverage_type
       return false unless pol.plan.year + 1 == existing_plan.year
-      return false unless (pol.plan.renewal_plan == existing_plan || pol.plan.renewal_plan.hios_plan_id.split("-").first == existing_plan.hios_plan_id.split("-").first)
+      return false unless plan_matched?(pol.plan, existing_plan)
       return false if pol.subscriber.coverage_end.present?
       return false if (all_member_ids - pol.active_member_ids).any?
       return false if (pol.active_member_ids - all_member_ids).any?
