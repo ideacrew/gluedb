@@ -418,6 +418,29 @@ module ExternalEvents
       end
     end
 
+    def renewal_cancel_policy
+      subscriber = existing_policy.subscriber
+      subscriber_person = subscriber.person
+      subscriber_person.policies.select do |pol|
+        has_renewal_cancel_policy?(pol)
+      end
+    end
+
+    def has_renewal_cancel_policy?(pol)
+      if pol.is_shop?
+        return false if pol.employer_id.blank?
+        return false if find_employer(policy_cv).blank?
+        return false unless pol.employer_id == find_employer(policy_cv).id
+      end
+      return false if pol.subscriber.blank?
+      return false if pol.subscriber.m_id != subscriber_id
+      return false if pol.plan.blank?
+      return false unless existing_plan.carrier_id == pol.plan.carrier_id
+      return false unless existing_plan.coverage_type == pol.plan.coverage_type
+      return false unless existing_plan.year == pol.plan.year
+      pol.canceled? && pol.subscriber.coverage_start == subscriber_start
+    end
+
     private
 
     def initialize_clone(other)
