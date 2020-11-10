@@ -1,9 +1,9 @@
 site:
-  short_name: "Access Health CT"
-  long_name: "Access Health Glue DB"
+  short_name: "Maine Cover Me"
+  long_name: "Cover Me EDI DB"
   copyright_period_start: "2014"
 
-  
+
   social_media:
     facebook_url: ""
 
