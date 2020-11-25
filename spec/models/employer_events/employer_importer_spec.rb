@@ -307,7 +307,6 @@ describe EmployerEvents::EmployerImporter, "for an existing employer with one ov
   end
 end
 
-
 describe EmployerEvents::EmployerImporter, "for an existing employer, update reinstated plan year end date", :dbclean => :after_each do
   let(:start_date) {Date.today.beginning_of_month.prev_year}
   let(:end_date) {start_date + 1.year - 1.day}
