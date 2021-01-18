@@ -1,7 +1,7 @@
 file_name = ARGV[0]
 
 transmissions = Protocols::X12::Transmission.where(
-  "id" => {
+  "file_name" => {
     "$in" => [
                file_name
              ]
