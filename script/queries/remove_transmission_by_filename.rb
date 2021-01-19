@@ -1,4 +1,4 @@
-*file_names 
+*file_names = ARGV 
 
 transmissions = Protocols::X12::Transmission.where(
   "file_name" => {
