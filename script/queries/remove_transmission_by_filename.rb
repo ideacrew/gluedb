@@ -1,10 +1,8 @@
-file_name = ARGV[0]
+*file_names 
 
 transmissions = Protocols::X12::Transmission.where(
   "file_name" => {
-    "$in" => [
-               file_name
-             ]
+    "$in" =>  file_names
   }
 )
 
