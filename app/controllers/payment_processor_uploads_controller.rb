@@ -17,4 +17,8 @@ class PaymentProcessorUploadsController < VocabUploadsController
       render :new
     end
   end
+
+  def enrollment_not_shop_market(details)
+    flash_message_now(:error, "Expected enrollment market type is shop but got #{details[:provided]}")
+  end
 end

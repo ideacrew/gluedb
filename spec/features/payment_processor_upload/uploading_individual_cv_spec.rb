@@ -51,6 +51,7 @@ feature 'uploading individual CV', :dbclean => :after_each do
 
     click_button "Upload"
 
+    expect(page).to have_content 'Expected enrollment market type is shop but got individual'
     expect(page).to have_content 'Failed to Upload.'
   end
 
@@ -75,6 +76,7 @@ feature 'uploading individual CV', :dbclean => :after_each do
     attach_file('payment_processor_upload_vocab', file_path)
 
     click_button "Upload"
+    expect(page).to have_content 'Expected enrollment market type is shop but got individual'
     expect(page).to have_content 'Failed to Upload.'
   end
 end

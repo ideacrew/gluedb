@@ -29,14 +29,13 @@ class PaymentProcessorUpload
     file_name = vocab.original_filename
     doc = Nokogiri::XML(file_data)
 
-    change_request = Parsers::Xml::Enrollment::ChangeRequestFactory.create_from_xml(doc, payment_processor_upload=true)
-    return false if change_request.nil?
+    change_request = Parsers::Xml::Enrollment::ChangeRequestFactory.create_from_xml(doc)
     plan = Plan.find_by_hios_id_and_year(change_request.hios_plan_id, change_request.plan_year)
     validations = [
+      Validators::ShopEnrollmentValidator.new(change_request, listener),
       Validators::PremiumValidator.new(change_request, plan, listener),
       Validators::PremiumTotalValidatorFactory.create_for(change_request, listener),
-      Validators::PremiumResponsibleValidator.new(change_request, listener),
-      Validators::AptcValidator.new(change_request, plan, listener)
+      Validators::PremiumResponsibleValidator.new(change_request, listener)
     ]
 
     if validations.any? { |v| v.validate == false }
@@ -61,12 +60,13 @@ class PaymentProcessorUpload
 
   def log_upload(file_name, file_data)
     broadcast_info = {
-      :routing_key => "info.events.legacy_enrollment_vocabulary.uploaded",
+      :routing_key => "info.events.legacy_enrollment_vocabulary.payment_processor_vocabulary_uploaded",
       :app_id => "gluedb",
       :headers => {
         "file_name" => file_name,
         "kind" =>  kind,
-        "submitted_by"  => submitted_by
+        "submitted_by"  => submitted_by,
+        "type" => "payment_processor_vocab_uploaded"
       }
     }
     if !csl_number.blank?
