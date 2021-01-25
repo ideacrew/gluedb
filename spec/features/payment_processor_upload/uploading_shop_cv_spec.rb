@@ -41,12 +41,13 @@ feature 'uploading show CV', :dbclean => :after_each do
     allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
     allow(mock_event_broadcaster).to receive(:broadcast).with(
       {
-        :routing_key => "info.events.legacy_enrollment_vocabulary.uploaded",
+        :routing_key => "info.events.legacy_enrollment_vocabulary.payment_processor_vocabulary_uploaded",
         :app_id =>  "gluedb",
         :headers =>  {
           "file_name" => File.basename(file_path),
           "kind" => 'initial_enrollment',
           "submitted_by"  => user.email,
+          "type"=>"payment_processor_vocab_uploaded",
           "csl_number" => "1234"
         }
       },

@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-feature 'uploading individual CV', :dbclean => :after_each do
+feature 'uploading a cancel/term CV', :dbclean => :after_each do
   let(:mock_event_broadcaster) do
     instance_double(Amqp::EventBroadcaster)
   end
@@ -26,8 +26,39 @@ feature 'uploading individual CV', :dbclean => :after_each do
     plan.save!
   end
 
-  scenario 'IVL CV fails to upload successful' do
-    file_path = Rails.root + "spec/support/fixtures/individual_enrollment/correct.xml"
+  scenario 'nonsubscriber member canceled' do
+    file_path = Rails.root + "spec/support/fixtures/cancel/nonsubscriber_cancel.xml"
+    allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
+    allow(mock_event_broadcaster).to receive(:broadcast).with(
+      {
+        :routing_key => "info.events.legacy_enrollment_vocabulary.payment_processor_vocabulary_uploaded",
+        :app_id =>  "gluedb",
+        :headers =>  {
+          "file_name" => File.basename(file_path),
+          "kind" => 'initial_enrollment',
+          "submitted_by"  => user.email,
+          "type"=>"payment_processor_vocab_uploaded",
+          "csl_number" => "1234"
+        }
+      },
+      File.read(file_path)
+    )
+
+    visit new_payment_processor_upload_path
+
+    choose 'Maintenance'
+    fill_in "payment_processor_upload[redmine_ticket]", with: "1234"
+
+    attach_file('payment_processor_upload_vocab', file_path)
+
+    click_button "Upload"
+
+    expect(page).not_to have_content 'Uploaded successfully.'
+    expect(page).to have_content 'Expected enrollment market type is shop but got individual'
+  end
+
+  scenario 'subscriber member canceled' do
+    file_path = Rails.root + "spec/support/fixtures/cancel/subscriber_cancel.xml"
     allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
     allow(mock_event_broadcaster).to receive(:broadcast).with(
       {
@@ -45,39 +76,29 @@ feature 'uploading individual CV', :dbclean => :after_each do
     )
     visit new_payment_processor_upload_path
 
-    choose 'Initial Enrollment'
+    choose 'Maintenance'
     fill_in "payment_processor_upload[redmine_ticket]", with: "1234"
 
     attach_file('payment_processor_upload_vocab', file_path)
-
-    click_button "Upload"
-
-    expect(page).to have_content 'Expected enrollment market type is shop but got individual'
-    expect(page).to have_content 'Failed to Upload.'
-  end
-
-  scenario 'no file is selected' do
-    visit new_payment_processor_upload_path
-
-    choose 'Initial Enrollment'
-    fill_in "payment_processor_upload[redmine_ticket]", with: "1234"
 
     click_button "Upload"
 
     expect(page).not_to have_content 'Uploaded successfully.'
+    expect(page).to have_content 'Expected enrollment market type is shop but got individual'
   end
 
-  scenario 'enrollee\'s premium is incorrect' do
+  scenario 'incorrect premium total' do
     visit new_payment_processor_upload_path
 
-    choose 'Initial Enrollment'
+    choose 'Maintenance'
     fill_in "payment_processor_upload[redmine_ticket]", with: "1234"
 
-    file_path = Rails.root + "spec/support/fixtures/individual_enrollment/incorrect_premium.xml"
+    file_path = Rails.root + "spec/support/fixtures/cancel/incorrect_premium_total.xml"
     attach_file('payment_processor_upload_vocab', file_path)
 
     click_button "Upload"
-    expect(page).to have_content 'Expected enrollment market type is shop but got individual'
+
     expect(page).to have_content 'Failed to Upload.'
+    expect(page).to have_content 'Expected enrollment market type is shop but got individual'
   end
 end
