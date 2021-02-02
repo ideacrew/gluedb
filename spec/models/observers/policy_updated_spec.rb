@@ -1,8 +1,9 @@
 require 'rails_helper'
 
 describe Observers::PolicyUpdated do
-  let(:today) { Time.mktime(2025, 1, 1) }
+  let(:today) { Time.now }
   let(:current_year) { ((today.beginning_of_year)..today.end_of_year) }
+  let(:future_year) { ((today.beginning_of_year + 1.year)..(today.end_of_year + 1.year)) }
   let(:coverage_year_first) { (Time.mktime(2018, 1, 1)..Time.mktime(2018, 12, 31) )}
   let(:coverage_year_too_old) { (Time.mktime(2017, 1, 1)..Time.mktime(2017, 12, 31) )}
   let(:plan) { build(:plan, metal_level: "platinum")}
@@ -94,6 +95,23 @@ describe Observers::PolicyUpdated do
         is_shop?: false,
         kind: 'individual',
         coverage_year: current_year,
+        coverage_type: "health",
+        plan: plan
+      )
+    end
+
+    it "does nothing" do
+      Observers::PolicyUpdated.notify(policy, today)
+    end
+  end
+
+  context "given an ivl policy from the future year" do
+    let(:policy) do
+      instance_double(
+        Policy,
+        is_shop?: false,
+        kind: 'individual',
+        coverage_year: future_year,
         coverage_type: "health",
         plan: plan
       )
