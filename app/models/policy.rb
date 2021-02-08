@@ -101,7 +101,6 @@ class Policy
   before_save :invalidate_find_cache
   before_save :check_for_cancel_or_term
   before_save :check_multi_aptc
-  after_save :cancel_ivl_renewal
 
   scope :all_active_states,   where(:aasm_state.in => %w[submitted resubmitted effectuated])
   scope :all_inactive_states, where(:aasm_state.in => %w[canceled carrier_canceled terminated])
