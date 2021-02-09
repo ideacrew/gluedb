@@ -33,7 +33,7 @@ module FederalReports
     def self.base_conditional(policy)   
       return false if policy.is_shop? 
       return false if policy.coverage_type.to_s.downcase != "health"
-      return false if policy.coverage_year.first.year == Time.now.year
+      return false if policy.coverage_year.first.year >= Time.now.year
       return false if policy.coverage_year.first.year < 2018
       true
     end
