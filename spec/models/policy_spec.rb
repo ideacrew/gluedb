@@ -842,6 +842,8 @@ describe "#cancel_renewal", :dbclean => :after_each do
     it "should cancel renewal policy on terminating active policy" do
       expect(active_policy.matched_ivl_renewals).to eq [renewal_policy]
       active_policy.terminate_as_of(renewal_policy.coverage_year.end)
+      expect(active_policy.terminated?).to eq true
+      active_policy.cancel_ivl_renewal
       renewal_policy.reload
       expect(renewal_policy.is_shop?).to eq false
       expect(renewal_policy.canceled?).to eq true
@@ -861,6 +863,8 @@ describe "#cancel_renewal", :dbclean => :after_each do
     it "should cancel renewal policy on terminating active policy" do
       expect(active_policy.matched_ivl_renewals).to eq [renewal_policy]
       active_policy.terminate_as_of(renewal_policy.coverage_year.end)
+      expect(active_policy.terminated?).to eq true
+      active_policy.cancel_ivl_renewal
       renewal_policy.reload
       expect(renewal_policy.is_shop?).to eq false
       expect(renewal_policy.canceled?).to eq true
