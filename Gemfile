@@ -14,7 +14,7 @@ gem 'jquery-ui-rails', '5.0.5'
 gem 'virtus', "~> 1.0.5"
 gem 'spreadsheet', '1.0.4'
 gem 'ruby-ole', '1.2.11.7'
-gem 'openhbx_cv2', git: "https://github.com/ideacrew/openhbx_cv2.git"
+gem 'openhbx_cv2', git: "https://github.com/ideacrew/openhbx_cv2.git", branch: "trunk"
 gem "interactor", "~> 3.1.0"
 gem 'interactor-rails', '2.0.2'
 gem "psych", "2.0.5"
@@ -90,7 +90,7 @@ gem 'prawn', '~> 2.2'
 gem 'prawn-templates', '~> 0.1.2'
 gem 'forkr', '1.0.2'
 gem 'edi_codec', git: "https://github.com/ideacrew/edi_codec.git"
-gem 'ibsciss-middleware', git: "https://github.com/dchbx/ruby-middleware.git", :require => "middleware"
+gem 'ibsciss-middleware', git: "https://github.com/ideacrew/ruby-middleware.git", branch: "trunk", :require => "middleware"
 gem 'rgl', '0.5.2'
 gem 'aws-sdk', "~> 2.2.4"
 
