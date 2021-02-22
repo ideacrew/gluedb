@@ -53,7 +53,7 @@ module Listeners
       m_headers = (properties.headers || {}).to_hash.stringify_keys
       employer_id = m_headers["employer_id"].to_s
       plan_year_id = m_headers["plan_year_id"].to_s
-      trading_partner_publishable = m_headers["is_trading_partner_publishable"].present? ? m_headers["is_trading_partner_publishable"] : true
+      trading_partner_publishable = (m_headers["is_trading_partner_publishable"] == "false" || false) ? m_headers["is_trading_partner_publishable"] : true
       event_name = delivery_info.routing_key.split("employer.").last
       if !event_name.blank?
         if (event_name =~ /nfp\./) || (event_name =~ /nfp_/)
