@@ -101,7 +101,6 @@ class Policy
   before_save :invalidate_find_cache
   before_save :check_for_cancel_or_term
   before_save :check_multi_aptc
-  after_save :cancel_ivl_renewal
 
   scope :all_active_states,   where(:aasm_state.in => %w[submitted resubmitted effectuated])
   scope :all_inactive_states, where(:aasm_state.in => %w[canceled carrier_canceled terminated])
@@ -963,7 +962,7 @@ class Policy
       ['94506DC0390008','86052DC0400004'].include?(active_plan.hios_plan_id.split("-").first) &&
           (['94506DC0390010','86052DC0400010'].include?(renewal_plan.hios_plan_id.split("-").first) || active_plan.renewal_plan == renewal_plan)
     else
-      (active_plan.renewal_plan == renewal_plan || active_plan.renewal_plan.hios_plan_id.split("-").first == renewal_plan.hios_plan_id.split("-").first)
+      (active_plan.renewal_plan == renewal_plan || (active_plan.renewal_plan.present? && active_plan.renewal_plan.hios_plan_id.split("-").first == renewal_plan.hios_plan_id.split("-").first))
     end
   end
 
