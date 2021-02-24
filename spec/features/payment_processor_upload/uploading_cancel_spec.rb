@@ -37,6 +37,7 @@ feature 'uploading a cancel/term CV', :dbclean => :after_each do
           "file_name" => File.basename(file_path),
           "kind" => 'initial_enrollment',
           "submitted_by"  => user.email,
+          "bypass_validation" => "false",
           "type"=>"payment_processor_vocab_uploaded",
           "csl_number" => "1234"
         }
@@ -68,6 +69,7 @@ feature 'uploading a cancel/term CV', :dbclean => :after_each do
           "file_name" => File.basename(file_path),
           "kind" => 'initial_enrollment',
           "submitted_by"  => user.email,
+          "bypass_validation" => "false",
           "type"=>"payment_processor_vocab_uploaded",
           "csl_number" => "1234"
         }

@@ -2,6 +2,7 @@ class PaymentProcessorUpload
   attr_accessor :kind
   attr_accessor :submitted_by
   attr_accessor :vocab
+  attr_accessor :bypass_validation
   attr_accessor :csl_number
   attr_accessor :redmine_ticket
 
@@ -27,19 +28,22 @@ class PaymentProcessorUpload
     return(false) unless self.valid?
     file_data = vocab.read
     file_name = vocab.original_filename
-    doc = Nokogiri::XML(file_data)
 
-    change_request = Parsers::Xml::Enrollment::ChangeRequestFactory.create_from_xml(doc)
-    plan = Plan.find_by_hios_id_and_year(change_request.hios_plan_id, change_request.plan_year)
-    validations = [
-      Validators::ShopEnrollmentValidator.new(change_request, listener),
-      Validators::PremiumValidator.new(change_request, plan, listener),
-      Validators::PremiumTotalValidatorFactory.create_for(change_request, listener),
-      Validators::PremiumResponsibleValidator.new(change_request, listener)
-    ]
+    unless bypass_validation
+      doc = Nokogiri::XML(file_data)
 
-    if validations.any? { |v| v.validate == false }
-      return false
+      change_request = Parsers::Xml::Enrollment::ChangeRequestFactory.create_from_xml(doc)
+      plan = Plan.find_by_hios_id_and_year(change_request.hios_plan_id, change_request.plan_year)
+      validations = [
+        Validators::ShopEnrollmentValidator.new(change_request, listener),
+        Validators::PremiumValidator.new(change_request, plan, listener),
+        Validators::PremiumTotalValidatorFactory.create_for(change_request, listener),
+        Validators::PremiumResponsibleValidator.new(change_request, listener)
+      ]
+
+      if validations.any? { |v| v.validate == false }
+        return false
+      end
     end
 
     log_upload(file_name, file_data)
@@ -66,6 +70,7 @@ class PaymentProcessorUpload
         "file_name" => file_name,
         "kind" =>  kind,
         "submitted_by"  => submitted_by,
+        "bypass_validation" => bypass_validation.to_s,
         "type" => "payment_processor_vocab_uploaded"
       }
     }

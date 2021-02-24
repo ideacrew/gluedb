@@ -24,6 +24,7 @@
     = f.text_field :csl_number, label: "CSL Number", placeholder: 'CSL Number'
     = f.text_field :redmine_ticket, label: "Redmine Ticket", placeholder: 'Redmine Ticket'
     .row
+      = f.check_box :bypass_validation, label: 'Bypass Premium Validation?'
       = f.hidden_field :submitted_by
     = f.submit "Upload", :class => "btn btn-primary"
   .col-sm-4

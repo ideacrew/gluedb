@@ -7,6 +7,7 @@ class PaymentProcessorUploadsController < VocabUploadsController
 
   def create
     @payment_processor_vocab_upload = PaymentProcessorUpload.new(params[:payment_processor_upload])
+    @payment_processor_vocab_upload.bypass_validation = params[:payment_processor_upload][:bypass_validation] == "1"
 
     if @payment_processor_vocab_upload.save(self)
       flash_message(:success, "\"#{params[:payment_processor_upload][:vocab].original_filename}\" - Uploaded successfully.")
