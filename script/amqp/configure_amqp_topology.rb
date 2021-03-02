@@ -1,1 +1,1 @@
-Listeners::EnrollmentEventBatchHandler.configure!
+Listeners::EnrollmentEventBatchHandler.run

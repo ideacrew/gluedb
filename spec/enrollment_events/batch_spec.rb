@@ -117,11 +117,11 @@ describe EnrollmentEvents::Batch, :dbclean => :after_each do
     end
   end
 
-  context ".create_batch_transactions_and_yield" do
+  context ".create_batch_transaction_and_yield" do
     it "should create batch transactions" do
       subject.create_batch_and_yield(parsed_event) do
       end
-      subject.create_batch_transactions_and_yield(parsed_event, body, nil, nil) do
+      subject.create_batch_transaction_and_yield(parsed_event, body, nil, nil) do
       end
       batch = EnrollmentEvents::Batch.first
       expect(batch.transactions.count).to eq 1

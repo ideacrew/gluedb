@@ -25,7 +25,7 @@ module Listeners
       resource_event_broadcast("error", event_key, r_code, body, other_headers)
     end
 
-    def process_enrollment_batch(delivery_info, parsed_event, body, event_time)
+    def create_enrollment_batch(delivery_info, parsed_event, body, event_time)
       EnrollmentEvents::Batch.create_batch_and_yield(parsed_event) do |new_batch|
         resource_event_broadcast("info", "batch_created", "200", body, {
                                            :employer_hbx_id => new_batch.employer_hbx_id,
@@ -38,8 +38,8 @@ module Listeners
       channel.ack(delivery_info.delivery_tag, false)
     end
 
-    def process_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
-      EnrollmentEvents::Batch.create_batch_transactions_and_yield(parsed_event, body, m_headers, event_time) do |transaction|
+    def create_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
+      EnrollmentEvents::Batch.create_batch_transaction_and_yield(parsed_event, body, m_headers, event_time) do |transaction|
         resource_event_broadcast("info", "batch_transactions_updated", "200", transaction.payload, {
                                            :employer_hbx_id => transaction.batch.employer_hbx_id,
                                            :subscriber_hbx_id => transaction.batch.subscriber_hbx_id,
@@ -51,13 +51,13 @@ module Listeners
       channel.ack(delivery_info.delivery_tag, false)
     end
 
-    def cut_enrollment_batch
+    def process_enrollment_batch
       if EnrollmentEvents::Batch.where(aasm_state: 'open').any?
         EnrollmentEvents::Batch.where(aasm_state: 'open').each do |batch|
            if batch.may_process?
              batch.process!
              Amqp::ConfirmedPublisher.with_confirmed_channel(connection) do |chan|
-               ex = chan.fanout(ExchangeInformation.event_publish_exchange, {:durable => true})
+               ex = chan.topic(ExchangeInformation.event_publish_exchange, {:durable => true})
                ex.publish(
                  "",
                  { routing_key: BatchProcess,
@@ -65,6 +65,7 @@ module Listeners
                  }
                )
              end
+             resource_event_broadcast("info", "batch_processing", "200", "", { batch_id: batch.id })
            end
         end
       end
@@ -76,16 +77,16 @@ module Listeners
       event_time = extract_timestamp(properties)
       parsed_event = ExternalEvents::EnrollmentEventNotification.new(nil, delivery_info, event_time, body, m_headers)
       if routing_key == BatchCut
-        cut_enrollment_batch
         resource_event_broadcast("info", "batch_cut", "200")
+        process_enrollment_batch
         channel.ack(delivery_info.delivery_tag, false)
       else
         begin
           unless EnrollmentEvents::Batch.new_batch?(parsed_event)
-            process_enrollment_batch(delivery_info,parsed_event, body, event_time)
-            process_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
+            create_enrollment_batch(delivery_info,parsed_event, body, event_time)
+            create_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
           else
-            process_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
+            create_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
           end
         rescue => e
           resource_error_broadcast("unknown_error", "500", body, m_headers)

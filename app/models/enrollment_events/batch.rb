@@ -66,7 +66,7 @@ module EnrollmentEvents
       })
     end
 
-    def self.create_batch_transactions_and_yield(parsed_event, new_payload, m_headers, event_time)
+    def self.create_batch_transaction_and_yield(parsed_event, new_payload, m_headers, event_time)
       transaction = create_transaction(find_batch(parsed_event), new_payload, m_headers, event_time)
       yield transaction
     end
