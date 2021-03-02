@@ -16,7 +16,7 @@ module EnrollmentEvents
              class_name: "EnrollmentEvents::Transaction",
              order: { submitted_at: :desc }
 
-    index({subscriber_hbx_id: 1, employer_hbx_id: 1, benefit_kind: 1, status: 1, deactivated_at: 1})
+    index({subscriber_hbx_id: 1, employer_hbx_id: 1, benefit_kind: 1, aasm_state: 1})
 
     aasm do
       state :open, initial: true
