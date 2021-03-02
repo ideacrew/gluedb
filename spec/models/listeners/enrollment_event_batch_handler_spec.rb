@@ -4,8 +4,8 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
   let(:connection) { double }
   let(:queue) { double }
   let(:default_exchange) { double }
-  let(:fanout) { double }
-  let(:channel) { double(:connection => connection, fanout: fanout, :default_exchange => default_exchange) }
+  let(:topic) { double }
+  let(:channel) { double(:connection => connection, topic: topic, :default_exchange => default_exchange) }
   let(:event_broadcaster) { instance_double(Amqp::EventBroadcaster) }
   let(:event_exchange_name) { "event exchange name" }
 
@@ -392,10 +392,17 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
           :submitted_timestamp=> @time_now
         }
       }, "")
+      allow(event_broadcaster).to receive(:broadcast).with({
+        :routing_key => "info.application.glue.enrollment_event_handler.batch_processing",
+        :headers=> {
+          :batch_id => batch.id,
+          :return_status => "200",
+          :submitted_timestamp=> @time_now
+        }
+      }, "")
       allow(::Amqp::ConfirmedPublisher).to receive(:with_confirmed_channel).with(connection).and_yield(channel)
       allow(ExchangeInformation).to receive(:event_publish_exchange).and_return(event_exchange_name)
-      allow(channel).to receive(:fanout).with(event_exchange_name, {:durable => true}).and_return(default_exchange)
-
+      allow(channel).to receive(:topic).with(event_exchange_name, {:durable => true}).and_return(default_exchange)
       allow(default_exchange).to receive(:publish).with(
         "",
         {
