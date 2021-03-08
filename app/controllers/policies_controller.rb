@@ -56,10 +56,19 @@ class PoliciesController < ApplicationController
 
   end
 
+  # Handles a PUT request
+  # @note This method may modify our termination reason on policy
+  # @param request [Request] the request object
+  # @return [String] the resulting webpage
   def change_npt_indicator
     altered_npt_indicator = params[:policy][:npt_indicator]
     policy = Policy.find(params[:policy][:id])
-    message = Policy.change_npt_indicator(policy, altered_npt_indicator, current_user.email)
+    response = policy.change_npt_indicator(policy, altered_npt_indicator, current_user.email)
+    if response
+      message = {notice: "Successfully updated NPT indicator value to '#{altered_npt_indicator}'"}
+    else
+      message = {error: "Failed to update NPT indicator value to '#{altered_npt_indicator}'"}
+    end
     redirect_to cancelterminate_policy_path({ :id => params[:policy][:id]}), flash: message
   end
 
