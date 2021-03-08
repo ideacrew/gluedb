@@ -56,6 +56,13 @@ class PoliciesController < ApplicationController
 
   end
 
+  def change_npt_indicator
+    altered_npt_indicator = params[:policy][:npt_indicator]
+    policy = Policy.find(params[:policy][:id])
+    message = Policy.change_npt_indicator(policy, altered_npt_indicator, current_user.email)
+    redirect_to cancelterminate_policy_path({ :id => params[:policy][:id]}), flash: message
+  end
+
   def index
     @q = params[:q]
     @qf = params[:qf]
@@ -68,9 +75,9 @@ class PoliciesController < ApplicationController
     end
 
     respond_to do |format|
-	    format.html # index.html.erb
-	    format.json { render json: @policies }
-	  end
+      format.html # index.html.erb
+      format.json { render json: @policies }
+    end
   end
 
   def generate_tax_document
