@@ -44,6 +44,7 @@ module EnrollmentAction
       existing_policy = termination.existing_policy
       member_date_map = {}
       active_dependents_from_term = []
+      existing_policy.reload
       existing_policy.enrollees.each do |en|
         member_date_map[en.m_id] = en.coverage_start
         if termination.all_member_ids.include?(en.m_id)
