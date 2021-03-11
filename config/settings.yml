@@ -1,15 +1,15 @@
 site:
-  short_name: "DC HealthLink"
-  long_name: "DC HealthLink Glue DB"
+  short_name: "Maine Cover Me"
+  long_name: "Cover Me EDI DB"
   copyright_period_start: "2014"
 
-  
+
   social_media:
     facebook_url: ""
 
 contact_center:
   name: "Department of Human Services"
   address: "P.O. Box 91560"
-  city: "Washington"
-  state_abbreviation: "DC"
+  city: "Hartford"
+  state_abbreviation: "CT"
   postal_code: "20090"
