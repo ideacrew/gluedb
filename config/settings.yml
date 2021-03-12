@@ -13,3 +13,6 @@ contact_center:
   city: "Hartford"
   state_abbreviation: "CT"
   postal_code: "20090"
+
+shop_market:
+  market_enabled: false
