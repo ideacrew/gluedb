@@ -111,5 +111,17 @@ module EnrollmentAction
           [plan, subscriber_person, subscriber_id, subscriber_start]
     end
 
+    def continued_coverage_renewal_candidates?(retro_candidate, renewal_candidate)
+      retro_plan = retro_candidate.existing_plan
+      renewal_plan = renewal_candidate.existing_plan
+      return false unless retro_plan
+      return false unless renewal_plan
+      return false unless retro_plan.carrier_id == renewal_plan.carrier_id
+      return false unless retro_plan.coverage_type == renewal_plan.coverage_type
+      return unless retro_candidate.plan_matched?(retro_plan, renewal_plan)
+      return if (retro_candidate.all_member_ids - renewal_candidate.all_member_ids).any?
+      return if (renewal_candidate.all_member_ids - retro_candidate.all_member_ids).any?
+      renewal_candidate.subscriber_start == retro_candidate.coverage_year.end + 1.day
+    end
   end
 end

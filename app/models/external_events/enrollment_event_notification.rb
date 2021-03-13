@@ -326,17 +326,41 @@ module ExternalEvents
       @kind ||= extract_market_kind(enrollment_event_xml)
     end
 
-    def is_adjacent_to?(other)
-      return false unless active_year == other.active_year
-      case [is_termination?, other.is_termination?]
-      when [true, true]
-        false
-      when [false, false]
-        false
-      when [false, true]
-        false
+    def coverage_year
+      if is_shop?
+        plan_year = find_employer_plan_year(policy_cv)
+        (plan_year.start_date..plan_year.end_date)
       else
-        (self.subscriber_end == other.subscriber_start - 1.day) || (self.is_cancel? && (subscriber_start == other.subscriber_start))
+        (Date.new(active_year.to_i, 1, 1)..Date.new(active_year.to_i, 12, 31))
+      end
+    end
+
+    def is_adjacent_to?(other)
+      unless active_year == other.active_year
+        # [add, term, add] 3 events order,
+        # processed as [add(2020), term(2021)], [term(2021), add(2021)]
+        case [is_termination?, other.is_termination?]
+          when [true, true]
+            false
+          when [false, false]
+            false
+          when [true, false]
+            false
+          else
+            (other.is_cancel? && (coverage_year && coverage_year.end == coverage_year.begin + 1.year - 1.day) &&
+              (coverage_year.end == other.subscriber_start - 1.day) && coverage_year.include?(subscriber_start))
+        end
+      else
+        case [is_termination?, other.is_termination?]
+          when [true, true]
+            false
+          when [false, false]
+            false
+          when [false, true]
+            false
+          else
+            (self.subscriber_end == other.subscriber_start - 1.day) || (self.is_cancel? && (subscriber_start == other.subscriber_start))
+        end
       end
     end
 
