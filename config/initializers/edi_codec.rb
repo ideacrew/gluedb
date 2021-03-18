@@ -1,2 +1,2 @@
-EdiCodec::Configuration.source_exchange = ExchangeInformation.hbx_id.upcase
+EdiCodec::Configuration.source_exchange = "#{Settings.site.source_exchange_code}"
 
