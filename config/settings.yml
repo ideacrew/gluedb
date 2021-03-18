@@ -2,7 +2,7 @@ site:
   short_name: "Maine Cover Me"
   long_name: "Cover Me EDI DB"
   copyright_period_start: "2014"
-
+  source_exchange_code: ME0
 
   social_media:
     facebook_url: ""
