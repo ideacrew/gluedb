@@ -12,8 +12,8 @@ module PdfTemplates
 
     attribute :prorated_amounts, [PdfTemplates::ProratedAmount]
 
-    attribute :rating_area, String, :default => 'R-DC001'
-    attribute :source_exchange_id, String, :default => 'DC0'
+    attribute :rating_area, String, :default => "R-#{Settings.site.source_exchange_code}01"
+    attribute :source_exchange_id, String, :default => "#{Settings.site.source_exchange_code}"
 
     def to_csv
       [
