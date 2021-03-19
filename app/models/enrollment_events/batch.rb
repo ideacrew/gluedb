@@ -41,7 +41,8 @@ module EnrollmentEvents
       self.where({
         subscriber_hbx_id: parsed_event.subscriber_id,
         employer_hbx_id: parsed_event.employer_hbx_id,
-        benefit_kind: parsed_event.determine_market(parsed_event.enrollment_event_xml)
+        benefit_kind: parsed_event.determine_market(parsed_event.enrollment_event_xml),
+        aasm_state: 'open'
       }).any?
     end
 

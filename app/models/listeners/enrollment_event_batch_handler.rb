@@ -89,7 +89,7 @@ module Listeners
             create_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
           end
         rescue => e
-          resource_error_broadcast("unknown_error", "500", body, m_headers)
+          resource_error_broadcast("unknown_error", "500", {:event => body, error: e.class.name, message: e.message , backtrace: e.backtrace.join("\n")}.to_json, m_headers)
           channel.ack(delivery_info.delivery_tag, false)
         end
       end
