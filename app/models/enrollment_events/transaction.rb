@@ -11,7 +11,7 @@ module EnrollmentEvents
 
     belongs_to :batch, index: true
 
-    index({batch_id: 1, payload: 1, headers: 1,  event_time: 1})
+    index({batch_id: 1, headers: 1,  event_time: 1})
 
   end
 end
