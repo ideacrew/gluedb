@@ -994,7 +994,7 @@ class Policy
       :routing_key => "info.events.policy.non_payment_indicator_altered",
       :app_id => "gluedb",
       :headers => {
-        "policy_id" =>  policy.id,
+        "policy_id" =>  policy.id.to_s,
         "eg_id" => policy.eg_id,
         "old_npt" => old_npt,
         "new_npt" => policy.term_for_np,
@@ -1002,7 +1002,7 @@ class Policy
       }
     }
     Amqp::EventBroadcaster.with_broadcaster do |eb|
-      eb.broadcast(broadcast_info, policy.id)
+      eb.broadcast(broadcast_info, policy.id.to_s)
     end
   end
 
