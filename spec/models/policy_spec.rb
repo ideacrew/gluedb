@@ -946,14 +946,14 @@ describe ".change_npt_indicator", :dbclean => :after_each do
             :routing_key => "info.events.policy.non_payment_indicator_altered",
             :app_id => "gluedb",
             :headers => {
-              "policy_id" =>  policy2.id,
+              "policy_id" =>  policy2.id.to_s,
               "eg_id" => policy2.eg_id,
               "old_npt" => old_npt,
               "new_npt" => true,
               "submitted_by"  => submitted_by
             }
           },
-          policy2.id
+          policy2.id.to_s
         )
         npt_value = policy2.change_npt_indicator(policy2, true_npt, submitted_by)
         expect(policy2.aasm_state).to eq "terminated"
@@ -981,14 +981,14 @@ describe ".change_npt_indicator", :dbclean => :after_each do
             :routing_key => "info.events.policy.non_payment_indicator_altered",
             :app_id => "gluedb",
             :headers => {
-              "policy_id" =>  policy1.id,
+              "policy_id" =>  policy1.id.to_s,
               "eg_id" => policy1.eg_id,
               "old_npt" => old_npt,
               "new_npt" => false,
               "submitted_by"  => submitted_by
             }
           },
-          policy1.id
+          policy1.id.to_s
         )
         npt_value = policy1.change_npt_indicator(policy1, false_npt, submitted_by)
         expect(policy1.aasm_state).to eq "terminated"
