@@ -1,1 +1,0 @@
-Listeners::EnrollmentEventBatchProcessor.run
