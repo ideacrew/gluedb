@@ -10,8 +10,6 @@ module EnrollmentEvents
     field :benefit_kind, type: String
     field :aasm_state, type: String
 
-    default_scope ->{ where(aasm_state: 'open') }
-
     has_many :transactions,
              class_name: "EnrollmentEvents::Transaction",
              order: { submitted_at: :desc }
@@ -50,7 +48,8 @@ module EnrollmentEvents
       self.where({
                      subscriber_hbx_id: parsed_event.subscriber_id,
                      employer_hbx_id: parsed_event.employer_hbx_id,
-                     benefit_kind: parsed_event.determine_market(parsed_event.enrollment_event_xml)
+                     benefit_kind: parsed_event.determine_market(parsed_event.enrollment_event_xml),
+                     aasm_state: 'open'
                  }).first
     end
 
