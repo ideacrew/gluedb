@@ -10,7 +10,7 @@ GIT
 
 GIT
   remote: https://github.com/ideacrew/edi_codec.git
-  revision: cafce9b293108cd0867858c3a3a6eec7bd22e396
+  revision: da7a1a5920d2fd9dd09a4c090f1a7a22a8d0cb16
   branch: carrier_boarding
   specs:
     edi_codec (0.1.2)
