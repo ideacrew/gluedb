@@ -31,7 +31,7 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
             "First Name", "Last Name","SSN", "DOB", "Gender", "Relationship",
             "Plan Name", "HIOS ID", "Plan Metal Level", "Carrier Name",
             "Premium Amount", "Premium Total", "Policy APTC", "Policy Employer Contribution",
-            "Coverage Start", "Coverage End",
+            "Coverage Start", "Coverage End", "Benefit Status",
             "Employer Name", "Employer DBA", "Employer FEIN", "Employer HBX ID",
             "Home Address", "Mailing Address","Email","Phone Number","Broker"]
     policies.each do |pol|
@@ -82,6 +82,7 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                   en.pre_amt, pol.pre_amt_tot,pol.applied_aptc, pol.tot_emp_res_amt,
                   en.coverage_start.blank? ? nil : en.coverage_start.strftime("%Y%m%d"),
                   en.coverage_end.blank? ? nil : en.coverage_end.strftime("%Y%m%d"),
+                  en.ben_stat == "cobra" ? en.ben_stat : nil,
                   pol.employer_id.blank? ? nil : employer.name,
                   pol.employer_id.blank? ? nil : employer.dba,
                   pol.employer_id.blank? ? nil : employer.fein,
