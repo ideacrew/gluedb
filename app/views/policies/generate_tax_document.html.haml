@@ -8,5 +8,6 @@
         .control-group
           = link_to "Download PDF for review", download_tax_document_policy_path(@policy, {file_name: @file_name, person_id: @person.id}), target: "_blank"
           <br> <br>
-          = link_to "Approve and Upload", upload_tax_document_to_S3_policy_path(@policy, {file_name: @file_name, person_id: @person.id}), :class => "btn btn-primary", :method=> :post
+          = link_to "Approve and Upload", upload_tax_document_to_S3_policy_path(@policy, {file_name: @file_name, person_id: @person.id}), :class => "btn btn-primary", :confirm => 'WARNING: This will create and mail the 1095A PDF Form to the Consumer (no IRS data sent). Do you wish to continue?', :method=> :post
           = link_to "Cancel", delete_local_generated_tax_document_policy_path(@policy, {file_name: @file_name, person_id: @person.id}), :class => "btn btn-inverse", :method=> :delete
+
