@@ -63,9 +63,10 @@ module Parsers
         end
 
         def hios_id
-          (@loop["REFs"].detect do |r|
+          hios_value = (@loop["REFs"].detect do |r|
             r[1] == "CE"
           end)[2]
+          ::Parsers::HiosIdParser.parse(hios_value)
         end
 
         def empty?

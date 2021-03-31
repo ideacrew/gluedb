@@ -13,9 +13,10 @@ module Parsers
         end
 
         def hios_plan_id
-          @loop["REFs"].detect do |ref|
+          hios_value = (@loop["REFs"].detect do |ref|
             ref[1] == "TV"
-          end[2]
+          end[2])
+          ::Parsers::HiosIdParser.parse(hios_value)
         end
       end
     end
