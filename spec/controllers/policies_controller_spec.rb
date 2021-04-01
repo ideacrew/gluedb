@@ -125,7 +125,6 @@ describe PoliciesController, :dbclean => :after_each do
     end
   end
 
-
   describe "Change NPT indicator" do
 
     let(:mock_event_broadcaster) do
@@ -210,6 +209,19 @@ describe PoliciesController, :dbclean => :after_each do
           put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "false"}}
           expect(flash[:error]).to match(/The NPT Indicator has not been updated/)
         end
+  end
+
+  describe "POST trigger_1095A_H41" do
+
+    context "success" do
+      before do
+        allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+        post :trigger_1095A_H41, {id: policy.id, person_id: person.id}
+      end
+
+      it 'redirects to `person_path`' do
+        expect(response).to redirect_to(generate_tax_document_form_policy_path(policy.id, {person_id: person.id}))
+        expect(flash[:notice]).to match(/Triggered 1095A and H41 for policy_id/)
       end
     end
   end
