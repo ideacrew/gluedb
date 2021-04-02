@@ -163,6 +163,12 @@ class PoliciesController < ApplicationController
     end
   end
 
+  def trigger_1095A_H41
+    policy = Policy.find(params[:id])
+    Observers::PolicyUpdated.notify(policy)
+    redirect_to generate_tax_document_form_policy_path(Policy.find(params[:id]), {person_id: Person.find(params[:person_id])}), :flash => { :notice=> "Triggered 1095A and H41 for policy_id: #{policy.id}" }
+  end
+
   private
 
   def void_policy_ids(policy_ids_string)
