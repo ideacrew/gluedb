@@ -120,8 +120,8 @@ RSpec.describe PoliciesHelper, :type => :helper do
         )
       end
 
-      it "returns true" do
-        expect(helper.is_policy_not_eligible_to_notify?(policy)).to be_truthy
+      it "returns false" do
+        expect(helper.is_policy_not_eligible_to_notify?(policy)).to be_falsey
       end
     end
 
