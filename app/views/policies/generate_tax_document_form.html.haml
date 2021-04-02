@@ -67,13 +67,15 @@
           .form_actions
             = submit_tag 'Submit', class: 'btn btn-inverse'
 
-%ul.breadcrumb
-  Automated 1095A/H41 Trigger (to Consumer and IRS):
-.panel.panel-default
-  .panel-body
-    .row
-      .col-md-2
-        = link_to "1095A/H41 Trigger", trigger_1095A_H41_policy_path(@policy, {person_id:@person.id}), :class => "btn btn-primary", confirm: 'WARNING: Submission will trigger generation of 1095A PDF Form to Consumer and H41 XML Report to IRS. Do you wish to continue?', :method=> :post
+- if show_1095A_document_button?(@policy) && @policy.coverage_year.first.year > 2017
+  %ul.breadcrumb
+    Automated 1095A/H41 Trigger (to Consumer and IRS):
+    = @policy.id
+  .panel.panel-default
+    .panel-body
+      .row
+        .col-md-2
+          = link_to "1095A/H41 Trigger", trigger_1095A_H41_policy_path(@policy, {person_id:@person.id}), :class => "btn btn-primary", confirm: 'WARNING: Submission will trigger generation of 1095A PDF Form to Consumer and H41 XML Report to IRS. Do you wish to continue?', :method=> :post
 
 :javascript
   function validate_1095A_form() {
