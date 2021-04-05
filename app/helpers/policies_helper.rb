@@ -5,7 +5,7 @@ module PoliciesHelper
   end
 
   def is_policy_not_eligible_to_notify?(policy)
-    policy.kind == 'coverall' || policy.is_shop? || policy.plan.metal_level == "catastrophic" || policy.coverage_type.to_s.downcase != "health" || policy.coverage_year.first.year >= Time.now.year || policy.coverage_year.first.year < 2018
+    policy.kind == 'coverall' || policy.is_shop? || policy.plan.metal_level == "catastrophic" || policy.coverage_type.to_s.downcase != "health" || policy.coverage_year.first.year >= Time.now.year
   end
 
   def disable_radio_button?(policy)
