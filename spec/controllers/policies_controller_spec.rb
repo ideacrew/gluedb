@@ -209,6 +209,8 @@ describe PoliciesController, :dbclean => :after_each do
           put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "false"}}
           expect(flash[:error]).to match(/The NPT Indicator has not been updated/)
         end
+      end
+    end
   end
 
   describe "POST trigger_1095A_H41" do
