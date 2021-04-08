@@ -68,8 +68,9 @@ module EnrollmentAction
     def self.construct(chunk)
       term = chunk.detect { |c| c.is_termination? }
       actions = chunk.sort_by(&:active_year)
-      action = actions.detect { |c| !c.is_termination? }.first
-      additional_action = actions.detect { |c| !c.is_termination? }.last
+      action = actions.detect { |c| !c.is_termination? }
+      # currently we expect max chunk length is 3.
+      additional_action = actions.select { |c| !c.is_termination? }.last if chunk.length > 2
       self.new(term, action, additional_action)
     end
 
