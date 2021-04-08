@@ -337,8 +337,14 @@ module ExternalEvents
 
     def is_adjacent_to?(other)
       unless active_year == other.active_year
-        # [add, term, add] 3 events order,
+        # subscriber, with retro coverage event
+        # sceanrio: 1
+        # [add(2020), term(2021), add(2021)] 3 events order,
         # processed as [add(2020), term(2021)], [term(2021), add(2021)]
+
+        # sceanrio: 2
+        # [add(2020), term(2021))] 2 events order,
+        # processed as [add(2020), term(2021)]
         case [is_termination?, other.is_termination?]
           when [true, true]
             false
