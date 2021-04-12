@@ -10,13 +10,30 @@ module Parsers::Xml::Enrollment
     def type
       @xml.at_xpath('/proc:Operation/proc:operation/proc:type', @namespaces).text
     end
-      def cancel?
-        type == 'cancel'
-      end
 
-      def terminate?
-        type == 'terminate'
-      end
+    def market_type
+      @payload.first_element_child.name.split('_').first
+    end
+
+    def individual_market?
+      market_type == 'individual'
+    end
+
+    def subscriber_id
+      @enrollment_group.at_xpath('./ins:subscriber/ins:exchange_member_id', @namespaces).text
+    end
+
+    def cancel?
+      type == 'cancel'
+    end
+
+    def terminate?
+      type == 'terminate'
+    end
+
+    def reinstate?
+      type == 'reinstate'
+    end
 
     def reason
       @xml.at_xpath('/proc:Operation/proc:operation/proc:reason', @namespaces)
@@ -76,7 +93,7 @@ module Parsers::Xml::Enrollment
     end
 
     def subscriber_affected?
-      subscriber_id = @enrollment_group.at_xpath('./ins:subscriber/ins:exchange_member_id', @namespaces).text
+      subscriber_id
       affected_enrollees.any? { |e| e.hbx_member_id == subscriber_id}
     end
   end
