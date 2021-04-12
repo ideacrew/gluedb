@@ -27,7 +27,7 @@ feature 'uploading individual CV', :dbclean => :after_each do
   end
 
   scenario 'IVL CV fails to upload successful' do
-    file_path = Rails.root + "spec/support/fixtures/individual_enrollment/correct.xml"
+    file_path = Rails.root + "spec/support/fixtures/individual_enrollment/carefirst_correct.xml"
     allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
     allow(mock_event_broadcaster).to receive(:broadcast).with(
       {
