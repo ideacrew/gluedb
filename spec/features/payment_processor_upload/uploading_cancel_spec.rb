@@ -58,7 +58,7 @@ feature 'uploading a cancel/term CV', :dbclean => :after_each do
   end
 
   scenario 'subscriber member canceled' do
-    file_path = Rails.root + "spec/support/fixtures/cancel/subscriber_cancel.xml"
+    file_path = Rails.root + "spec/support/fixtures/cancel/carefirst_subscriber_cancel.xml"
     allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
     allow(mock_event_broadcaster).to receive(:broadcast).with(
       {

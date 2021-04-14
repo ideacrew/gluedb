@@ -54,32 +54,51 @@ class VocabUpload
   # @return [Boolean]
   def alter_npt_flag(change_request)
     begin
-      if change_request.type == 'add' && change_request.hbx_carrier_id == "116036" #hbx_carrier_id of CareFirst carrier
-        reinstate_policy_m_id = change_request.subscriber_id
-        reinstate_policy_plan_id = change_request.plan_id
-        reinstate_policy_carrier_id = change_request.carrier_id
-        term_policy_end_date = change_request.begin_date - 1.day
-        pols = Person.where(authority_member_id: reinstate_policy_m_id ).first.policies
-        pols.each do |pol|
-          if (pol.employer_id == nil && pol.term_for_np == true && pol.plan_id.to_s == reinstate_policy_plan_id && pol.carrier_id.to_s == reinstate_policy_carrier_id)
-
-            if (pol.aasm_state == "terminated" && pol.policy_end == term_policy_end_date) || (pol.aasm_state == "canceled" && pol.policy_start == change_request.begin_date)
-              pol.update_attributes!(term_for_np: false)
-              Observers::PolicyUpdated.notify(pol)
-              true
-            end
-          end
-        end
-      elsif change_request.reinstate?
-        pol = Policy.where(hbx_enrollment_ids: change_request.eg_id).first
-        if pol.term_for_np == true
-          pol.update_attributes!(term_for_np: false)
-          Observers::PolicyUpdated.notify(pol)
-        end
-        true
+      policy = Policy.where(hbx_enrollment_ids: change_request.eg_id).first
+      if change_request.hbx_carrier_id == "116036" #hbx_carrier_id of CareFirst carrier
+        alter_carefirst_npt_flag(change_request, policy)
+      else
+        alter_non_carefirst_npt_flag(change_request, policy)
       end
     rescue Exception => e
       puts e.to_s
+    end
+  end
+
+  def alter_carefirst_npt_flag(change_request, policy)
+    reinstate_policy_m_id = change_request.subscriber_id
+    pols = Person.where(authority_member_id: reinstate_policy_m_id).first.policies
+    pols.each do |pol|
+      if change_request.type == 'add' && change_request.reason.text == 'initial_enrollment' && term_or_cancel_carefirst_policy_exists?(pol, change_request)
+        pol.update_attributes!(term_for_np: false)
+        Observers::PolicyUpdated.notify(pol)
+      elsif change_request.cancel? && policy.aasm_state == 'resubmitted' && term_or_cancel_carefirst_policy_exists?(pol, change_request)
+        policy.update_attributes!(term_for_np: true)
+      end
+    end
+  end
+
+  def term_or_cancel_carefirst_policy_exists?(pol, change_request)
+    reinstate_policy_plan_id = change_request.plan_id
+    reinstate_policy_carrier_id = change_request.carrier_id
+    term_policy_end_date = change_request.begin_date - 1.day
+    return false unless pol.employer_id == nil
+    return false unless pol.term_for_np == true
+    return false unless pol.plan_id.to_s == reinstate_policy_plan_id
+    return false unless pol.carrier_id.to_s == reinstate_policy_carrier_id
+    return false unless (pol.aasm_state == "terminated" && pol.policy_end == term_policy_end_date) || (pol.aasm_state == "canceled" && pol.policy_start == change_request.begin_date)
+    true
+  end
+
+  def alter_non_carefirst_npt_flag(change_request, policy)
+    if change_request.reinstate? && policy.term_for_np == true
+      policy.update_attributes!(term_for_np: false)
+      Observers::PolicyUpdated.notify(policy)
+    elsif change_request.cancel? && policy.aasm_state == 'resubmitted'
+      unless policy.versions.empty?
+        last_version_npt = policy.versions.last.term_for_np
+        policy.update_attributes!(term_for_np: last_version_npt)
+      end
     end
   end
 
