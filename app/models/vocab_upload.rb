@@ -72,8 +72,14 @@ class VocabUpload
       if change_request.type == 'add' && change_request.reason.text == 'initial_enrollment' && term_or_cancel_carefirst_policy_exists?(pol, change_request)
         pol.update_attributes!(term_for_np: false)
         Observers::PolicyUpdated.notify(pol)
+        return true
       elsif change_request.cancel? && policy.aasm_state == 'resubmitted' && term_or_cancel_carefirst_policy_exists?(pol, change_request)
         policy.update_attributes!(term_for_np: true)
+        return true
+      elsif change_request.terminate? && policy.aasm_state == 'terminated' && policy.term_for_np == true
+        policy.update_attributes!(term_for_np: false)
+        Observers::PolicyUpdated.notify(policy)
+        return true
       end
     end
   end
@@ -99,6 +105,9 @@ class VocabUpload
         last_version_npt = policy.versions.last.term_for_np
         policy.update_attributes!(term_for_np: last_version_npt)
       end
+    elsif change_request.terminate? && policy.aasm_state == 'terminated' && policy.term_for_np == true
+      policy.update_attributes!(term_for_np: false)
+      Observers::PolicyUpdated.notify(policy)
     end
   end
 
