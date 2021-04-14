@@ -57,7 +57,7 @@ feature 'uploading individual CV', :dbclean => :after_each do
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 
-  scenario 'a successful upload' do
+  scenario 'A carefirst reinstate CV successful upload' do
     file_path = Rails.root + "spec/support/fixtures/individual_enrollment/carefirst_correct.xml"
     allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
     allow(mock_event_broadcaster).to receive(:broadcast).with(
@@ -88,7 +88,7 @@ feature 'uploading individual CV', :dbclean => :after_each do
     expect(page).to have_content 'Uploaded successfully.'
   end
 
-  scenario 'a successful upload' do
+  scenario 'A non carefirst reinstate CV successful upload' do
     file_path = Rails.root + "spec/support/fixtures/individual_enrollment/non_carefirst_correct.xml"
     allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
     allow(mock_event_broadcaster).to receive(:broadcast).with(
@@ -97,7 +97,7 @@ feature 'uploading individual CV', :dbclean => :after_each do
         :app_id =>  "gluedb",
         :headers =>  {
           "file_name" => File.basename(file_path),
-          "kind" => 'initial_enrollment',
+          "kind" => 'maintenance',
           "submitted_by"  => user.email,
           "bypass_validation" => "false",
           "redmine_ticket" => "1234"
@@ -107,7 +107,68 @@ feature 'uploading individual CV', :dbclean => :after_each do
     )
     visit new_vocab_upload_path
 
-    choose 'Initial Enrollment'
+    choose 'Maintenance'
+    fill_in "vocab_upload[redmine_ticket]", with: "1234"
+
+    attach_file('vocab_upload_vocab', file_path)
+
+    expect(policy.term_for_np).to eq true
+    click_button "Upload"
+    policy.reload
+    expect(policy.term_for_np).to eq false
+    expect(page).to have_content 'Uploaded successfully.'
+  end
+
+  scenario 'A carefirst termination CV successful upload' do
+    file_path = Rails.root + "spec/support/fixtures/individual_enrollment/term_carefirst_correct.xml"
+    allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
+    allow(mock_event_broadcaster).to receive(:broadcast).with(
+      {
+        :routing_key => "info.events.legacy_enrollment_vocabulary.uploaded",
+        :app_id =>  "gluedb",
+        :headers =>  {
+          "file_name" => File.basename(file_path),
+          "kind" => 'maintenance',
+          "submitted_by"  => user.email,
+          "bypass_validation" => "false",
+          "redmine_ticket" => "1234"
+        }
+      },
+      File.read(file_path)
+    )
+    visit new_vocab_upload_path
+
+    choose 'Maintenance'
+    fill_in "vocab_upload[redmine_ticket]", with: "1234"
+    attach_file('vocab_upload_vocab', file_path)
+    terminated_policy = Policy.where(eg_id: '2').first
+    expect(terminated_policy.term_for_np).to eq true
+    click_button "Upload"
+    terminated_policy.reload
+    expect(terminated_policy.term_for_np).to eq false
+    expect(page).to have_content 'Uploaded successfully.'
+  end
+
+  scenario 'A non carefirst termination CV successful upload' do
+    file_path = Rails.root + "spec/support/fixtures/individual_enrollment/term_non_carefirst_correct.xml"
+    allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
+    allow(mock_event_broadcaster).to receive(:broadcast).with(
+      {
+        :routing_key => "info.events.legacy_enrollment_vocabulary.uploaded",
+        :app_id =>  "gluedb",
+        :headers =>  {
+          "file_name" => File.basename(file_path),
+          "kind" => 'maintenance',
+          "submitted_by"  => user.email,
+          "bypass_validation" => "false",
+          "redmine_ticket" => "1234"
+        }
+      },
+      File.read(file_path)
+    )
+    visit new_vocab_upload_path
+
+    choose 'Maintenance'
     fill_in "vocab_upload[redmine_ticket]", with: "1234"
 
     attach_file('vocab_upload_vocab', file_path)
