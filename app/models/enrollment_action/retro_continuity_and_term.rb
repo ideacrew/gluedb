@@ -3,6 +3,10 @@ module EnrollmentAction
     include NotificationExemptionHelper
     extend RenewalComparisonHelper
 
+    def self.qualifies_3?(chunk)
+      qualifies?(chunk)
+    end
+
     def self.qualifies?(chunk)
       return false if chunk.length < 3
       # 3 events [prior_cov, current_cov_term, renewal_cov_for_prior]
