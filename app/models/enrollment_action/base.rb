@@ -21,6 +21,13 @@ module EnrollmentAction
       end
     end
 
+    def self.check_for_action_3(chunk)
+      selected_action = [
+        ::EnrollmentAction::RetroContinuityAndTerm
+      ].detect { |kls| kls.qualifies_3?(chunk) }
+      selected_action
+    end
+
     def self.select_action_for(chunk)
       selected_action = [
         ::EnrollmentAction::RetroContinuityAndTerm,
@@ -64,6 +71,10 @@ module EnrollmentAction
         end
         nil
       end
+    end
+
+    def self.qualifies_3?(chunk)
+      false
     end
 
     def self.construct(chunk)

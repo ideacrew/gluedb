@@ -57,10 +57,7 @@ module Handlers
     end
 
     def chunk_enrollments(enrollments)
-      aw = ArrayWindow.new(enrollments)
-      aw.chunk_adjacent do |a, b|
-        !a.is_adjacent_to?(b)
-      end
+      ::EnrollmentAction::TripleChunkBuilder.call(enrollments)
     end
 
     def resolve_actions(enrollment_set)
