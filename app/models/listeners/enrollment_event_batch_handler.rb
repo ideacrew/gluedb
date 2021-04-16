@@ -57,7 +57,7 @@ module Listeners
            if batch.may_process?
              batch.process!
              Amqp::ConfirmedPublisher.with_confirmed_channel(connection) do |chan|
-               ex = chan.topic(ExchangeInformation.event_publish_exchange, {:durable => true})
+               ex = chan.topic(ExchangeInformation.event_exchange, {:durable => true})
                ex.publish(
                  "",
                  { routing_key: BatchProcess,
