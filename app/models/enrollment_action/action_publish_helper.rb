@@ -216,6 +216,34 @@ module EnrollmentAction
       event_xml_doc
     end
 
+    def set_carrier_member_id(carrier_member_id)
+      event_xml_doc.xpath("//cv:enrollment_event_body/cv:affected_members/cv:affected_member", XML_NS).each do |node|
+        node.xpath("cv:member/cv:id/cv:id/cv:alias_ids/cv:alias_id", XML_NS).each do |d_node|
+          d_node.content = carrier_member_id
+        end
+      end
+      event_xml_doc.xpath("//cv:enrollment_event_body/cv:enrollment/cv:policy/cv:enrollees/cv:enrollee", XML_NS).each do |node|
+        node.xpath("cv:member/cv:id/cv:id/cv:alias_id/cv:alias_id", XML_NS).each do |d_node|
+          d_node.content = carrier_member_id
+        end
+      end
+      event_xml_doc
+    end
+
+    def set_carrier_policy_id(carrier_policy_id)
+      event_xml_doc.xpath("//cv:enrollment_event_body/cv:affected_members/cv:affected_member", XML_NS).each do |node|
+        node.xpath("cv:member/cv:id/cv:id/cv:alias_ids/cv:alias_id", XML_NS).each do |d_node|
+          d_node.content = carrier_policy_id
+        end
+      end
+      event_xml_doc.xpath("//cv:enrollment_event_body/cv:enrollment/cv:policy/cv:enrollees/cv:enrollee", XML_NS).each do |node|
+        node.xpath("cv:member/cv:id/cv:id/cv:alias_id/cv:alias_id", XML_NS).each do |d_node|
+          d_node.content = carrier_policy_id
+        end
+      end
+      event_xml_doc
+    end
+
     def set_policy_id(policy_id_value)
       event_xml_doc.xpath("//cv:enrollment_event_body/cv:enrollment/cv:policy/cv:id/cv:id", XML_NS).each do |node|
         node.content = policy_id_value

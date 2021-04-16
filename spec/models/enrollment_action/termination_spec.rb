@@ -146,7 +146,7 @@ describe EnrollmentAction::Termination, "given a valid enrollment" do
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
-  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago) }
+  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil) }
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
   let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, aasm_state: "submitted", employer_id: '', carrier: carrier, reload: true, canceled?: false) }
   let(:termination_event) { instance_double(

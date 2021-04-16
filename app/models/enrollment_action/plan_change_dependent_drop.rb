@@ -50,11 +50,13 @@ module EnrollmentAction
         publish_edi(amqp_connection, action_helper.to_xml, action.hbx_enrollment_id, action.employer_hbx_id)
       else
         existing_policy = termination.existing_policy
+        termination_helper = EnrollmentAction::ActionPublishHelper.new(termination.event_xml)
         member_date_map = {}
         existing_policy.enrollees.each do |en|
           member_date_map[en.m_id] = en.coverage_start
+          termination_helper.set_carrier_member_id("urn:openhbx:hbx:me0:resources:v1:person:member_id##{en.c_id}") if en.c_id.present?
+          termination_helper.set_carrier_policy_id("urn:openhbx:hbx:me0:resources:v1:person:policy_id##{en.cp_id}") if en.cp_id.present?
         end
-        termination_helper = EnrollmentAction::ActionPublishHelper.new(termination.event_xml)
         termination_helper.set_event_action("urn:openhbx:terms:v1:enrollment#change_member_terminate")
         termination_helper.set_policy_id(existing_policy.eg_id)
         termination_helper.set_member_starts(member_date_map)

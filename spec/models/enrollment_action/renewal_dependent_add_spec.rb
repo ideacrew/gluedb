@@ -137,9 +137,10 @@ describe EnrollmentAction::RenewalDependentAdd, "#publish" do
   let(:event_xml) { double }
   let(:member_primary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
   let(:enrollee_primary) { instance_double(Openhbx::Cv2::Enrollee, :member => member_primary, :subscriber? => true) }
-  let(:enrollee_affected) { instance_double(Enrollee, :m_id => 1)}
+  let(:enrollee_affected) { instance_double(Enrollee, :m_id => 1, :c_id => nil, :cp_id => nil)}
   let(:primary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
-
+  let!(:enrollee) { double(:m_id => 3, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee], :eg_id => 3) }
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary]) }
 
   let(:renewal_dependent_add_event) { instance_double(
@@ -147,6 +148,7 @@ describe EnrollmentAction::RenewalDependentAdd, "#publish" do
     :all_member_ids => [1,2],
     :event_responder => event_responder,
     :event_xml => event_xml,
+    :existing_policy => policy,
     :policy_cv => new_policy_cv,
     :hbx_enrollment_id => 1,
     :employer_hbx_id => 1
@@ -192,7 +194,8 @@ describe EnrollmentAction::RenewalDependentAdd, "#publish" do
 
   context "carrier with canceled_renewal_causes_new_coverage" do
     let(:carrier) { instance_double(Carrier, :canceled_renewal_causes_new_coverage => true) }
-    let(:policy) { instance_double(Policy, :carrier => carrier) }
+    let(:enrollee2) { instance_double(Enrollee, :m_id => 4, :c_id => nil, :cp_id => nil)}
+    let(:policy) { instance_double(Policy, :carrier => carrier, :enrollees => [enrollee2]) }
 
     before do
       allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(event_xml).and_return(action_helper)

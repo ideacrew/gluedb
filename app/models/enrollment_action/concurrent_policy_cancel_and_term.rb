@@ -38,7 +38,6 @@ module EnrollmentAction
       member_end_date_map = {}
       dropped_dependents = []
       terminated_dependents = []
-
       existing_policy.enrollees.each do |en|
         member_date_map[en.m_id] = en.coverage_start
         member_end_date_map[en.m_id] = en.coverage_end
@@ -51,6 +50,13 @@ module EnrollmentAction
       if dropped_dependents.present?
         cancellation_helper = ActionPublishHelper.new(termination.event_xml)
         cancellation_helper.set_event_action("urn:openhbx:terms:v1:enrollment#change_member_terminate")
+        enrollees = existing_policy.try(:enrollees)
+        if enrollees.present?
+          enrollees.each do |en|
+            cancellation_helper.set_carrier_member_id("urn:openhbx:hbx:me0:resources:v1:person:member_id##{en.c_id}") if en.c_id.present?
+            cancellation_helper.set_carrier_policy_id("urn:openhbx:hbx:me0:resources:v1:person:policy_id##{en.cp_id}") if en.cp_id.present?
+          end
+        end
         cancellation_helper.set_policy_id(existing_policy.eg_id)
         cancellation_helper.set_member_starts(member_date_map)
         cancellation_helper.filter_affected_members(dropped_dependents)
@@ -68,6 +74,13 @@ module EnrollmentAction
       if terminated_dependents.present?
         termination_helper = ActionPublishHelper.new(termination.event_xml)
         termination_helper.set_event_action("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
+        enrollees = existing_policy.try(:enrollees)
+        if enrollees.present?
+          enrollees.each do |en|
+            termination_helper.set_carrier_member_id("urn:openhbx:hbx:me0:resources:v1:person:member_id##{en.c_id}") if en.c_id.present?
+            termination_helper.set_carrier_policy_id("urn:openhbx:hbx:me0:resources:v1:person:policy_id##{en.cp_id}") if en.cp_id.present?
+          end
+        end
         termination_helper.set_policy_id(existing_policy.eg_id)
         termination_helper.set_member_starts(member_date_map)
         termination_helper.filter_affected_members(terminated_dependents)
