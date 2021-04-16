@@ -401,7 +401,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
         }
       }, "")
       allow(::Amqp::ConfirmedPublisher).to receive(:with_confirmed_channel).with(connection).and_yield(channel)
-      allow(ExchangeInformation).to receive(:event_publish_exchange).and_return(event_exchange_name)
+      allow(ExchangeInformation).to receive(:event_exchange).and_return(event_exchange_name)
       allow(channel).to receive(:topic).with(event_exchange_name, {:durable => true}).and_return(default_exchange)
       allow(default_exchange).to receive(:publish).with(
         "",
