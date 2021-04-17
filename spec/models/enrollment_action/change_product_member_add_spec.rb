@@ -7,6 +7,7 @@ describe EnrollmentAction::PlanChangeDependentAdd, "given an enrollment event se
 - the second enrollment has more members
 - the second enrollment has a different product" do
 
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => false) }
   let(:old_plan) { instance_double(Plan, :id => 1, :carrier_id => "1234") }
   let(:new_plan) { instance_double(Plan, :id => 2, :carrier_id => "1234") }
   let(:new_plan_different_carrier) { instance_double(Plan, :id => 3, :carrier_id => "4567") }
@@ -22,6 +23,12 @@ describe EnrollmentAction::PlanChangeDependentAdd, "given an enrollment event se
 
   subject { EnrollmentAction::PlanChangeDependentAdd }
 
+  before do
+    allow(old_plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan_different_carrier).to receive(:carrier).and_return(carrier)
+  end
+
   it "qualifies" do
     expect(subject.qualifies?(event_set)).to be_truthy
   end
@@ -34,6 +41,32 @@ describe EnrollmentAction::PlanChangeDependentAdd, "given an enrollment event se
     expect(subject.qualifies?(event_set.take(1))).to be_falsey
   end
 
+end
+
+describe EnrollmentAction::PlanChangeDependentAdd, "given an enrollment event set that:
+-- has two events
+-- has different plan
+-- has same carrier
+-- with carrier requiring term/drop" do
+
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => true) }
+  let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
+  let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
+
+  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2]) }
+  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => new_plan, :all_member_ids => [1,2]) }
+  let(:event_set) { [event_1, event_2] }
+
+  subject { EnrollmentAction::PlanChangeDependentAdd }
+
+  before do
+    allow(plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan).to receive(:carrier).and_return(carrier)
+  end
+
+  it "doesn't qualify" do
+    expect(subject.qualifies?(event_set)).to be_falsey
+  end
 end
 
 describe EnrollmentAction::PlanChangeDependentAdd, "given a qualified enrollment set, being persisted" do
