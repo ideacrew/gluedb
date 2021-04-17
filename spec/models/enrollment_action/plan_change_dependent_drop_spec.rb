@@ -7,6 +7,7 @@ describe EnrollmentAction::PlanChangeDependentDrop, "given an EnrollmentAction a
   - has no dropped dependents
   - is not the same plan, has the same carrier, and has dropped dependents" do
 
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => false) }
   let(:plan_1) { instance_double(Plan, id: 1, carrier_id: 1) }
   let(:plan_2) { instance_double(Plan, id: 2, carrier_id: 2) }
   let(:plan_3) { instance_double(Plan, id: 3, carrier_id: 1) }
@@ -17,6 +18,12 @@ describe EnrollmentAction::PlanChangeDependentDrop, "given an EnrollmentAction a
   let(:succeeds) { instance_double(ExternalEvents::EnrollmentEventNotification, existing_plan: plan_3, all_member_ids: [1, 2]) }
 
   subject { EnrollmentAction::PlanChangeDependentDrop }
+
+  before do
+    allow(plan_1).to receive(:carrier).and_return(carrier)
+    allow(plan_2).to receive(:carrier).and_return(carrier)
+    allow(plan_3).to receive(:carrier).and_return(carrier)
+  end
 
   it "does not qualify because it has less than two elements" do
     expect(subject.qualifies?([main_event])).to be_false
@@ -36,6 +43,53 @@ describe EnrollmentAction::PlanChangeDependentDrop, "given an EnrollmentAction a
 
   it "qualifies" do
     expect(subject.qualifies?([main_event, succeeds])).to be_truthy
+  end
+end
+
+describe EnrollmentAction::PlanChangeDependentDrop, "given an EnrollmentAction array that:
+  - has less than two elements
+  - is the same plan
+  - doesn't have the same carrier
+  - has no dropped dependents
+  - is not the same plan, has the same carrier, and has dropped dependents
+  - carrier require term/drop" do
+
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => true) }
+  let(:plan_1) { instance_double(Plan, id: 1, carrier_id: 1) }
+  let(:plan_2) { instance_double(Plan, id: 2, carrier_id: 2) }
+  let(:plan_3) { instance_double(Plan, id: 3, carrier_id: 1) }
+  let(:main_event) { instance_double(ExternalEvents::EnrollmentEventNotification, existing_plan: plan_1, all_member_ids: [1, 2, 3]) }
+  let(:fails_plan_id_is_the_same) { instance_double(ExternalEvents::EnrollmentEventNotification, existing_plan: plan_1, all_member_ids: [1, 2]) }
+  let(:fails_carrier_ids_are_different) { instance_double(ExternalEvents::EnrollmentEventNotification, existing_plan: plan_2, all_member_ids: [1, 2]) }
+  let(:fails_no_dropped_dependents) { instance_double(ExternalEvents::EnrollmentEventNotification, existing_plan: plan_2, all_member_ids: [1, 2, 3]) }
+  let(:succeeds) { instance_double(ExternalEvents::EnrollmentEventNotification, existing_plan: plan_3, all_member_ids: [1, 2]) }
+
+  subject { EnrollmentAction::PlanChangeDependentDrop }
+
+  before do
+    allow(plan_1).to receive(:carrier).and_return(carrier)
+    allow(plan_2).to receive(:carrier).and_return(carrier)
+    allow(plan_3).to receive(:carrier).and_return(carrier)
+  end
+
+  it "does not qualify because it has less than two elements" do
+    expect(subject.qualifies?([main_event])).to be_false
+  end
+
+  it "does not qualify because both elements are the same plan" do
+    expect(subject.qualifies?([main_event, fails_plan_id_is_the_same])).to be_false
+  end
+
+  it "does not qualify because the carrier IDs are different" do
+    expect(subject.qualifies?([main_event, fails_carrier_ids_are_different])).to be_false
+  end
+
+  it "does not qualify because there are no dropped dependents" do
+    expect(subject.qualifies?([main_event, fails_no_dropped_dependents])).to be_false
+  end
+
+  it "doesn'tqualifies" do
+    expect(subject.qualifies?([main_event, succeeds])).to be_false
   end
 end
 

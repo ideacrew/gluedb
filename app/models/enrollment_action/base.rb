@@ -35,6 +35,7 @@ module EnrollmentAction
         ::EnrollmentAction::PlanChange,
         ::EnrollmentAction::PlanChangeDependentAdd,
         ::EnrollmentAction::PlanChangeDependentDrop,
+        ::EnrollmentAction::PlanChangeSameCarrier,
         ::EnrollmentAction::RenewalDependentAdd,
         ::EnrollmentAction::RenewalDependentDrop,
         ::EnrollmentAction::CobraNewPolicySwitchover,
