@@ -16,7 +16,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
     let(:subscriber_hbx_id) { 1 }
     let(:delivery_tag) { double }
     let(:delivery_info) { double(delivery_tag: delivery_tag, routing_key: nil) }
-    let(:headers) {double}
+    let(:headers) { {} }
     let(:event_time) { Time.now }
     let(:properties) do
       double(
@@ -134,7 +134,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
       transaction = batch.transactions.first
       expect(transaction.batch_id).to eq batch.id
       expect(transaction.payload).to eq body
-      expect(transaction.headers).to eq "#{headers}"
+      expect(transaction.headers).to eq headers
     end
 
     it "should broadcast batch created and transaction updated message" do
@@ -177,7 +177,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
     let(:subscriber_hbx_id) { 1 }
     let(:delivery_tag) { double }
     let(:delivery_info) { double(delivery_tag: delivery_tag, routing_key: nil) }
-    let(:headers) {double}
+    let(:headers) { {} }
     let(:event_time) { Time.now }
     let(:properties) do
       double(
@@ -286,7 +286,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
       transaction = batch.transactions.first
       expect(transaction.batch_id).to eq batch.id
       expect(transaction.payload).to eq body
-      expect(transaction.headers).to eq "#{headers}"
+      expect(transaction.headers).to eq headers
     end
 
     it "should update existing batch with transaction" do
@@ -304,7 +304,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
     let(:subscriber_hbx_id) { 1 }
     let(:delivery_tag) { double }
     let(:delivery_info) { double(delivery_tag: delivery_tag, routing_key: "") }
-    let(:headers) {double}
+    let(:headers) { {} }
     let(:event_time) { Time.now }
     let(:properties) do
       double(

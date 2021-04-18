@@ -61,11 +61,11 @@ module Listeners
                ex.publish(
                  "",
                  { routing_key: BatchProcess,
-                   headers: { batch_id: batch.id }
+                   headers: { batch_id: batch.id.to_s }
                  }
                )
              end
-             resource_event_broadcast("info", "batch_processing", "200", "", { batch_id: batch.id })
+             resource_event_broadcast("info", "batch_processing", "200", "", { batch_id: batch.id.to_s })
            end
         end
       end

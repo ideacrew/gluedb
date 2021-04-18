@@ -6,7 +6,7 @@ module EnrollmentEvents
 
     field :batch_id, type: Time
     field :payload, type: String
-    field :headers, type: String
+    field :headers, type: Hash
     field :event_time, type: Time
 
     belongs_to :batch, index: true
