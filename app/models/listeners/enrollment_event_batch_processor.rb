@@ -20,13 +20,14 @@ module Listeners
     end
 
     def on_message(delivery_info, properties, body)
-      m_headers = properties.headers || {}
+      m_headers = (properties.headers || {}).to_hash.stringify_keys
+      batch_id = m_headers["batch_id"].to_s
       responder = ::ExternalEvents::BatchRecordResponder.new(
         "application.gluedb.enrollment_event_batch_processor",
-        channel, m_headers[:batch_id]
+        channel, batch_id
       )
       begin
-        batch = EnrollmentEvents::Batch.where(id: properties.headers[:batch_id], aasm_state: "pending_transmission", ).first
+        batch = EnrollmentEvents::Batch.where(id: batch_id, aasm_state: "pending_transmission").first
         if batch.present?
           events = []
           batch.transactions.each do |transaction|
@@ -40,18 +41,16 @@ module Listeners
             events << event_message
           end
           EnrollmentEventProcessingClient.new.call(events)
-          channel.ack(delivery_info.delivery_tag, false)
           batch.transmit! if batch.may_transmit?
-          resource_event_broadcast("info", "batch_processed", "200", body, m_headers)
+          resource_event_broadcast("info", "batch_processed", "200", body, properties.headers)
         else
-          resource_event_broadcast("info", "batch_not_found", "404", body, m_headers)
+          resource_event_broadcast("info", "batch_not_found", "404", body, properties.headers)
         end
-        channel.ack(delivery_info.delivery_tag, false)
       rescue => error
-        batch.exception! if batch.present?
-        resource_error_broadcast("exception", "500", error.backtrace, m_headers)
-        channel.ack(delivery_info.delivery_tag, false)
+        batch.exception! if batch.present? && batch.may_exception?
+        resource_error_broadcast("exception", "500", error.backtrace, properties.headers)
       end
+      channel.ack(delivery_info.delivery_tag, false)
     end
 
     def self.create_queues(chan)
