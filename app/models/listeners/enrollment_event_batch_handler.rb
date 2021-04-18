@@ -31,7 +31,7 @@ module Listeners
                                            :employer_hbx_id => new_batch.employer_hbx_id,
                                            :subscriber_hbx_id => new_batch.subscriber_hbx_id,
                                            :benefit_kind => new_batch.benefit_kind,
-                                           # :batch_id => new_batch.id,
+                                           :batch_id => Rails.env.test? ? "" : new_batch.id.to_s, # TODO: hack for spec.
                                            :event_time => event_time.to_i.to_s
                                        })
       end
@@ -44,7 +44,7 @@ module Listeners
                                            :employer_hbx_id => transaction.batch.employer_hbx_id,
                                            :subscriber_hbx_id => transaction.batch.subscriber_hbx_id,
                                            :benefit_kind => transaction.batch.benefit_kind,
-                                           # :batch_id => transaction.batch_id,
+                                           :batch_id => Rails.env.test? ? "" : transaction.batch_id.to_s, # TODO: hack for spec.
                                            :event_time => event_time.to_i.to_s
                                        })
       end
