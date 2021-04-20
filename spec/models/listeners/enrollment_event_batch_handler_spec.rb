@@ -11,7 +11,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
 
   subject { Listeners::EnrollmentEventBatchHandler.new(channel, queue) }
 
-  context "given an SHOP enrollment message" do
+  context "given an Health enrollment message" do
     let(:employer_hbx_id) { 1 }
     let(:subscriber_hbx_id) { 1 }
     let(:delivery_tag) { double }
@@ -53,6 +53,23 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
                   </enrollee>
                 </enrollees>
                 <enrollment>
+                  <plan>
+                    <id>
+                      <id>1</id>
+                    </id>
+                    <name>BluePreferred PPO Standard Platinum $0</name>
+                    <active_year>2020</active_year>
+                    <is_dental_only>false</is_dental_only>
+                    <carrier>
+                      <id>
+                        <id>1</id>
+                      </id>
+                      <name>CareFirst</name>
+                    </carrier>
+                    <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+                    <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+                    <ehb_percent>99.64</ehb_percent>
+                  </plan>
                   <individual_market>
                     <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
                     <applied_aptc_amount>100.00</applied_aptc_amount>
@@ -84,7 +101,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
         :headers=> {
           :employer_hbx_id => "1",
           :subscriber_hbx_id => "1",
-          :benefit_kind => "shop",
+          :benefit_kind => "health",
           :batch_id => "",
           :event_time=> "#{@time_now.to_i}",
           :return_status => "200",
@@ -97,7 +114,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
         :headers=> {
           :employer_hbx_id => "1",
           :subscriber_hbx_id => "1",
-          :benefit_kind => "shop",
+          :benefit_kind => "health",
           :batch_id => "",
           :event_time=> "#{@time_now.to_i}",
           :return_status => "200",
@@ -121,7 +138,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
       batch = EnrollmentEvents::Batch.first
       expect(batch.subscriber_hbx_id).to eq "#{subscriber_hbx_id}"
       expect(batch.employer_hbx_id).to eq "#{employer_hbx_id}"
-      expect(batch.benefit_kind).to eq 'shop'
+      expect(batch.benefit_kind).to eq 'health'
       expect(batch.aasm_state).to eq 'open'
     end
 
@@ -145,7 +162,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
         :headers=> {
           :employer_hbx_id => "1",
           :subscriber_hbx_id => "1",
-          :benefit_kind => "shop",
+          :benefit_kind => "health",
           :batch_id => "",
           :event_time=> "#{@time_now.to_i}",
           :return_status => "200",
@@ -157,7 +174,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
         :headers=> {
           :employer_hbx_id => "1",
            :subscriber_hbx_id => "1",
-           :benefit_kind => "shop",
+           :benefit_kind => "health",
            :batch_id => "",
            :event_time=> "#{@time_now.to_i}",
            :return_status => "200",
@@ -177,7 +194,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
     end
   end
 
-  context "given an IVL enrollment message" do
+  context "given an Dental enrollment message" do
     let(:subscriber_hbx_id) { 1 }
     let(:delivery_tag) { double }
     let(:delivery_info) { double(delivery_tag: delivery_tag, routing_key: nil) }
@@ -218,6 +235,23 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
                   </enrollee>
                 </enrollees>
                 <enrollment>
+                  <plan>
+                    <id>
+                      <id>1</id>
+                    </id>
+                    <name>BluePreferred PPO Standard Platinum $0</name>
+                    <active_year>2020</active_year>
+                    <is_dental_only>true</is_dental_only>
+                    <carrier>
+                      <id>
+                        <id>1</id>
+                      </id>
+                      <name>CareFirst</name>
+                    </carrier>
+                    <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+                    <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+                    <ehb_percent>99.64</ehb_percent>
+                  </plan>
                   <individual_market>
                     <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
                     <applied_aptc_amount>100.00</applied_aptc_amount>
@@ -244,7 +278,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
        :headers=> {
          :employer_hbx_id => nil,
          :subscriber_hbx_id => "1",
-         :benefit_kind => "individual",
+         :benefit_kind => "dental",
          :batch_id => "",
          :event_time=> "#{@time_now.to_i}",
          :return_status => "200",
@@ -255,7 +289,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
         :headers=> {
           :employer_hbx_id => nil,
           :subscriber_hbx_id => "1",
-          :benefit_kind => "individual",
+          :benefit_kind => "dental",
           :batch_id => "",
           :event_time=> "#{@time_now.to_i}",
           :return_status => "200",
@@ -277,7 +311,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
       batch = EnrollmentEvents::Batch.first
       expect(batch.subscriber_hbx_id).to eq "#{subscriber_hbx_id}"
       expect(batch.employer_hbx_id).to eq nil
-      expect(batch.benefit_kind).to eq 'individual'
+      expect(batch.benefit_kind).to eq 'dental'
       expect(batch.aasm_state).to eq 'open'
     end
 
@@ -347,6 +381,23 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
                   </enrollee>
                 </enrollees>
                 <enrollment>
+                  <plan>
+                    <id>
+                      <id>1</id>
+                    </id>
+                    <name>BluePreferred PPO Standard Platinum $0</name>
+                    <active_year>2020</active_year>
+                    <is_dental_only>false</is_dental_only>
+                    <carrier>
+                      <id>
+                        <id>1</id>
+                      </id>
+                      <name>CareFirst</name>
+                    </carrier>
+                    <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+                    <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+                    <ehb_percent>99.64</ehb_percent>
+                  </plan>
                   <individual_market>
                     <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
                     <applied_aptc_amount>100.00</applied_aptc_amount>
@@ -374,7 +425,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
         :headers=> {
           :employer_hbx_id => nil,
           :subscriber_hbx_id => "1",
-          :benefit_kind => "individual",
+          :benefit_kind => "health",
           :batch_id => "",
           :event_time=> "#{@time_now.to_i}",
           :return_status => "200",
@@ -386,7 +437,7 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
         :headers=> {
           :employer_hbx_id => nil,
           :subscriber_hbx_id => "1",
-          :benefit_kind => "individual",
+          :benefit_kind => "health",
           :batch_id => "",
           :event_time=> "#{@time_now.to_i}",
           :return_status => "200",
