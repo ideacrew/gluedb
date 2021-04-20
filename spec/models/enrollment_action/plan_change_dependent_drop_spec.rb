@@ -84,11 +84,11 @@ describe EnrollmentAction::PlanChangeDependentDrop, "given an EnrollmentAction a
     expect(subject.qualifies?([main_event, fails_carrier_ids_are_different])).to be_false
   end
 
-  it "does not qualify because there are no dropped dependents" do
+  it "does not qualify because carriers are same but carrier requires term drop" do
     expect(subject.qualifies?([main_event, fails_no_dropped_dependents])).to be_false
   end
 
-  it "doesn'tqualifies" do
+  it "doesn't qualifies" do
     expect(subject.qualifies?([main_event, succeeds])).to be_false
   end
 end
