@@ -33,6 +33,23 @@ describe EnrollmentEvents::Batch, :dbclean => :after_each do
                 </enrollee>
               </enrollees>
               <enrollment>
+                <plan>
+                  <id>
+                    <id>1</id>
+                  </id>
+                  <name>BluePreferred PPO Standard Platinum $0</name>
+                  <active_year>2020</active_year>
+                  <is_dental_only>false</is_dental_only>
+                  <carrier>
+                    <id>
+                      <id>1</id>
+                    </id>
+                    <name>CareFirst</name>
+                  </carrier>
+                  <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+                  <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+                  <ehb_percent>99.64</ehb_percent>
+                </plan>
                 <individual_market>
                   <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
                   <applied_aptc_amount>100.00</applied_aptc_amount>
@@ -75,6 +92,10 @@ describe EnrollmentEvents::Batch, :dbclean => :after_each do
       subject.create_batch_and_yield(parsed_event) do
       end
       expect(EnrollmentEvents::Batch.count).to eq 1
+      batch = EnrollmentEvents::Batch.first
+      expect(batch.subscriber_hbx_id).to eq "1"
+      expect(batch.benefit_kind).to eq "health"
+      expect(batch.employer_hbx_id).to eq nil
       expect(EnrollmentEvents::Batch.first.aasm_state).to eq "open"
     end
   end

@@ -39,7 +39,7 @@ module EnrollmentEvents
       self.where({
         subscriber_hbx_id: parsed_event.subscriber_id,
         employer_hbx_id: parsed_event.employer_hbx_id,
-        benefit_kind: parsed_event.determine_market(parsed_event.enrollment_event_xml),
+        benefit_kind: benefit_kind(parsed_event),
         aasm_state: 'open'
       }).any?
     end
@@ -48,7 +48,7 @@ module EnrollmentEvents
       self.where({
                      subscriber_hbx_id: parsed_event.subscriber_id,
                      employer_hbx_id: parsed_event.employer_hbx_id,
-                     benefit_kind: parsed_event.determine_market(parsed_event.enrollment_event_xml),
+                     benefit_kind: benefit_kind(parsed_event),
                      aasm_state: 'open'
                  }).first
     end
@@ -62,8 +62,12 @@ module EnrollmentEvents
       self.create!({
         subscriber_hbx_id: parsed_event.subscriber_id,
         employer_hbx_id: parsed_event.employer_hbx_id,
-        benefit_kind: parsed_event.determine_market(parsed_event.enrollment_event_xml)
+        benefit_kind: benefit_kind(parsed_event)
       })
+    end
+
+    def self.benefit_kind(parsed_event)
+      (parsed_event.coverage_type == "true" || parsed_event.coverage_type == true) ? "dental" : "health"
     end
 
     def self.create_batch_transaction_and_yield(parsed_event, new_payload, m_headers, event_time)
