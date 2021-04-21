@@ -16,14 +16,7 @@
       %member
         %id
           %id= "urn:openhbx:hbx:dc0:resources:v1:person:hbx_id##{person.authority_member.hbx_member_id}"
-          - if enrollee.cp_id.present? || enrollee.c_id.present?
-            %alias_ids
-              - if enrollee.c_id.present?
-                %alias_id
-                  %id= "urn:openhbx:hbx:me0:resources:v1:person:member_id##{enrollee.c_id}"
-              - if enrollee.cp_id.present?
-                %alias_id
-                  %id= "urn:openhbx:hbx:me0:resources:v1:person:policy_id##{enrollee.cp_id}"
+          = render :partial => "enrollment_events/alias_id", :locals => { :enrollee => enrollee }
         = render "people/person", :person => person
         - unless enrollee.subscriber?
           %person_relationships

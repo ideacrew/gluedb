@@ -53,8 +53,10 @@ module EnrollmentAction
         enrollees = existing_policy.try(:enrollees)
         if enrollees.present?
           enrollees.each do |en|
-            cancellation_helper.set_carrier_member_id("urn:openhbx:hbx:me0:resources:v1:person:member_id##{en.c_id}") if en.c_id.present?
-            cancellation_helper.set_carrier_policy_id("urn:openhbx:hbx:me0:resources:v1:person:policy_id##{en.cp_id}") if en.cp_id.present?
+            if en.c_id.present? || en.cp_id.present?
+              cancellation_helper.set_member_level_carrier_assigned_ids(en)
+              cancellation_helper.set_policy_level_carrier_assigned_ids(en)
+            end
           end
         end
         cancellation_helper.set_policy_id(existing_policy.eg_id)
@@ -77,8 +79,10 @@ module EnrollmentAction
         enrollees = existing_policy.try(:enrollees)
         if enrollees.present?
           enrollees.each do |en|
-            termination_helper.set_carrier_member_id("urn:openhbx:hbx:me0:resources:v1:person:member_id##{en.c_id}") if en.c_id.present?
-            termination_helper.set_carrier_policy_id("urn:openhbx:hbx:me0:resources:v1:person:policy_id##{en.cp_id}") if en.cp_id.present?
+            if en.c_id.present? || en.cp_id.present?
+              termination_helper.set_member_level_carrier_assigned_ids(en)
+              termination_helper.set_policy_level_carrier_assigned_ids(en)
+            end
           end
         end
         termination_helper.set_policy_id(existing_policy.eg_id)

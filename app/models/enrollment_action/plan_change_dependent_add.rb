@@ -53,8 +53,10 @@ module EnrollmentAction
       enrollees = termination.existing_policy.try(:enrollees)
       if enrollees.present?
         enrollees.each do |en|
-          action_helper.set_carrier_member_id("urn:openhbx:hbx:me0:resources:v1:person:member_id##{en.c_id}") if en.c_id.present?
-          action_helper.set_carrier_policy_id("urn:openhbx:hbx:me0:resources:v1:person:policy_id##{en.cp_id}") if en.cp_id.present?
+          if en.c_id.present? || en.cp_id.present?
+            action_helper.set_member_level_carrier_assigned_ids(en)
+            action_helper.set_policy_level_carrier_assigned_ids(en)
+          end
         end
       end
       action_helper.keep_member_ends([])

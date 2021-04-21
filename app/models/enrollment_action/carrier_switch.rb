@@ -38,16 +38,14 @@ module EnrollmentAction
     def publish
       amqp_connection = termination.event_responder.connection
       action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
+      existing_policy = termination.existing_policy
       if !action.is_shop? && same_carrier_renewal_candidates(action).any?
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#auto_renew")
       else
-        existing_policy = termination.existing_policy
         member_date_map = {}
         termination_helper = ActionPublishHelper.new(termination.event_xml)
         existing_policy.enrollees.each do |en|
           member_date_map[en.m_id] = en.coverage_start
-          termination_helper.set_carrier_member_id("urn:openhbx:hbx:me0:resources:v1:person:member_id##{en.c_id}") if en.c_id.present?
-          termination_helper.set_carrier_policy_id("urn:openhbx:hbx:me0:resources:v1:person:policy_id##{en.cp_id}") if en.cp_id.present?
         end
 
         termination_helper.set_event_action("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
@@ -61,6 +59,15 @@ module EnrollmentAction
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#initial")
       end
 
+      enrollees = existing_policy.try(:enrollees)
+      if enrollees.present?
+        enrollees.each do |en|
+          if en.c_id.present? || en.cp_id.present?
+            action_helper.set_member_level_carrier_assigned_ids(en)
+            action_helper.set_policy_level_carrier_assigned_ids(en)
+          end
+        end
+      end
       action_helper.keep_member_ends([])
       publish_edi(amqp_connection, action_helper.to_xml, action.hbx_enrollment_id, action.employer_hbx_id)
     end
