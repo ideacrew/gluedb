@@ -1,7 +1,7 @@
 module Parsers
   module Edi
     module Etf
-      RPAddress = Struct.new(:street1, :street2, :city, :state, :zip)
+      RPAddress = Struct.new(:street1, :street2, :city, :state, :zip, :county_code)
 
       class ResponsiblePartyParser
         def initialize(rl)
@@ -45,6 +45,9 @@ module Parsers
             )
             if !@address.street2.blank?
               new_address.address_2 = @address.street2
+            end
+            if !@address.county_code.blank?
+              new_address.location_county_code = @address.county_code
             end
             new_person.addresses << new_address
           end
@@ -97,12 +100,14 @@ module Parsers
             city = @rp_loop["N4"][1]
             state = @rp_loop["N4"][2]
             zip = @rp_loop["N4"][3]
+            county_code = @loop["L2100A"]["N4"][4].blank? ? nil : @loop["L2100A"]["N4"][4]
             @address = RPAddress.new(
               street1,
               street2,
               city,
               state,
-              zip
+              zip,
+              county_code
             )
           end
         end

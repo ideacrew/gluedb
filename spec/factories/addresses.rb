@@ -11,6 +11,10 @@ FactoryGirl.define do
       address_type 'invalid'
     end
 
+    trait :with_county_code do
+      location_county_code '10010'
+    end
+
     trait :without_address_1 do
       address_1 ' '
     end

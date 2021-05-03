@@ -111,6 +111,11 @@ module Parsers
           @loop["L2100A"]["N4"][3]
         end
 
+        def county_code
+          result = @loop["L2100A"]["N4"][4]
+          ((result.blank?) ? nil : result)
+        end
+
         def name_prefix
           result = @loop["L2100A"]["NM1"][6]
           ((result.blank?) ? nil : result)
