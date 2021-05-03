@@ -50,7 +50,7 @@ module Queries
           address_hash["address_2"] = address.address_2
         end
         unless address.location_county_code.blank?
-          address_hash["location_county_code"] = address.address_2
+          address_hash["location_county_code"] = address.location_county_code
         end
         {"addresses" => { "$elemMatch" => address_hash}}
       end
