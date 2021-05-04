@@ -9,5 +9,5 @@ MultiForkr.new({
   Listeners::ReportEligibilityUpdatedReducerListener => 1,
   Listeners::ReportEligibilityUpdatedDigestDropListener => 1,
   Listeners::EnrollmentEventBatchHandler => 1,
-  Listeners::EnrollmentEventBatchProcessor => 3
+  Listeners::EnrollmentEventBatchProcessor => 6
 }).run
