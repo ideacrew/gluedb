@@ -56,13 +56,12 @@ module Listeners
         EnrollmentEvents::Batch.where(aasm_state: 'open').each do |batch|
            if batch.may_process?
              batch.process!
-             Amqp::ConfirmedPublisher.with_confirmed_channel(connection) do |chan|
-               ex = chan.topic(ExchangeInformation.event_exchange, {:durable => true})
-               ex.publish(
-                 "",
-                 { routing_key: BatchProcess,
-                   headers: { batch_id: batch.id.to_s }
-                 }
+             ::Amqp::EventBroadcaster.with_broadcaster do |b|
+               b.broadcast(
+                 { :headers => { batch_id: batch.id.to_s },
+                   :routing_key => BatchProcess
+                 },
+                 ""
                )
              end
              resource_event_broadcast("info", "batch_processing", "200", "", { batch_id: batch.id.to_s })

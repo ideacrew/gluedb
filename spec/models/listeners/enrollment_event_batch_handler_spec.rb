@@ -459,15 +459,14 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
           :submitted_timestamp=> @time_now
         }
       }, "")
-      allow(::Amqp::ConfirmedPublisher).to receive(:with_confirmed_channel).with(connection).and_yield(channel)
-      allow(ExchangeInformation).to receive(:event_exchange).and_return(event_exchange_name)
-      allow(channel).to receive(:topic).with(event_exchange_name, {:durable => true}).and_return(default_exchange)
-      allow(default_exchange).to receive(:publish).with(
-        "",
+      allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(event_broadcaster)
+      allow(event_broadcaster).to receive(:broadcast).with(
         {
-          :routing_key => "info.events.enrollment_batch.process",
-          :headers => { batch_id: batch.id }
-        }
+          :headers => { batch_id: batch.id },
+          :routing_key => "info.events.enrollment_batch.process"
+
+        },
+        "",
       )
     end
 
@@ -482,12 +481,12 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
 
     it "should publish batch process event" do
       batch = EnrollmentEvents::Batch.all.first
-      expect(default_exchange).to receive(:publish).with(
-        "",
+      expect(event_broadcaster).to receive(:broadcast).with(
         {
-          :routing_key => "info.events.enrollment_batch.process",
-          :headers => { batch_id: batch.id }
-        }
+          :headers => { batch_id: batch.id },
+          :routing_key => "info.events.enrollment_batch.process"
+        },
+        "",
       )
       delivery_info = double(delivery_tag: delivery_tag, routing_key: "info.events.enrollment_batch.cut")
       subject.on_message(delivery_info, properties, body)
