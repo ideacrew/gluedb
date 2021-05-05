@@ -306,41 +306,10 @@ module EnrollmentAction
       end
     end
 
-    def set_carrier_ids(node, enrollee)
-      member_id_node = node.xpath("cv:member/cv:id", XML_NS).first
-      alias_id_nodes = node.xpath("cv:member/cv:id//cv:alias_ids/cv:alias_id/cv:id", XML_NS)
-      if alias_id_nodes.blank?
-        add_carrier_assigned_ids(ApplicationController.new, enrollee, member_id_node)
-      else
-        alias_id_nodes.each do |alias_id_node|
-          alias_id_node_urn = alias_id_node.content.split('#').first
-          content_value = if alias_id_node_urn == "urn:openhbx:hbx:me0:resources:v1:person:member_id"
-            "urn:openhbx:hbx:me0:resources:v1:person:member_id##{enrollee.c_id}"
-          elsif alias_id_node_urn == "urn:openhbx:hbx:me0:resources:v1:person:policy_id"
-            "urn:openhbx:hbx:me0:resources:v1:person:policy_id##{enrollee.cp_id}"
-          end
-          alias_id_node.content = content_value if content_value
-        end
-      end
-    end
-
-    def set_member_level_carrier_assigned_ids(enrollee)
-      return event_xml_doc if enrollee.c_id.blank? && enrollee.cp_id.blank?
-
-      event_xml_doc.xpath("//cv:enrollment_event_body/cv:affected_members/cv:affected_member", XML_NS).each do |node|
-        next node unless node.xpath("cv:member/cv:id/cv:id", XML_NS).first.content.split('#').last == enrollee.m_id.to_s
-        set_carrier_ids(node, enrollee)
-      end
-      event_xml_doc
-    end
-
-    def set_policy_level_carrier_assigned_ids(enrollee)
-      return event_xml_doc if enrollee.c_id.blank? && enrollee.cp_id.blank?
-
-      event_xml_doc.xpath("//cv:enrollment_event_body/cv:enrollment/cv:policy/cv:enrollees/cv:enrollee", XML_NS).each do |node|
-        next node unless node.xpath("cv:member/cv:id/cv:id", XML_NS).first.content.split('#').last == enrollee.m_id.to_s
-        set_carrier_ids(node, enrollee)
-      end
+    def set_carrier_assigned_ids(enrollee)
+      enricher = EnrollmentAction::MemberIdentifierEnricher.new(event_xml_doc)
+      enricher.set_carrier_assigned_member_id_for(enrollee)
+      enricher.set_carrier_assigned_policy_id_for(enrollee)
       event_xml_doc
     end
 

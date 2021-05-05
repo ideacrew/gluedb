@@ -54,8 +54,7 @@ module EnrollmentAction
         if enrollees.present?
           enrollees.each do |en|
             if en.c_id.present? || en.cp_id.present?
-              cancellation_helper.set_member_level_carrier_assigned_ids(en)
-              cancellation_helper.set_policy_level_carrier_assigned_ids(en)
+              cancellation_helper.set_carrier_assigned_ids(en)
             end
           end
         end
@@ -80,8 +79,7 @@ module EnrollmentAction
         if enrollees.present?
           enrollees.each do |en|
             if en.c_id.present? || en.cp_id.present?
-              termination_helper.set_member_level_carrier_assigned_ids(en)
-              termination_helper.set_policy_level_carrier_assigned_ids(en)
+              termination_helper.set_carrier_assigned_ids(en)
             end
           end
         end

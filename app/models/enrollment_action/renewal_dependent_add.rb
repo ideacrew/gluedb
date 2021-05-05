@@ -43,8 +43,7 @@ module EnrollmentAction
       if enrollees.present?
         enrollees.each do |en|
           if en.c_id.present? || en.cp_id.present?
-            action_helper.set_member_level_carrier_assigned_ids(en)
-            action_helper.set_policy_level_carrier_assigned_ids(en)
+            action_helper.set_carrier_assigned_ids(en)
           end
         end
       end

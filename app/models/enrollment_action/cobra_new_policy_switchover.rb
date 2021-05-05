@@ -40,8 +40,7 @@ module EnrollmentAction
       existing_policy.enrollees.each do |en|
         member_date_map[en.m_id] = en.coverage_start
         if en.c_id.present? || en.cp_id.present?
-          term_helper.set_member_level_carrier_assigned_ids(en)
-          term_helper.set_policy_level_carrier_assigned_ids(en)
+          action_helper.set_carrier_assigned_ids(en)
         end
       end
       term_helper.set_event_action("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
