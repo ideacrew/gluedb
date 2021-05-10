@@ -106,9 +106,14 @@ end
 
 describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent set, being published" do
   let(:member_primary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
-  let(:enrollee_primary) { instance_double(::Openhbx::Cv2::Enrollee, :member => member_primary) }
+  let(:enrollee_primary) do
+     instance_double(
+       ::Openhbx::Cv2::Enrollee,
+       :member => member_primary
+    )
+  end
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary]) }
+  let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy) }
   let(:member_end_date) { Date.today - 1.day }
   let(:terminated_member_ids) { [2] }
 
@@ -151,9 +156,16 @@ describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent se
     :to_xml => termination_helper_result_xml
   ) }
 
-  let(:terminated_policy) {
-    instance_double(Policy, :eg_id => terminated_policy_eg_id, :employer => employer, :reload => true, active_member_ids: [1])
-  }
+  let(:terminated_policy) do
+    instance_double(
+      Policy,
+      :enrollees => [enrollee],
+      :eg_id => terminated_policy_eg_id,
+      :employer => employer,
+      :reload => true,
+      active_member_ids: [1]
+    )
+  end
 
   subject do
     EnrollmentAction::RenewalDependentDrop.new(nil, action_event)

@@ -143,7 +143,7 @@ describe EnrollmentAction::CarrierSwitchRenewal, "given a qualified enrollment s
   let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
 
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }
+  let(:policy) { instance_double(Policy, :eg_id => 1) }
 
   let(:action_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -178,9 +178,14 @@ describe EnrollmentAction::CarrierSwitchRenewal, "given a qualified enrollment s
   let(:terminated_policy_eg_id) { double }
   let(:employer) { instance_double(Employer, :hbx_id => employer_hbx_id) }
 
-  let(:terminated_policy) {
-    instance_double(Policy, :eg_id => terminated_policy_eg_id, :employer => employer)
-  }
+  let(:terminated_policy) do
+    instance_double(
+      Policy,
+      :enrollees => [enrollee_primary, enrollee_new],
+      :eg_id => terminated_policy_eg_id,
+      :employer => employer
+    )
+  end
 
   subject do
     EnrollmentAction::CarrierSwitchRenewal.new(nil, action_event).tap do |s|

@@ -56,6 +56,14 @@ module EnrollmentAction
         employer_hbx_id = employer.blank? ? nil : employer.hbx_id
         term_action_helper = EnrollmentAction::ActionPublishHelper.new(term_event_xml)
         term_action_helper.filter_affected_members(a_member_ids)
+        enrollees = pol.enrollees
+        if enrollees.present?
+          enrollees.each do |en|
+            if en.c_id.present? || en.cp_id.present?
+              term_action_helper.set_carrier_assigned_ids(en)
+            end
+          end
+        end
         publish_edi(amqp_connection, term_action_helper.to_xml, pol.eg_id, employer_hbx_id)
       end
       action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
@@ -63,14 +71,6 @@ module EnrollmentAction
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#initial")
       else
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#active_renew")
-      end
-      enrollees = action.existing_policy.try(:enrollees)
-      if enrollees.present?
-        enrollees.each do |en|
-          if en.c_id.present? || en.cp_id.present?
-            action_helper.set_carrier_assigned_ids(en)
-          end
-        end
       end
       action_helper.keep_member_ends([])
       publish_edi(amqp_connection, action_helper.to_xml, action.hbx_enrollment_id, action.employer_hbx_id)
