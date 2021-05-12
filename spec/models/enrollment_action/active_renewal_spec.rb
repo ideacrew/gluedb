@@ -199,7 +199,7 @@ describe EnrollmentAction::ActiveRenewal, "#publish" do
   let(:amqp_connection) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
   let(:event_xml) { double }
-  let!(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let!(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => "SOME CARRIER ASSIGNED POLICY ID") }
   let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary], :eg_id => 1) }
   let(:action) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -226,6 +226,7 @@ describe EnrollmentAction::ActiveRenewal, "#publish" do
     allow(action_helper).
       to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#active_renew").
       and_return(true)
+    allow(action_helper).to receive(:set_carrier_assigned_ids).with(enrollee_primary)
     allow(action_helper).to receive(:keep_member_ends).with([]).and_return(true)
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, 1, 1)
     allow(action).to receive(:renewal_cancel_policy).and_return([])

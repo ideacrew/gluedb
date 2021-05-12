@@ -315,21 +315,6 @@ module EnrollmentAction
 
     private
 
-    def add_carrier_assigned_ids(controller, enrollee, member_id_node)
-      ol_xml = controller.render_to_string(
-        :layout => nil,
-        :partial => "enrollment_events/alias_id",
-        :locals => { :enrollee => enrollee },
-        :format => :xml
-      )
-
-      ol_xml_doc = Nokogiri::XML(ol_xml)
-      ol_xml_node = ol_xml_doc.root
-      if ol_xml_node
-        member_id_node.add_child(ol_xml_node)
-      end
-    end
-
     def add_employer_contacts_and_office_locations
       employer_id_node = event_xml_doc.at_xpath("//cv:enrollment/cv:shop_market/cv:employer_link/cv:id/cv:id", XML_NS)
       employer_id = Maybe.new(employer_id_node).content.strip.split("#").last.value
