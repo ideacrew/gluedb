@@ -8,7 +8,7 @@ describe Parsers::Edi::Etf::PersonParser do
     {
       'L2100A' => {
         "N3" => ['', street1, street2, ''],
-        'N4' => ['', city, state, zip, county_code]
+        'N4' => ['', city, state, zip, '', 'CY', county_code]
       },
       'REFs' => [['', '17', member_id ]]
     }

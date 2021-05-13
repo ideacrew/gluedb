@@ -112,7 +112,8 @@ module Parsers
         end
 
         def county_code
-          result = @loop["L2100A"]["N4"][4]
+          return nil unless @loop["L2100A"]["N4"][5] == 'CY'
+          result = @loop["L2100A"]["N4"][6]
           ((result.blank?) ? nil : result)
         end
 
