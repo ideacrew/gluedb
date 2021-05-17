@@ -35,10 +35,13 @@ module EnrollmentAction
       policy_to_change = termination.existing_policy
       subscriber_start = action.subscriber_start
       member_date_map = {}
+      action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
       policy_to_change.enrollees.each do |en|
         member_date_map[en.m_id] = en.coverage_start
+        if en.c_id.present? || en.cp_id.present?
+          action_helper.set_carrier_assigned_ids(en)
+        end
       end
-      action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
       action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#change_financial_assistance")
       action_helper.set_policy_id(policy_to_change.eg_id)
       action_helper.set_member_starts(member_date_map)

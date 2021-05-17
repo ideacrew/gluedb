@@ -25,6 +25,14 @@ module EnrollmentAction
       end
       amqp_connection = action.event_responder.connection
       action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
+      enrollees = existing_policy.try(:enrollees)
+      if enrollees.present?
+        enrollees.each do |en|
+          if en.c_id.present? || en.cp_id.present?
+            action_helper.set_carrier_assigned_ids(en)
+          end
+        end
+      end
       action_helper.set_policy_id(@existing_policy.eg_id)
       action_helper.set_member_starts(member_date_map)
       action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#reinstate_enrollment")
