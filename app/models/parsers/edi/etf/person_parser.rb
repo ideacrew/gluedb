@@ -65,7 +65,8 @@ module Parsers
                 :address_2 => @person_loop.street2,
                 :city => @person_loop.city,
                 :state => @person_loop.state,
-                :zip => @person_loop.zip
+                :zip => @person_loop.zip,
+                :location_county_code => @person_loop.county_code
               )
             if new_address.valid?
               new_person.update_address(new_address)

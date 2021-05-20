@@ -8,7 +8,7 @@ describe Parsers::Edi::Etf::PersonParser do
     {
       'L2100A' => {
         "N3" => ['', street1, street2, ''],
-        'N4' => ['', city, state, zip]
+        'N4' => ['', city, state, zip, '', 'CY', county_code]
       },
       'REFs' => [['', '17', member_id ]]
     }
@@ -18,6 +18,7 @@ describe Parsers::Edi::Etf::PersonParser do
   let(:city) { 'Atlanta' }
   let(:state) { 'GA' }
   let(:zip) { '20002' }
+  let(:county_code) { '10010' }
   let(:member_id) { '666' }
 
 end
