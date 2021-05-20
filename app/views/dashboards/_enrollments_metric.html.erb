@@ -37,41 +37,43 @@
   </tbody>
 </table>
 
-<h4>SHOP Market Enrollments</h4>
-<table class="table">
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>WTD</th>
-      <th>Last Week</th>
-      <th>MTD</th>
-      <th>Last Month</th>
-      <th>QTD</th>
-      <th>YTD</th>
-      <th>Total</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-    	<td>Enrollments</td>
-      <td><%= number_with_delimiter(@wtd_transmissions) %></td>
-      <td><%= number_with_delimiter(@lw_transmissions) %></td>
-      <td><%= number_with_delimiter(@mtd_transmissions) %></td>
-      <td><%= number_with_delimiter(@lm_transmissions) %></td>
-      <td><%= number_with_delimiter(@qtd_transmissions) %></td>
-      <td><%= number_with_delimiter(@ytd_transmissions) %></td>
-      <td><%= number_with_delimiter(@total_edi_transactions) %></td>
-    </tr>
-    <tr>
-    	<td>Maintenance</td>
-      <td><%= number_with_delimiter(@wtd_transmissions) %></td>
-      <td><%= number_with_delimiter(@lw_transmissions) %></td>
-      <td><%= number_with_delimiter(@mtd_transmissions) %></td>
-      <td><%= number_with_delimiter(@lm_transmissions) %></td>
-      <td><%= number_with_delimiter(@qtd_transmissions) %></td>
-      <td><%= number_with_delimiter(@ytd_transmissions) %></td>
-      <td><%= number_with_delimiter(@total_edi_transactions) %></td>
-    </tr>
+<% if Settings.shop_market.market_enabled %>
+  <h4>SHOP Market Enrollments</h4>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>WTD</th>
+        <th>Last Week</th>
+        <th>MTD</th>
+        <th>Last Month</th>
+        <th>QTD</th>
+        <th>YTD</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+      	<td>Enrollments</td>
+        <td><%= number_with_delimiter(@wtd_transmissions) %></td>
+        <td><%= number_with_delimiter(@lw_transmissions) %></td>
+        <td><%= number_with_delimiter(@mtd_transmissions) %></td>
+        <td><%= number_with_delimiter(@lm_transmissions) %></td>
+        <td><%= number_with_delimiter(@qtd_transmissions) %></td>
+        <td><%= number_with_delimiter(@ytd_transmissions) %></td>
+        <td><%= number_with_delimiter(@total_edi_transactions) %></td>
+      </tr>
+      <tr>
+      	<td>Maintenance</td>
+        <td><%= number_with_delimiter(@wtd_transmissions) %></td>
+        <td><%= number_with_delimiter(@lw_transmissions) %></td>
+        <td><%= number_with_delimiter(@mtd_transmissions) %></td>
+        <td><%= number_with_delimiter(@lm_transmissions) %></td>
+        <td><%= number_with_delimiter(@qtd_transmissions) %></td>
+        <td><%= number_with_delimiter(@ytd_transmissions) %></td>
+        <td><%= number_with_delimiter(@total_edi_transactions) %></td>
+      </tr>
 
-  </tbody>
-</table>
+    </tbody>
+  </table>
+<% end %>

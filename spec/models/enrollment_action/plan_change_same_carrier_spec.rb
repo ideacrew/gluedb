@@ -1,133 +1,23 @@
-require 'rails_helper'
+require "rails_helper"
 
-describe EnrollmentAction::SimpleProductChange, "given an enrollment event set that:
--- has one event" do
-
-  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification) }
-  let(:event_set) { [event_1] }
-
-  subject { EnrollmentAction::SimpleProductChange }
-
-  it "doesn't qualify" do
-    expect(subject.qualifies?(event_set)).to be_falsey
-  end
-end
-
-describe EnrollmentAction::SimpleProductChange, "given an enrollment event set that:
--- has two events
--- has the same plan" do
-
-  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => false) }
-  let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
-  let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
-
-  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2]) }
-  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2]) }
-  let(:event_set) { [event_1, event_2] }
-
-  subject { EnrollmentAction::SimpleProductChange }
-
-  before do
-    allow(plan).to receive(:carrier).and_return(carrier)
-    allow(new_plan).to receive(:carrier).and_return(carrier)
-  end
-
-  it "doesn't qualify" do
-    expect(subject.qualifies?(event_set)).to be_falsey
-  end
-end
-
-describe EnrollmentAction::SimpleProductChange, "given an enrollment event set that:
--- has two events
--- has different plan
--- has same carrier
--- with carrier requiring term/drop" do
+describe EnrollmentAction::PlanChangeSameCarrier, "Plan change same carrier and require term/drop" do
 
   let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => true) }
-  let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
-  let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
+  let(:plan_1) { instance_double(Plan, :id => 1, :carrier_id => 1) }
+  let(:plan_2) { instance_double(Plan, :id => 2, :carrier_id => 1) }
 
-  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2]) }
-  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => new_plan, :all_member_ids => [1,2]) }
+  let(:member_ids_1) { [1,2] }
+  let(:member_ids_2) { [1,2,3] }
+
+  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan_1, :all_member_ids => member_ids_1) }
+  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan_2, :all_member_ids => member_ids_2) }
   let(:event_set) { [event_1, event_2] }
 
-  subject { EnrollmentAction::SimpleProductChange }
+  subject { EnrollmentAction::PlanChangeSameCarrier }
 
   before do
-    allow(plan).to receive(:carrier).and_return(carrier)
-    allow(new_plan).to receive(:carrier).and_return(carrier)
-  end
-
-  it "doesn't qualify" do
-    expect(subject.qualifies?(event_set)).to be_falsey
-  end
-end
-
-describe EnrollmentAction::SimpleProductChange, "given an enrollment event set that:
--- has two events
--- has different carriers" do
-
-  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => false) }
-  let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
-  let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 2) }
-
-  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2]) }
-  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => new_plan, :all_member_ids => [1,2]) }
-  let(:event_set) { [event_1, event_2] }
-
-  subject { EnrollmentAction::SimpleProductChange }
-
-  before do
-    allow(plan).to receive(:carrier).and_return(carrier)
-    allow(new_plan).to receive(:carrier).and_return(carrier)
-  end
-
-  it "doesn't qualify" do
-    expect(subject.qualifies?(event_set)).to be_falsey
-  end
-end
-
-describe EnrollmentAction::SimpleProductChange, "given an enrollment event set that:
---  provides a new plan id
---  with no dependents changed
---  with a carrier that DOES NOT require simple plan changes" do
-  let(:non_tufts_carrier) { instance_double(Carrier, requires_simple_plan_changes?: false, :require_term_drop? => false) }
-  let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
-  let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
-
-  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2]) }
-  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => new_plan, :all_member_ids => [1,2]) }
-  let(:event_set) { [event_1, event_2] }
-
-  subject { EnrollmentAction::SimpleProductChange }
-
-  before :each do
-    allow(plan).to receive(:carrier).and_return(non_tufts_carrier)
-    allow(new_plan).to receive(:carrier).and_return(non_tufts_carrier)
-  end
-
-  it "doesn't qualify" do
-    expect(subject.qualifies?(event_set)).to be_falsey
-  end
-end
-
-describe EnrollmentAction::SimpleProductChange, "given an enrollment event set that:
---  provides a new plan id
---  with no dependents changed
---  with a carrier that requires simple plan changes" do
-  let(:tufts_carrier) { instance_double(Carrier, requires_simple_plan_changes?: true, :require_term_drop? => false) }
-  let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
-  let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
-
-  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2]) }
-  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => new_plan, :all_member_ids => [1,2]) }
-  let(:event_set) { [event_1, event_2] }
-
-  subject { EnrollmentAction::SimpleProductChange }
-
-  before :each do
-    allow(plan).to receive(:carrier).and_return(tufts_carrier)
-    allow(new_plan).to receive(:carrier).and_return(tufts_carrier)
+    allow(plan_1).to receive(:carrier).and_return(carrier)
+    allow(plan_2).to receive(:carrier).and_return(carrier)
   end
 
   it "qualifies" do
@@ -135,7 +25,33 @@ describe EnrollmentAction::SimpleProductChange, "given an enrollment event set t
   end
 end
 
-describe EnrollmentAction::SimpleProductChange, "#persist" do
+describe EnrollmentAction::PlanChangeSameCarrier, "Plan change different carrier and require term/drop" do
+
+  let(:carrier_1) { instance_double(Carrier, :id => 1, :require_term_drop? => true) }
+  let(:carrier_2) { instance_double(Carrier, :id => 1, :require_term_drop? => true) }
+  let(:plan_1) { instance_double(Plan, :id => 1, :carrier_id => 1) }
+  let(:plan_2) { instance_double(Plan, :id => 2, :carrier_id => 2) }
+
+  let(:member_ids_1) { [1,2] }
+  let(:member_ids_2) { [1,2,3] }
+
+  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan_1, :all_member_ids => member_ids_1) }
+  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan_2, :all_member_ids => member_ids_2) }
+  let(:event_set) { [event_1, event_2] }
+
+  subject { EnrollmentAction::PlanChangeSameCarrier }
+
+  before do
+    allow(plan_1).to receive(:carrier).and_return(carrier_1)
+    allow(plan_2).to receive(:carrier).and_return(carrier_2)
+  end
+
+  it "doesn't qualifies" do
+    expect(subject.qualifies?(event_set)).to be_false
+  end
+end
+
+describe EnrollmentAction::PlanChangeSameCarrier, "given a qualified enrollment set, being persisted" do
   let(:member_primary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
   let(:member_secondary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 2) }
   let(:member_new) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 3) }
@@ -146,7 +62,8 @@ describe EnrollmentAction::SimpleProductChange, "#persist" do
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary])}
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary, enrollee_new]) }
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2]) }
+  let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
+  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2], :terminate_as_of => subscriber_end, :policy_end => subscriber_end, :is_shop? => true, carrier: carrier) }
   let(:primary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:secondary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
   let(:new_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
@@ -159,46 +76,46 @@ describe EnrollmentAction::SimpleProductChange, "#persist" do
     :all_member_ids => [1,2,3],
     :hbx_enrollment_id => 3,
     :is_cobra? => false
-    ) }
+  ) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     :policy_cv => terminated_policy_cv,
     :existing_policy => policy,
     :subscriber_end => subscriber_end,
     :all_member_ids => [1,2]
-    ) }
+  ) }
 
   let(:policy_updater) { instance_double(ExternalEvents::ExternalPolicy) }
 
   subject do
-    EnrollmentAction::SimpleProductChange.new(termination_event, action_event)
+    EnrollmentAction::PlanChangeSameCarrier.new(termination_event, action_event)
   end
 
   before :each do
+    allow(policy).to receive(:term_for_np).and_return(false)
     allow(ExternalEvents::ExternalMember).to receive(:new).with(member_primary).and_return(primary_db_record)
     allow(ExternalEvents::ExternalMember).to receive(:new).with(member_secondary).and_return(secondary_db_record)
     allow(ExternalEvents::ExternalMember).to receive(:new).with(member_new).and_return(new_db_record)
 
-    allow(policy).to receive(:terminate_as_of).with(subscriber_end).and_return(true)
     allow(policy).to receive(:save!).and_return(true)
-    allow(ExternalEvents::ExternalPolicy).to receive(:new).with(new_policy_cv, plan, false).and_return(policy_updater)
+    allow(ExternalEvents::ExternalPolicy).to receive(:new).with(new_policy_cv, plan, false, market_from_payload: subject.action).and_return(policy_updater)
     allow(policy_updater).to receive(:persist).and_return(true)
     allow(subject.action).to receive(:existing_policy).and_return(false)
+    allow(subject.action).to receive(:kind).and_return(action_event)
+    allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 
   it "successfully creates the new policy" do
-    expect(ExternalEvents::ExternalPolicy).to receive(:new).with(new_policy_cv, plan, false).and_return(policy_updater)
-    expect(policy_updater).to receive(:persist).and_return(true)
     expect(subject.persist).to be_truthy
   end
 
-  it "terminates the old policy" do
-    expect(policy).to receive(:terminate_as_of).with(subscriber_end).and_return(true)
+  it "notifies of the policy change" do
+    expect(Observers::PolicyUpdated).to receive(:notify).with(policy)
     subject.persist
   end
 end
 
-describe EnrollmentAction::SimpleProductChange, "#publish" do
+describe EnrollmentAction::PlanChangeSameCarrier, "given a qualified enrollment set for terminate, and a new enrollment, being published" do
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:termination_event_xml) { double }
@@ -207,7 +124,8 @@ describe EnrollmentAction::SimpleProductChange, "#publish" do
   let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago) }
 
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }
+  let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, plan: instance_double(Plan, id: 1), carrier: carrier) }
 
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -241,9 +159,10 @@ describe EnrollmentAction::SimpleProductChange, "#publish" do
     EnrollmentAction::ActionPublishHelper,
     :to_xml => action_helper_result_xml
   ) }
+  let(:policy2) { instance_double(Policy,plan: instance_double(Plan, id: 2)) }
 
   subject do
-    EnrollmentAction::SimpleProductChange.new(termination_event, action_event)
+    EnrollmentAction::PlanChangeSameCarrier.new(termination_event, action_event)
   end
 
   before :each do
@@ -253,11 +172,13 @@ describe EnrollmentAction::SimpleProductChange, "#publish" do
     allow(termination_publish_helper).to receive(:set_policy_id).with(1)
     allow(termination_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
     allow(subject).to receive(:publish_edi).with(amqp_connection, termination_helper_result_xml, termination_event.existing_policy.eg_id, termination_event.employer_hbx_id).and_return([true, {}])
-    allow(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#change_product")
+    allow(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#initial")
     allow(action_publish_helper).to receive(:keep_member_ends).with([])
     allow(action_publish_helper).to receive(:set_policy_id).with(1)
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, action_event.hbx_enrollment_id, action_event.employer_hbx_id)
     allow(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
+    allow(subject).to receive(:same_carrier_renewal_candidates).with(action_event).and_return([])
+    allow(action_event).to receive(:is_shop?).and_return(true)
   end
 
   it "publishes an event of enrollment termination" do
@@ -280,8 +201,8 @@ describe EnrollmentAction::SimpleProductChange, "#publish" do
     subject.publish
   end
 
-  it "publishes an event of product change" do
-    expect(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#change_product")
+  it "publishes an event of enrollment initialization" do
+    expect(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#initial")
     subject.publish
   end
 
@@ -298,5 +219,28 @@ describe EnrollmentAction::SimpleProductChange, "#publish" do
   it "corrects the qualifying event type on the termination" do
     expect(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
     subject.publish
+  end
+
+  context "carrier switch with continuous coverage" do
+    before :each do
+      allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(termination_event_xml).and_return(termination_publish_helper)
+      allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(event_xml).and_return(action_publish_helper)
+      allow(termination_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
+      allow(termination_publish_helper).to receive(:set_policy_id).with(1)
+      allow(termination_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
+      allow(subject).to receive(:publish_edi).with(amqp_connection, termination_helper_result_xml, termination_event.existing_policy.eg_id, termination_event.employer_hbx_id).and_return([true, {}])
+      allow(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#initial")
+      allow(action_publish_helper).to receive(:keep_member_ends).with([])
+      allow(action_publish_helper).to receive(:set_policy_id).with(1)
+      allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, action_event.hbx_enrollment_id, action_event.employer_hbx_id)
+      allow(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
+      allow(subject).to receive(:same_carrier_renewal_candidates).with(action_event).and_return([policy])
+      allow(action_event).to receive(:is_shop?).and_return(false)
+    end
+
+    it "publishes renewal event for continuous coverage" do
+      expect(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#auto_renew")
+      subject.publish
+    end
   end
 end

@@ -23,7 +23,7 @@ module Parsers
         end
 
         def is_shop?
-          !(@loop["L1000A"]["N1"][2] == "DC0")
+          !(@loop["L1000A"]["N1"][4] == ExchangeInformation.receiver_id)
         end
 
         def people

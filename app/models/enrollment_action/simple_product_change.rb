@@ -8,6 +8,7 @@ module EnrollmentAction
       return false if chunk.length < 2
       return false if same_plan?(chunk)
       return false if carriers_are_different?(chunk)
+      return false if carrier_requires_term_drop?(chunk)
       carrier_requires_simple_plan_changes?(chunk)
     end
 
