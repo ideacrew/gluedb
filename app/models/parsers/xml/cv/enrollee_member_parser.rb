@@ -12,6 +12,7 @@ module Parsers::Xml::Cv
     element :tax_household_id, String, tag: "tax_household_id/cv:id"
     has_one :person, Parsers::Xml::Cv::PersonParser, tag: 'person'
     has_one :benefit, Parsers::Xml::Cv::EnrolleeBenefitParser, tag: 'benefit'
+    has_one :person_health, Parsers::Xml::Cv::PersonHealthParser, tag: 'person_health'
 
     def to_hash
       result = {
@@ -20,6 +21,7 @@ module Parsers::Xml::Cv
           family_id:family_id,
           tax_household_id:tax_household_id,
           person:person.to_hash,
+          person_health:person_health.to_hash,
       }
 
       result[:benefit] = benefit.to_hash if benefit

@@ -34,6 +34,9 @@ class Enrollee
   field :coverage_end, type: Date
   field :coverage_status, type: String, default: "active"
 
+  # Allowed values are 'Y', 'N', or nil for 'NA'
+  field :tobacco_use, type: String
+
   embedded_in :policy, :inverse_of => :enrollees
 
   validates_presence_of :m_id, :relationship_status_code

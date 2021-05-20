@@ -20,7 +20,8 @@ module Parsers::Xml::Cv
           is_subscriber:is_subscriber,
           member:member.to_hash,
           person_relationships:person_relationships.map(&:to_hash),
-          person_demographics:person_demographics.to_hash
+          person_demographics:person_demographics.to_hash,
+          tobacco_use:member.to_hash[:person_health]
       }
 
       result[:is_primary_applicant] = person_demographics if person_demographics
