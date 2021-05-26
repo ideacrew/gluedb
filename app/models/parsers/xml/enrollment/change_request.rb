@@ -93,7 +93,6 @@ module Parsers::Xml::Enrollment
     end
 
     def subscriber_affected?
-      subscriber_id
       affected_enrollees.any? { |e| e.hbx_member_id == subscriber_id}
     end
   end
