@@ -106,14 +106,20 @@ end
 
 describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent set, being published" do
   let(:member_primary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
-  let(:enrollee_primary) { instance_double(::Openhbx::Cv2::Enrollee, :member => member_primary) }
+  let(:enrollee_primary) do
+     instance_double(
+       ::Openhbx::Cv2::Enrollee,
+       :member => member_primary
+    )
+  end
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary]) }
+  let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy) }
   let(:member_end_date) { Date.today - 1.day }
   let(:terminated_member_ids) { [2] }
 
   let(:subscriber_start) { Date.today }
-
+  let!(:enrollee) { double(:m_id => 3, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee], :eg_id => 3) }
   let(:amqp_connection) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
   let(:event_xml) { double }
@@ -124,6 +130,7 @@ describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent se
     :event_responder => event_responder,
     :event_xml => event_xml,
     :policy_cv => new_policy_cv,
+    :existing_policy => policy,
     :existing_plan => plan,
     :all_member_ids => [1],
     :hbx_enrollment_id => 3,
@@ -149,9 +156,16 @@ describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent se
     :to_xml => termination_helper_result_xml
   ) }
 
-  let(:terminated_policy) {
-    instance_double(Policy, :eg_id => terminated_policy_eg_id, :employer => employer, :reload => true, active_member_ids: [1])
-  }
+  let(:terminated_policy) do
+    instance_double(
+      Policy,
+      :enrollees => [enrollee],
+      :eg_id => terminated_policy_eg_id,
+      :employer => employer,
+      :reload => true,
+      active_member_ids: [1]
+    )
+  end
 
   subject do
     EnrollmentAction::RenewalDependentDrop.new(nil, action_event)
@@ -194,7 +208,7 @@ describe EnrollmentAction::RenewalDependentDrop, "given a qualified enrollent se
 
   context "carrier with canceled_renewal_causes_new_coverage" do
     let(:carrier) { instance_double(Carrier, :canceled_renewal_causes_new_coverage => true) }
-    let(:policy) { instance_double(Policy, :carrier => carrier) }
+    let(:policy) { instance_double(Policy, :carrier => carrier, :enrollees => [enrollee]) }
 
     before do
       subject.terminated_policy_information = [[terminated_policy,[2]]]

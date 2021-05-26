@@ -54,6 +54,14 @@ module EnrollmentAction
       amqp_connection = termination.event_responder.connection
       policy_to_change = termination.existing_policy
       change_publish_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
+      enrollees = policy_to_change.try(:enrollees)
+      if enrollees.present?
+        enrollees.each do |en|
+          if en.c_id.present? || en.cp_id.present?
+            change_publish_helper.set_carrier_assigned_ids(en)
+          end
+        end
+      end
       if @dep_adding_to_renewal
         change_publish_helper.set_event_action("urn:openhbx:terms:v1:enrollment#auto_renew")
         change_publish_helper.keep_member_ends([])

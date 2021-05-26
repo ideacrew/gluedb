@@ -184,9 +184,9 @@ describe EnrollmentAction::PlanChangeDependentDrop, "given a valid enrollment" d
   let(:event_xml) { double }
   let(:termination_event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
-  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago) }
-  let(:new_enrollee) { double(m_id: 2, coverage_start: :one_month_ago) }
-  let(:dropped_enrollee) { double(m_id: 3, coverage_start: :one_month_ago) }
+  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:new_enrollee) { double(m_id: 2, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:dropped_enrollee) { double(m_id: 3, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil) }
   let(:plan) { instance_double(Plan, id: 1) }
   let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee, new_enrollee, dropped_enrollee], eg_id: 1) }
   let(:dependent_drop_event) { instance_double(

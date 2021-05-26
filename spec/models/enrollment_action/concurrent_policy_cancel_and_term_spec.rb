@@ -75,7 +75,7 @@ describe EnrollmentAction::ConcurrentPolicyCancelAndTerm, "given a valid enrollm
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
-  let(:enrollee) { double(m_id: 1, coverage_start: 1.month.ago.beginning_of_month, coverage_end: 1.month.since.end_of_month) }
+  let(:enrollee) { double(m_id: 1, coverage_start: 1.month.ago.beginning_of_month, coverage_end: 1.month.since.end_of_month, :c_id => nil, :cp_id => nil) }
   let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1) }
   let(:termination_event) { instance_double(
       ::ExternalEvents::EnrollmentEventNotification,
@@ -135,8 +135,8 @@ describe EnrollmentAction::ConcurrentPolicyCancelAndTerm, "given a valid enrollm
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
-  let(:enrollee) { double(m_id: 1, coverage_start: (Date.today - 1.month).beginning_of_month, coverage_end: Date.today.beginning_of_month) }
-  let(:enrollee2) { double(m_id: 2, coverage_start: Date.today.beginning_of_month, coverage_end: Date.today.beginning_of_month) }
+  let(:enrollee) { double(m_id: 1, coverage_start: (Date.today - 1.month).beginning_of_month, coverage_end: Date.today.beginning_of_month, :c_id => nil, :cp_id => nil) }
+  let(:enrollee2) { double(m_id: 2, coverage_start: Date.today.beginning_of_month, coverage_end: Date.today.beginning_of_month, :c_id => nil, :cp_id => nil) }
   let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee, enrollee2], eg_id: 1) }
   let(:termination_event) { instance_double(
       ::ExternalEvents::EnrollmentEventNotification,

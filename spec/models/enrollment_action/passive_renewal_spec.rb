@@ -73,6 +73,8 @@ describe EnrollmentAction::PassiveRenewal, "publish enrollment set for passive r
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
+  let!(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary], :eg_id => 1) }
   let(:action_helper_result_xml) { double }
   let(:action_publish_helper) { instance_double(
     EnrollmentAction::ActionPublishHelper,
@@ -81,6 +83,7 @@ describe EnrollmentAction::PassiveRenewal, "publish enrollment set for passive r
   let(:passive_renewal_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     :event_responder => event_responder,
+    :existing_policy => policy,
     :event_xml => event_xml,
     :employer_hbx_id => 1,
     :hbx_enrollment_id => 1
@@ -115,7 +118,8 @@ describe EnrollmentAction::PassiveRenewal, "publish enrollment set for passive r
 
   context "carrier with canceled_renewal_causes_new_coverage" do
     let(:carrier) { instance_double(Carrier, :canceled_renewal_causes_new_coverage => true) }
-    let(:policy) { instance_double(Policy, :carrier => carrier) }
+    let(:policy) { instance_double(Policy, :carrier => carrier, :enrollees => [enrollee_new]) }
+    let!(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
 
     before do
       allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(event_xml).and_return(action_publish_helper)

@@ -164,8 +164,8 @@ describe EnrollmentAction::CobraNewPolicySwitchover, "given a qualified enrollme
   let(:event_xml) { double }
   let(:termination_event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
-  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago) }
-  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
 
   let(:plan) { instance_double(Plan, :id => 1) }
   let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }

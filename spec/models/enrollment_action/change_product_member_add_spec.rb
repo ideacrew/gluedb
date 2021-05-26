@@ -146,8 +146,8 @@ describe EnrollmentAction::PlanChangeDependentAdd, "given a qualified enrollment
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
-  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago) }
-  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
 
   let(:plan) { instance_double(Plan, :id => 1) }
   let(:carrier) { instance_double(Carrier, :plan_change_renewal_dependent_add_transmitted_as_renewal => true) }

@@ -306,6 +306,13 @@ module EnrollmentAction
       end
     end
 
+    def set_carrier_assigned_ids(enrollee)
+      enricher = EnrollmentAction::MemberIdentifierEnricher.new(event_xml_doc)
+      enricher.set_carrier_assigned_member_id_for(enrollee)
+      enricher.set_carrier_assigned_policy_id_for(enrollee)
+      event_xml_doc
+    end
+
     private
 
     def add_employer_contacts_and_office_locations
