@@ -22,6 +22,7 @@
 				<address_line_2>Apt. Whatever</address_line_2>
 				<location_city_name>Washington</location_city_name>
 				<location_state_code>DC</location_state_code>
+				<location_county_code>11001</location_county_code>
 				<postal_code>20037</postal_code>
 			</address>
 

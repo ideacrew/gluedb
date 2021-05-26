@@ -106,6 +106,7 @@ describe RemoteResources::IndividualResource do
        expect(address.address_line_2).to eq "Apt. Whatever"
        expect(address.location_city_name).to eq "Washington"
        expect(address.location_state_code).to eq "DC"
+       expect(address.location_county_code).to eq "11001"
        expect(address.postal_code).to eq "20037"
     end
 

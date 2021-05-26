@@ -126,5 +126,19 @@ describe Address do
         expect(address.match(second_address)).to be_false
       end
     end
+
+    context 'county_code differ' do
+      let(:address) { build :address, :with_county_code }
+
+      let(:second_address) do
+        a = address.clone
+        a.location_county_code = '10001'
+        a
+      end
+
+      it 'returns false' do
+        expect(address.match(second_address)).to be_false
+      end
+    end
   end
 end

@@ -11,6 +11,7 @@ module RemoteResources
     element :address_line_2, String, tag: "address_line_2"
     element :location_city_name, String, tag: "location_city_name"
     element :location_state_code, String, tag: "location_state_code"
+    element :location_county_code, String, tag: "location_county_code"
     element :postal_code, String, tag: "postal_code"
 
     def address_1
@@ -27,6 +28,10 @@ module RemoteResources
 
     def state
       location_state_code
+    end
+
+    def county_code
+      location_county_code
     end
 
     def zip
@@ -55,6 +60,9 @@ module RemoteResources
       }
       if !address_2.blank?
         props_hash[:address_2] = address_2
+      end
+      if !county_code.blank?
+        props_hash[:location_county_code] = county_code
       end
       props_hash
     end

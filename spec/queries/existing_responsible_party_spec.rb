@@ -159,10 +159,12 @@ given a person with:
   let(:address_one_street1) { "#1 street" }
   let(:address_one_street2) { "Apt. Whatever" }
   let(:address_one_city) { "City #1" }
+  let(:address_one_county_code) { "10010" }
   let(:address_one_state) { "MD" }
   let(:address_one_zip) { "22222" }
   let(:address_two_street1) { "#2 street" }
   let(:address_two_city) { "City #2" }
+  let(:address_two_county_code) { "01101" }
   let(:address_two_state) { "DC" }
   let(:address_two_zip) { "22233" }
 
@@ -173,14 +175,16 @@ given a person with:
                          :address_2 => address_one_street2,
                          :city => address_one_city,
                          :state => address_one_state,
-                         :zip => address_one_zip)
+                         :zip => address_one_zip,
+                         :location_county_code => address_one_county_code)
     address_two = double("address1",
                          :address_type => address_type_two,
                          :address_1 => address_two_street1,
                          :address_2 => "",
                          :city => address_two_city,
                          :state => address_two_state,
-                         :zip => address_two_zip)
+                         :zip => address_two_zip,
+                         :location_county_code => address_two_county_code)
     double(
       "person",
       :name_middle => nil,
@@ -199,14 +203,16 @@ given a person with:
           "address_2" => address_one_street2,
           "city" => address_one_city,
           "state" => address_one_state,
-          "zip" => address_one_zip
+          "zip" => address_one_zip,
+          "location_county_code" => address_one_county_code
         }}},
         {"addresses" => { "$elemMatch" => {
           "address_type" => address_type_two,
           "address_1" => address_two_street1,
           "city" => address_two_city,
           "state" => address_two_state,
-          "zip" => address_two_zip
+          "zip" => address_two_zip,
+          "location_county_code" => address_two_county_code
         }}}
       ]
     }
