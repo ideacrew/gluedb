@@ -5,6 +5,7 @@
 		<proc:reason>initial_enrollment</proc:reason>
     <proc:affected_members>
       <proc:member_id>123456</proc:member_id>
+      <proc:member_id>789012</proc:member_id>
     </proc:affected_members>
 	</proc:operation>
 	<proc:payload>
