@@ -72,14 +72,11 @@ class VocabUpload
       if change_request.type == 'add' && change_request.reason.text == 'initial_enrollment' && term_or_cancel_carefirst_policy_exists?(pol, change_request)
         pol.update_attributes!(term_for_np: false)
         Observers::PolicyUpdated.notify(pol)
-        return true
       elsif change_request.cancel? && policy.aasm_state == 'resubmitted' && term_or_cancel_carefirst_policy_exists?(pol, change_request)
         policy.update_attributes!(term_for_np: true)
-        return true
       elsif change_request.terminate? && policy.aasm_state == 'terminated' && policy.term_for_np == true
         policy.update_attributes!(term_for_np: false)
         Observers::PolicyUpdated.notify(policy)
-        return true
       end
     end
   end
@@ -88,10 +85,14 @@ class VocabUpload
     reinstate_policy_plan_id = change_request.plan_id
     reinstate_policy_carrier_id = change_request.carrier_id
     term_policy_end_date = change_request.begin_date - 1.day
+    term_en_ids = pol.enrollees.map(&:m_id).sort
+    reinstate_en_ids = change_request.affected_member_ids.sort
     return false unless pol.employer_id == nil
     return false unless pol.term_for_np == true
     return false unless pol.plan_id.to_s == reinstate_policy_plan_id
     return false unless pol.carrier_id.to_s == reinstate_policy_carrier_id
+    return false unless term_en_ids.count == reinstate_en_ids.count
+    return false unless term_en_ids == reinstate_en_ids
     return false unless (pol.aasm_state == "terminated" && pol.policy_end == term_policy_end_date) || (pol.aasm_state == "canceled" && pol.policy_start == change_request.begin_date)
     true
   end

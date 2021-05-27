@@ -6,9 +6,10 @@ feature 'uploading individual CV', :dbclean => :after_each do
   end
 
   let!(:member) { FactoryGirl.build :member, hbx_member_id: '123456' }
+  let!(:child_member) { FactoryGirl.build :member, hbx_member_id: '789012' }
   let!(:person) { FactoryGirl.create :person, name_first: 'Example', name_last: 'Person', members: [ member ] }
-  let!(:policy1) { Policy.new(eg_id: '1', enrollees: [enrollee1], plan: plan, carrier: carrier ) }
-  let!(:policy2) { Policy.new(eg_id: '2', enrollees: [enrollee2], plan: plan, carrier: carrier, employer_id: nil, aasm_state: "terminated", term_for_np: true ) }
+  let!(:policy1) { Policy.new(eg_id: '1', enrollees: [enrollee1, child_enrollee1], plan: plan, carrier: carrier ) }
+  let!(:policy2) { Policy.new(eg_id: '2', enrollees: [enrollee2, child_enrollee2], plan: plan, carrier: carrier, employer_id: nil, aasm_state: "terminated", term_for_np: true ) }
   let!(:plan) { build(:plan, id: '5f77432ac09d079fd44c1ae9') }
   let!(:carrier) {create(:carrier, id: '53e67210eb899a4603000004', hbx_carrier_id: '116036')}
   let!(:enrollee1) do
@@ -17,6 +18,14 @@ feature 'uploading individual CV', :dbclean => :after_each do
       benefit_status_code: 'active',
       employment_status_code: 'active',
       relationship_status_code: 'self',
+      coverage_start: Date.new(2020,4,1))
+  end
+  let!(:child_enrollee1) do
+    Enrollee.new(
+      m_id: child_member.hbx_member_id,
+      benefit_status_code: 'active',
+      employment_status_code: 'active',
+      relationship_status_code: 'child',
       coverage_start: Date.new(2020,4,1))
   end
   let!(:enrollee2) do
@@ -28,7 +37,15 @@ feature 'uploading individual CV', :dbclean => :after_each do
       coverage_start: Date.new(2020,1,1),
       coverage_end: Date.new(2020,3,31))
   end
-
+  let!(:child_enrollee2) do
+    Enrollee.new(
+      m_id: child_member.hbx_member_id,
+      benefit_status_code: 'active',
+      employment_status_code: 'terminated',
+      relationship_status_code: 'child',
+      coverage_start: Date.new(2020,1,1),
+      coverage_end: Date.new(2020,3,31))
+  end
   let!(:policy) { FactoryGirl.create(:policy, eg_id: '7654321', employer_id: nil, aasm_state: "terminated", term_for_np: true ) }
   given(:premium) do
     PremiumTable.new(
