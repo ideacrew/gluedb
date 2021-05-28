@@ -10,7 +10,7 @@ GIT
 
 GIT
   remote: https://github.com/ideacrew/edi_codec.git
-  revision: 97ec591550ece04bed1e50cdd53e717c720f7e8d
+  revision: 7606ca08c1d77f46ee92419d6882bd6cb8d5771c
   branch: edicodec_maine_qa
   specs:
     edi_codec (0.1.2)
