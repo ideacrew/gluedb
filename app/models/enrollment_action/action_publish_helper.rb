@@ -306,10 +306,12 @@ module EnrollmentAction
       end
     end
 
-    def set_carrier_assigned_ids(enrollee)
+    def set_carrier_assigned_ids(enrollee, include_policy_ids = true)
       enricher = EnrollmentAction::MemberIdentifierEnricher.new(event_xml_doc)
       enricher.set_carrier_assigned_member_id_for(enrollee)
-      enricher.set_carrier_assigned_policy_id_for(enrollee)
+      if include_policy_ids
+        enricher.set_carrier_assigned_policy_id_for(enrollee)
+      end
       event_xml_doc
     end
 

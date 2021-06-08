@@ -49,6 +49,11 @@ module EnrollmentAction
       action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
       action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#change_product")
       action_helper.keep_member_ends([])
+      existing_policy.enrollees.each do |en|
+        if en.c_id.present?
+          action_helper.set_carrier_assigned_ids(en, false)
+        end
+      end
       publish_edi(amqp_connection, action_helper.to_xml, action.hbx_enrollment_id, action.employer_hbx_id)
     end
   end
