@@ -15,7 +15,7 @@ RSpec.describe "app/views/enrollment_events/_enrollment_event.xml.haml" do
 
   let(:person) { double(full_name: 'Ann B Mcc', addresses: [address], authority_member: authority_member, authority_member_id:'1',name_first: 'Ann', name_middle: 'B', name_last: 'Mcc', name_sfx: '',name_pfx: '',emails: [],phones: []) }
   let(:authority_member) { double(ssn: '342321212', dob: (Date.today - 20.years), gender: "male", hbx_member_id: '123') }
-  let(:address) { double(address_1: 'Wilson Building', address_2: 'Suite 100',address_3: '', city: 'Washington DC', state: 'DC', zip: '20002',address_type: '',zip_extension: nil) }
+  let(:address) { double(address_1: 'Wilson Building', address_2: 'Suite 100',address_3: '', city: 'Washington DC', state: 'DC', zip: '20002',address_type: '',zip_extension: nil, location_county_code: nil) }
 
   let!(:subscriber) {policy.subscriber}
   let(:employer) {FactoryGirl.create(:employer)}
