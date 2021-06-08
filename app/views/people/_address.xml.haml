@@ -9,7 +9,6 @@
   - unless address.location_county_code.blank?
     %location_county_code= address.location_county_code
   %location_state_code= address.state
-  %location
   %postal_code= address.zip
   - unless address.zip_extension.blank?
     %location_postal_extension_code= address.zip_extension
