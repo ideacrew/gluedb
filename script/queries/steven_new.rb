@@ -1,11 +1,29 @@
+#Usage
+#rails r script/queries/steven_new.rb BEGIN-DATE -e production
+#BEGIN-DATE, format = MMDDYYYY
+#E.g. rails r script/queries/steven_new.rb "01012017" -e production
+
 require 'csv'
 timey = Time.now
 puts "Report started at #{timey}"
+
+begin
+  @begin_date = Date.strptime(ARGV[0], "%m%d%Y")
+  puts "begin_date #{@begin_date}"
+rescue Exception => e
+  puts "Error #{e.message}"
+  puts "Usage:"
+  puts "rails r script/queries/steven_new.rb BEGIN-DATE"
+  puts "rails r script/queries/steven_new.rb 01012018"
+  exit
+end
+
+
 policies = Policy.no_timeout.where(
   {"eg_id" => {"$not" => /DC0.{32}/},
    :enrollees => {"$elemMatch" =>
       {:rel_code => "self",
-            :coverage_start => {"$gt" => Date.new(2017,12,31)}}}}
+            :coverage_start => {"$gte" => @begin_date}}}}
 )
 
 policies = policies.reject{|pol| pol.market == 'individual' && 
