@@ -7,6 +7,7 @@ describe EnrollmentAction::PlanChangeDependentDrop, "given an EnrollmentAction a
   - has no dropped dependents
   - is not the same plan, has the same carrier, and has dropped dependents" do
 
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => false) }
   let(:plan_1) { instance_double(Plan, id: 1, carrier_id: 1) }
   let(:plan_2) { instance_double(Plan, id: 2, carrier_id: 2) }
   let(:plan_3) { instance_double(Plan, id: 3, carrier_id: 1) }
@@ -17,6 +18,12 @@ describe EnrollmentAction::PlanChangeDependentDrop, "given an EnrollmentAction a
   let(:succeeds) { instance_double(ExternalEvents::EnrollmentEventNotification, existing_plan: plan_3, all_member_ids: [1, 2]) }
 
   subject { EnrollmentAction::PlanChangeDependentDrop }
+
+  before do
+    allow(plan_1).to receive(:carrier).and_return(carrier)
+    allow(plan_2).to receive(:carrier).and_return(carrier)
+    allow(plan_3).to receive(:carrier).and_return(carrier)
+  end
 
   it "does not qualify because it has less than two elements" do
     expect(subject.qualifies?([main_event])).to be_false
@@ -36,6 +43,32 @@ describe EnrollmentAction::PlanChangeDependentDrop, "given an EnrollmentAction a
 
   it "qualifies" do
     expect(subject.qualifies?([main_event, succeeds])).to be_truthy
+  end
+end
+
+describe EnrollmentAction::PlanChangeDependentDrop, "given an EnrollmentAction array that:
+-- has two events
+-- has different plan
+-- has same carrier
+-- with carrier requiring term/drop" do
+
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => true) }
+  let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
+  let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
+
+  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2]) }
+  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => new_plan, :all_member_ids => [1,2]) }
+  let(:event_set) { [event_1, event_2] }
+
+  subject { EnrollmentAction::PlanChangeDependentDrop }
+
+  before do
+    allow(plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan).to receive(:carrier).and_return(carrier)
+  end
+
+  it "doesn't qualifies" do
+    expect(subject.qualifies?(event_set)).to be_false
   end
 end
 

@@ -12,6 +12,10 @@ module EnrollmentAction
       chunk.first.existing_plan.carrier.requires_simple_plan_changes?
     end
 
+    def carrier_requires_term_drop?(chunk)
+      chunk.first.existing_plan.carrier.require_term_drop?
+    end
+
     def new_market?(chunk)
       chunk.first.enrollment_event_xml.event.body.enrollment.market != chunk.last.enrollment_event_xml.event.body.enrollment.market
     end

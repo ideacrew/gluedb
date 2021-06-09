@@ -8,7 +8,7 @@ module EnrollmentAction
     def self.qualifies?(chunk)
       return false if chunk.length < 2
       return false if same_plan?(chunk)
-      (!carriers_are_different?(chunk)) && !dependents_changed?(chunk)
+      (!carriers_are_different?(chunk)) && !carrier_requires_term_drop?(chunk) && !dependents_changed?(chunk)
     end
 
     def persist
