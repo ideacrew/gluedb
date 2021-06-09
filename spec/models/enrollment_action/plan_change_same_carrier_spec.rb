@@ -46,7 +46,7 @@ describe EnrollmentAction::PlanChangeSameCarrier, "Plan change different carrier
     allow(plan_2).to receive(:carrier).and_return(carrier_2)
   end
 
-  it "doesn't qualifies" do
+  it "doesn't qualify" do
     expect(subject.qualifies?(event_set)).to be_false
   end
 end
@@ -168,6 +168,8 @@ describe EnrollmentAction::PlanChangeSameCarrier, "given a qualified enrollment 
   before :each do
     allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(termination_event_xml).and_return(termination_publish_helper)
     allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(event_xml).and_return(action_publish_helper)
+    allow(termination_publish_helper).to receive(:set_carrier_assigned_ids).with(enrollee_primary)
+    allow(termination_publish_helper).to receive(:set_carrier_assigned_ids).with(enrollee_new)
     allow(termination_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
     allow(termination_publish_helper).to receive(:set_policy_id).with(1)
     allow(termination_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
@@ -175,6 +177,8 @@ describe EnrollmentAction::PlanChangeSameCarrier, "given a qualified enrollment 
     allow(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#initial")
     allow(action_publish_helper).to receive(:keep_member_ends).with([])
     allow(action_publish_helper).to receive(:set_policy_id).with(1)
+    allow(action_publish_helper).to receive(:set_carrier_assigned_ids).with(enrollee_primary, false)
+    allow(action_publish_helper).to receive(:set_carrier_assigned_ids).with(enrollee_new, false)
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, action_event.hbx_enrollment_id, action_event.employer_hbx_id)
     allow(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
     allow(subject).to receive(:same_carrier_renewal_candidates).with(action_event).and_return([])
