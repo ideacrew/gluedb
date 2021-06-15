@@ -273,7 +273,7 @@ describe EnrollmentAction::RetroContinuityAndTerm, "given an EnrollmentAction ar
 
     subject { EnrollmentAction::RetroContinuityAndTerm }
 
-    it "should return true" do
+    it "should return false" do
       expect(subject.qualifies?([action, termination, additional_action])).to be_falsy
     end
   end
