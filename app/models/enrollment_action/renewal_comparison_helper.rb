@@ -111,7 +111,27 @@ module EnrollmentAction
           [plan, subscriber_person, subscriber_id, subscriber_start]
     end
 
+    def has_prev_coverage(e_event)
+      subscriber_person = Person.find_by_member_id(e_event.subscriber_id)
+      return false unless subscriber_person
+      subscriber_person.policies.select do |pol|
+        has_active_coverage_for?(pol, e_event.existing_plan, e_event.subscriber_id, e_event.subscriber_start)
+      end
+    end
+
+    def has_active_coverage_for?(pol, plan, subscriber_id, subscriber_start)
+      return false if pol.is_shop?
+      return false if (pol.subscriber.m_id != subscriber_id)
+      return false unless (pol.plan.year == plan.year)
+      return false unless (plan.coverage_type == pol.plan.coverage_type)
+      return false if pol.canceled?
+      return false if pol.terminated?
+      return false unless (plan.carrier_id == pol.plan.carrier_id)
+      pol.coverage_period.include?(subscriber_start)
+    end
+
     def continued_coverage_renewal_candidates?(retro_candidate, renewal_candidate)
+      return false if has_prev_coverage(retro_candidate).present?
       retro_plan = retro_candidate.existing_plan
       renewal_plan = renewal_candidate.existing_plan
       return false unless retro_plan
