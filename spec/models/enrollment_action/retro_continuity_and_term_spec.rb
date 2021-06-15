@@ -262,6 +262,22 @@ describe EnrollmentAction::RetroContinuityAndTerm, "given an EnrollmentAction ar
     end
   end
 
+  context " does not qualifies, if their is coverage exists in reto year", :dbclean => :after_each do
+    let(:active_enrollee) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start:  Date.today.beginning_of_year, coverage_end: '')}
+    let!(:active_policy) {
+      policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, carrier_id: carrier_id, plan: active_plan, coverage_start: Date.today.beginning_of_year, coverage_end: nil, kind: kind)
+      policy.update_attributes(enrollees: [active_enrollee], hbx_enrollment_ids: ["123"])
+      policy.save
+      policy
+    }
+
+    subject { EnrollmentAction::RetroContinuityAndTerm }
+
+    it "should return true" do
+      expect(subject.qualifies?([action, termination, additional_action])).to be_falsy
+    end
+  end
+
   context "persist", :dbclean => :after_each do
 
     before do
