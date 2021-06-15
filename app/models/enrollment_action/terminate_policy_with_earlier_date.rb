@@ -23,11 +23,13 @@ module EnrollmentAction
     def publish
       amqp_connection = termination.event_responder.connection
       member_date_map = {}
+      reinstate_action_helper = ActionPublishHelper.new(termination.event_xml)
       existing_policy.enrollees.each do |en|
         member_date_map[en.m_id] = en.coverage_start
+        if en.c_id.present? || en.cp_id.present?
+          reinstate_action_helper.set_carrier_assigned_ids(en)
+        end
       end
-
-      reinstate_action_helper = ActionPublishHelper.new(termination.event_xml)
       reinstate_action_helper.set_policy_id(existing_policy.eg_id)
       reinstate_action_helper.set_member_starts(member_date_map)
       reinstate_action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#reinstate_enrollment")
@@ -47,7 +49,12 @@ module EnrollmentAction
       termiantion_action_helper.set_policy_id(existing_policy.eg_id)
       termiantion_action_helper.set_member_starts(member_date_map)
       termiantion_action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#terminate_enrollment")  # sends termination to nfp & carriers.
-
+      existing_policy.enrollees.each do |en|
+        member_date_map[en.m_id] = en.coverage_start
+        if en.c_id.present? || en.cp_id.present?
+          termination_aciton_helper.set_carrier_assigned_ids(en)
+        end
+      end
       publish_edi(amqp_connection, termiantion_action_helper.to_xml, termination.hbx_enrollment_id, termination.employer_hbx_id)
     end
   end

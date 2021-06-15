@@ -50,6 +50,14 @@ module EnrollmentAction
         employer = pol.employer
         employer_hbx_id = employer.blank? ? nil : employer.hbx_id
         term_action_helper = EnrollmentAction::ActionPublishHelper.new(term_event_xml)
+        enrollees = pol.enrollees
+        if enrollees.present?
+          enrollees.each do |en|
+            if en.c_id.present? || en.cp_id.present?
+              term_action_helper.set_carrier_assigned_ids(en)
+            end
+          end
+        end
         publish_edi(amqp_connection, term_action_helper.to_xml, pol.eg_id, employer_hbx_id)
       end
       action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)

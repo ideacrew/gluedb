@@ -4,6 +4,7 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
 --  provides a new plan id
 --  with no dependents changed
 --  with no carrier change" do
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => false) }
   let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
   let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
 
@@ -13,12 +14,43 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
 
   subject { EnrollmentAction::PlanChange }
 
+  before do
+    allow(plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan).to receive(:carrier).and_return(carrier)
+  end
+
   it "qualifies" do
     expect(subject.qualifies?(event_set)).to be_truthy
   end
 end
 
+describe EnrollmentAction::PlanChange, "given an enrollment event set that:
+--  provides a new plan id
+--  with no dependents changed
+--  with no carrier change
+--  with carrier requiring term/drop" do
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => true) }
+  let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
+  let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
+
+  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2]) }
+  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => new_plan, :all_member_ids => [1,2]) }
+  let(:event_set) { [event_1, event_2] }
+
+  subject { EnrollmentAction::PlanChange }
+
+  before do
+    allow(plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan).to receive(:carrier).and_return(carrier)
+  end
+
+  it "doesn't qualifies" do
+    expect(subject.qualifies?(event_set)).to be_falsey
+  end
+end
+
 describe EnrollmentAction::PlanChange, "given an enrollment event set with invalid data" do
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => false) }
   let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
   let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
   let(:different_carrier_plan) { instance_double(Plan, :id => 3, carrier_id: 2) }
@@ -31,6 +63,12 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set with inval
   let(:carrier_change_set) { [event_1, new_carrier_event] }
 
   subject { EnrollmentAction::PlanChange }
+
+  before do
+    allow(plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan).to receive(:carrier).and_return(carrier)
+    allow(different_carrier_plan).to receive(:carrier).and_return(carrier)
+  end
 
   it "does not qualify with changed dependents" do
     expect(subject.qualifies?(event_set)).to be_falsey
@@ -49,6 +87,7 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
 --  provides a new plan id
 --  with no dependents changed
 --  with no carrier change" do
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => false) }
   let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
   let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
   let(:member_primary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
@@ -77,6 +116,11 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
 
 
   subject { EnrollmentAction::PlanChange.new(termination_event, plan_change_event) }
+
+  before do
+    allow(plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan).to receive(:carrier).and_return(carrier)
+  end
 
   before :each do
     allow(ExternalEvents::ExternalMember).to receive(:new).with(member_primary).
@@ -110,6 +154,9 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }
   let(:action_helper_result_xml) { double }
   let(:action_publish_helper) { instance_double(
     EnrollmentAction::ActionPublishHelper,
@@ -119,6 +166,7 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
     ::ExternalEvents::EnrollmentEventNotification,
     :event_responder => event_responder,
     :event_xml => event_xml,
+    :existing_policy => policy,
     :employer_hbx_id => 1,
     :hbx_enrollment_id => 1,
     :is_shop? => true
@@ -165,6 +213,9 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }
   let(:action_helper_result_xml) { double }
   let(:action_publish_helper) { instance_double(
     EnrollmentAction::ActionPublishHelper,
@@ -174,6 +225,7 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
     ::ExternalEvents::EnrollmentEventNotification,
     :event_responder => event_responder,
     :event_xml => event_xml,
+    :existing_policy => policy,
     :employer_hbx_id => 1,
     :hbx_enrollment_id => 1,
     :is_shop? => false
@@ -221,6 +273,9 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }
   let(:action_helper_result_xml) { double }
   let(:action_publish_helper) { instance_double(
     EnrollmentAction::ActionPublishHelper,
@@ -230,6 +285,7 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
     ::ExternalEvents::EnrollmentEventNotification,
     :event_responder => event_responder,
     :event_xml => event_xml,
+    :existing_policy => policy,
     :employer_hbx_id => 1,
     :hbx_enrollment_id => 1,
     :is_shop? => false
@@ -305,6 +361,9 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }
   let(:action_helper_result_xml) { double }
   let(:action_publish_helper) { instance_double(
     EnrollmentAction::ActionPublishHelper,
@@ -314,6 +373,7 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
     ::ExternalEvents::EnrollmentEventNotification,
     :event_responder => event_responder,
     :event_xml => event_xml,
+    :existing_policy => policy,
     :employer_hbx_id => 1,
     :hbx_enrollment_id => 1,
     :is_shop? => false
@@ -390,6 +450,9 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
   let(:action_helper_result_xml) { double }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }
   let(:action_publish_helper) { instance_double(
     EnrollmentAction::ActionPublishHelper,
     :to_xml => action_helper_result_xml
@@ -397,6 +460,7 @@ describe EnrollmentAction::PlanChange, "given an enrollment event set that:
   let(:plan_change_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     :event_responder => event_responder,
+    :existing_policy => policy,
     :event_xml => event_xml,
     :employer_hbx_id => 1,
     :hbx_enrollment_id => 1,

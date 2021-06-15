@@ -8,7 +8,7 @@ module EnrollmentAction
     def self.qualifies?(chunk)
       return false if chunk.length < 2
       return false if same_plan?(chunk)
-      (!carriers_are_different?(chunk)) && !dependents_changed?(chunk)
+      (!carriers_are_different?(chunk)) && !carrier_requires_term_drop?(chunk) && !dependents_changed?(chunk)
     end
 
     def persist
@@ -48,6 +48,14 @@ module EnrollmentAction
       amqp_connection = action.event_responder.connection
       action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
       action_helper.set_event_action(event_action)
+      enrollees = action.existing_policy.try(:enrollees)
+      if enrollees.present?
+        enrollees.each do |en|
+          if en.c_id.present? || en.cp_id.present?
+            action_helper.set_carrier_assigned_ids(en)
+          end
+        end
+      end
       action_helper.keep_member_ends([])
       publish_edi(amqp_connection, action_helper.to_xml, action.hbx_enrollment_id, action.employer_hbx_id)
     end

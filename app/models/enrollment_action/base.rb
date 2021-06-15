@@ -32,6 +32,7 @@ module EnrollmentAction
         ::EnrollmentAction::MarketChange,
         ::EnrollmentAction::DependentAdd,
         ::EnrollmentAction::DependentDrop,
+        ::EnrollmentAction::PlanChangeSameCarrier,
         ::EnrollmentAction::PlanChange,
         ::EnrollmentAction::PlanChangeDependentAdd,
         ::EnrollmentAction::PlanChangeDependentDrop,
