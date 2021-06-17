@@ -11,7 +11,7 @@ RSpec.describe "app/views/enrollment_events/_enrollment_event.xml.haml" do
   let(:policy_start) { Date.new(2014, 1, 1) }
   let(:policy_end) { Date.new(2014, 12, 31)}
   let(:cobra_date) { Date.new(2016, 12, 31)}
-  let(:subscriber1) { double(person: person, relationship_status_code: 'Self', coverage_start: policy_start, pre_amt: 0.0, cp_id:'', c_id:'', coverage_end: policy_end,ben_stat: 'cobra',subscriber?: false) }
+  let(:subscriber1) { double(person: person, relationship_status_code: 'Self', coverage_start: policy_start, pre_amt: 0.0, cp_id:'', c_id:'', coverage_end: policy_end,ben_stat: 'cobra',subscriber?: false, tobacco_use_value: 'N') }
 
   let(:person) { double(full_name: 'Ann B Mcc', addresses: [address], authority_member: authority_member, authority_member_id:'1',name_first: 'Ann', name_middle: 'B', name_last: 'Mcc', name_sfx: '',name_pfx: '',emails: [],phones: []) }
   let(:authority_member) { double(ssn: '342321212', dob: (Date.today - 20.years), gender: "male", hbx_member_id: '123') }

@@ -29,6 +29,8 @@
             %ssn= person.authority_member.ssn
           %sex= "urn:openhbx:terms:v1:gender##{person.authority_member.gender}"
           %birth_date= simple_date_for(person.authority_member.dob)
+        %person_health
+          %is_tobacco_user= tobacco_use_value_for(enrollee)
       %is_subscriber= enrollee.subscriber?
       %benefit
         %premium_amount= enrollee.pre_amt.round(2)

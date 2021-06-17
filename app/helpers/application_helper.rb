@@ -168,4 +168,15 @@ module ApplicationHelper
    def site_full_name
      Settings.site.long_name
    end
+
+   def tobacco_use_value_for(enrollee)
+     case enrollee.tobacco_use_value
+     when "Y"
+       "true"
+     when "N"
+       "false"
+     else
+       "unknown"
+     end
+   end
 end

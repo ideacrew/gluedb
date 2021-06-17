@@ -157,7 +157,8 @@ end
       coverage_start: Date.today + 1.day,
       coverage_end: Time.now.end_of_year.to_date,
       cp_id: 'carrier_policy_id',
-      c_id: 'carrier_member_id'
+      c_id: 'carrier_member_id',
+      tobacco_use_value: nil
   end
 
   let(:policy) do
@@ -204,7 +205,8 @@ end
       coverage_start: Date.today + 1.day,
       coverage_end: Time.now.end_of_year.to_date,
       cp_id: 'carrier_policy_id',
-      c_id: 'carrier_member_id'
+      c_id: 'carrier_member_id',
+      tobacco_use_value: 'Y'
   end
 
   before do
