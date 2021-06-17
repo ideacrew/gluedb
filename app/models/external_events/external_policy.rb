@@ -145,11 +145,16 @@ module ExternalEvents
       "child"
     end
 
+    def extract_tobacco_use_value(enrollee_node)
+      Maybe.new(enrollee_node).member.tobacco_use_value.value
+    end
+
     def build_enrollee(policy, enrollee_node)
       member_id = extract_member_id(enrollee_node)
       policy.enrollees << Enrollee.new({
         :m_id => member_id,
         :rel_code => extract_rel_code(enrollee_node),
+        :tobacco_use => extract_tobacco_use_value(enrollee_node),
         :ben_stat => @cobra ? "cobra" : "active",
         :emp_stat => "active",
         :coverage_start => extract_enrollee_start(enrollee_node),
@@ -170,6 +175,7 @@ module ExternalEvents
       policy.enrollees << Enrollee.new({
         :m_id => subscriber_id,
         :rel_code => "self",
+        :tobacco_use => extract_tobacco_use_value(sub_node),
         :ben_stat => @cobra ? "cobra" : "active",
         :emp_stat => "active",
         :coverage_start => extract_enrollee_start(sub_node),

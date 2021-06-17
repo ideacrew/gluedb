@@ -49,6 +49,10 @@ class Enrollee
     RELATIONSHIP_CODE_MAP[relationship_code] || "child"
   end
 
+  def tobacco_use_value
+    tobacco_use.blank? ? "NA" : tobacco_use
+  end
+
   def coverage_start_matches?(date)
     if date.kind_of?(String)
       self.coverage_start == Date.parse(date)

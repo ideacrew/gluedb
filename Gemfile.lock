@@ -19,7 +19,7 @@ GIT
 
 GIT
   remote: https://github.com/ideacrew/openhbx_cv2.git
-  revision: 6567dd46112982e6a9c90001b617caf313271fc9
+  revision: d774b23f5f5f431142eb2ed7c782f86cc5d0ad36
   branch: trunk
   specs:
     openhbx_cv2 (0.0.1)

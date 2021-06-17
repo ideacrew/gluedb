@@ -13,8 +13,8 @@ describe ExternalEvents::ExternalPolicy, "given:
   let(:plan_cv) { instance_double(Openhbx::Cv2::PlanLink, :alias_ids => alias_ids) }
   let!(:policy_enrollment) { instance_double(Openhbx::Cv2::PolicyEnrollment, :rating_area => rating_area, :plan => plan_cv, :shop_market => shop_market) }
   let(:policy_cv) { instance_double(Openhbx::Cv2::Policy, :policy_enrollment => policy_enrollment, :enrollees =>[enrollees1, enrollees2]) }
-  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => []) }
-  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship]) }
+  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => [], :tobacco_use_value => "N") }
+  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship], :tobacco_use_value => "Y") }
   let(:relationship) do
     instance_double(Openhbx::Cv2::PersonRelationship,
       subject_individual: dependent_xml_id,
@@ -184,11 +184,11 @@ describe ExternalEvents::ExternalPolicy, "with a parsed market value param in th
   let(:responsible_party_node) { instance_double(::Openhbx::Cv2::ResponsibleParty) }
   let!(:policy_enrollment) { instance_double(Openhbx::Cv2::PolicyEnrollment) }
   let(:enrollees1) { instance_double(Openhbx::Cv2::Enrollee, subscriber?: true, member: member1)}
-  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => []) }
+  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => [], :tobacco_use_value => nil) }
   let(:subscriber_xml_id) { "urn:whaTEVER#subscriber_id" }
   let(:dependent_xml_id) { "urn:whaTEVER#dependent_id" }
   let(:enrollees2) { instance_double(Openhbx::Cv2::Enrollee, subscriber?: false, member: member2)}
-  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship]) }
+  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship], :tobacco_use_value => 'N') }
   let(:relationship) do
     instance_double(Openhbx::Cv2::PersonRelationship,
       subject_individual: dependent_xml_id,
@@ -267,11 +267,11 @@ describe ExternalEvents::ExternalPolicy, "with reinstated policy cv", dbclean: :
 
   let!(:policy_enrollment) { instance_double(Openhbx::Cv2::PolicyEnrollment) }
   let(:enrollees1) { instance_double(Openhbx::Cv2::Enrollee, subscriber?: true, member: member1)}
-  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => []) }
+  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => [], :tobacco_use_value => "Y") }
   let(:subscriber_xml_id) { "urn:whaTEVER#subscriber_id" }
   let(:dependent_xml_id) { "urn:whaTEVER#dependent_id" }
   let(:enrollees2) { instance_double(Openhbx::Cv2::Enrollee, subscriber?: false, member: member2)}
-  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship]) }
+  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship], :tobacco_use_value => nil) }
   let(:relationship) do
     instance_double(Openhbx::Cv2::PersonRelationship,
                     subject_individual: dependent_xml_id,

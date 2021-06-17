@@ -106,6 +106,7 @@ module ExternalEvents
         policy.enrollees << Enrollee.new({
           :m_id => member_id,
           :rel_code => extract_rel_code(enrollee_node),
+          :tobacco_use => extract_tobacco_use_value(enrollee_node),
           :ben_stat => policy.is_cobra? ?  "cobra" : "active",
           :emp_stat => "active",
           :coverage_start => extract_enrollee_start(enrollee_node),
@@ -140,6 +141,10 @@ module ExternalEvents
       end
       Observers::PolicyUpdated.notify(pol)
       true
+    end
+
+    def extract_tobacco_use_value(enrollee_node)
+      Maybe.new(enrollee_node).member.tobacco_use_value.value
     end
   end
 end
