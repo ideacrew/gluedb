@@ -57,6 +57,8 @@ module Handlers
     end
 
     def chunk_enrollments(enrollments)
+      qualifies, chunks = ::EnrollmentAction::FullActionSetMatch.call(enrollments)
+      return chunks if qualifies
       ::EnrollmentAction::TripleChunkBuilder.call(enrollments)
     end
 
