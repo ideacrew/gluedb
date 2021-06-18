@@ -12,6 +12,7 @@ module EnrollmentAction
 
     def self.check_match(enrollments)
       return [false, []] unless enrollments.length == 2
+      return [true, [enrollments]] if EnrollmentAction::Base.check_for_full_action(enrollments).present?
       # Here we are going to insert the special case of an exact match with
       # exactly that number of elements.  If true, we're going to return
       # a tuple of [true, enrollments]. Otherwise, [false, []].
