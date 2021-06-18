@@ -58,8 +58,8 @@ describe Handlers::EnrollmentEventEnrichHandler, "given:
 - one which occurs before the other
 - events are not adjacent" do
   let(:next_step) { double }
-  let(:event_1) { instance_double(::ExternalEvents::EnrollmentEventNotification, :drop_if_bogus_plan_year! => false, :drop_if_bogus_term! => false, :drop_if_bogus_renewal_term! => false) }
-  let(:event_2) { instance_double(::ExternalEvents::EnrollmentEventNotification, :drop_if_bogus_plan_year! => false, :drop_if_bogus_term! => false, :drop_if_bogus_renewal_term! => false) }
+  let(:event_1) { instance_double(::ExternalEvents::EnrollmentEventNotification, :drop_if_bogus_plan_year! => false, :drop_if_bogus_term! => false, :drop_if_bogus_renewal_term! => false, :is_termination? => false, :is_cancel? => false) }
+  let(:event_2) { instance_double(::ExternalEvents::EnrollmentEventNotification, :drop_if_bogus_plan_year! => false, :drop_if_bogus_term! => false, :drop_if_bogus_renewal_term! => false, :is_termination? => false, :is_cancel? => false) }
   let(:resolved_action_1) { instance_double(EnrollmentAction::Base) }
   let(:resolved_action_2) { instance_double(EnrollmentAction::Base) }
 
@@ -106,8 +106,8 @@ describe Handlers::EnrollmentEventEnrichHandler, "given:
 - one which occurs before the other
 - events are adjacent" do
   let(:next_step) { double }
-  let(:event_1) { instance_double(::ExternalEvents::EnrollmentEventNotification, :drop_if_bogus_plan_year! => false, :drop_if_bogus_term! => false, :drop_if_bogus_renewal_term! => false) }
-  let(:event_2) { instance_double(::ExternalEvents::EnrollmentEventNotification, :drop_if_bogus_plan_year! => false, :drop_if_bogus_term! => false, :drop_if_bogus_renewal_term! => false) }
+  let(:event_1) { instance_double(::ExternalEvents::EnrollmentEventNotification, :drop_if_bogus_plan_year! => false, :drop_if_bogus_term! => false, :drop_if_bogus_renewal_term! => false, :is_termination? => false, :is_cancel? => false) }
+  let(:event_2) { instance_double(::ExternalEvents::EnrollmentEventNotification, :drop_if_bogus_plan_year! => false, :drop_if_bogus_term! => false, :drop_if_bogus_renewal_term! => false, :is_termination? => false, :is_cancel? => false) }
   let(:resolved_action_1) { instance_double(EnrollmentAction::Base) }
 
   subject { Handlers::EnrollmentEventEnrichHandler.new(next_step) }

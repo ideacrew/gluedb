@@ -338,20 +338,8 @@ module ExternalEvents
     # This is only used by the pairwise comparison.
     # Possible triple combinations use other methods.
     def is_adjacent_to?(other)
-      unless active_year == other.active_year
-        case [is_termination?, other.is_termination?]
-          when [true, true]
-            false
-          when [false, false]
-            false
-          when [true, false]
-            false
-          else
-            (other.is_cancel? && (coverage_year && coverage_year.end == coverage_year.begin + 1.year - 1.day) &&
-                (coverage_year.end == other.subscriber_start - 1.day) && coverage_year.include?(subscriber_start))
-        end
-      else
-        case [is_termination?, other.is_termination?]
+      return false unless active_year == other.active_year
+      case [is_termination?, other.is_termination?]
         when [true, true]
           false
         when [false, false]
@@ -360,7 +348,6 @@ module ExternalEvents
           false
         else
           (self.subscriber_end == other.subscriber_start - 1.day) || (self.is_cancel? && (subscriber_start == other.subscriber_start))
-        end
       end
     end
 
