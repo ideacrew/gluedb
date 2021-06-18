@@ -158,20 +158,20 @@ describe PoliciesController, :dbclean => :after_each do
           )
           put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "true"}}
           expect(response).to redirect_to(cancelterminate_policy_path(:id => policy.id))
-          expect(flash[:notice]).to match(/The NPT Indicator has been updated/)
+          expect(flash[:notice]).to match(/The NPT Indicator was successfully updated/)
         end
 
         it "displays failure message when policy NPT indicator is already true" do
           policy.update_attributes!(aasm_state: "terminated", term_for_np: true)
           put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "true"}}
-          expect(flash[:error]).to match(/The NPT Indicator has not been updated/)
+          expect(flash[:error]).to match(/The NPT Indicator was unable to be updated with the new value selected./)
         end
       end
 
       context "when aasm_state of a policy is not in termination state" do
         it "displays failure message" do
           put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "true"}}
-          expect(flash[:error]).to match(/The NPT Indicator has not been updated/)
+          expect(flash[:error]).to match(/The NPT Indicator was unable to be updated with the new value selected./)
         end
       end
     end
@@ -201,14 +201,14 @@ describe PoliciesController, :dbclean => :after_each do
           )
           put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "false"}}
           expect(response).to redirect_to(cancelterminate_policy_path(:id => policy.id))
-          expect(flash[:notice]).to match(/The NPT Indicator has been updated/)
+          expect(flash[:notice]).to match(/The NPT Indicator was successfully updated/)
         end
       end
 
       context "when aasm_state of a policy is not in termination state" do
         it "displays failure message" do
           put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "false"}}
-          expect(flash[:error]).to match(/The NPT Indicator has not been updated/)
+          expect(flash[:error]).to match(/The NPT Indicator was unable to be updated with the new value selected./)
         end
       end
     end
