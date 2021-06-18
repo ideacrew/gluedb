@@ -21,6 +21,13 @@ module EnrollmentAction
       end
     end
 
+    def self.check_for_full_action(chunk)
+      selected_action = [
+          ::EnrollmentAction::RetroAddAndTerm
+      ].detect { |kls| kls.qualifies?(chunk) }
+      selected_action
+    end
+
     def self.check_for_action_3(chunk)
       selected_action = [
         ::EnrollmentAction::RetroContinuityAndTerm

@@ -6,8 +6,10 @@ module EnrollmentAction
     def self.qualifies?(chunk)
       # Adding coverage to retro year and cancel current coverage.
       return false if chunk.length < 2
-      return false unless (!chunk.first.is_termination? && chunk.last.is_termination?)
-      chunk.first.active_year != chunk.last.active_year
+      return false unless (!chunk.first.is_termination? && chunk.last.is_cancel?)
+      return false unless chunk.first.active_year != chunk.last.active_year
+      return false unless chunk.first.coverage_year
+      (chunk.first.coverage_year.end == chunk.last.subscriber_start - 1.day) && chunk.first.coverage_year.include?(chunk.first.subscriber_start)
     end
 
     def persist
