@@ -12,10 +12,8 @@ module EnrollmentAction
     def persist
       if termination.existing_policy
         policy_to_term = termination.existing_policy
-        unless policy_to_term.is_shop?
-          policy_to_term.reload
-          return false if policy_to_term.canceled?
-        end
+        policy_to_term.reload
+        return false if policy_to_term.canceled?
         # Is this even a cancellation, if so, check for custom NPT behaviour,
         # otherwise do nothing
 
