@@ -35,7 +35,7 @@ describe EnrollmentAction::CarefirstTermination, "given a valid terminated enrol
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], carrier: carrier, is_shop?: true) }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], carrier: carrier, is_shop?: true, reload: true, canceled?: false) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     is_cancel?: false,
