@@ -445,7 +445,12 @@ module ExternalEvents
     end
 
     def has_renewal_policy?(pol)
-      return false if pol.is_shop?
+      if pol.is_shop?
+        return false if pol.employer_id.blank?
+        employer = find_employer(policy_cv)
+        return false if employer.blank?
+        return false unless pol.employer_id == employer.id
+      end
       return false if pol.canceled?
       return false if pol.terminated?
       return false if pol.subscriber.blank?
@@ -461,7 +466,12 @@ module ExternalEvents
     end
 
     def dep_add_or_drop_to_renewal_policy?(renewal_candidate, renewal_policy)
-    return false if is_shop? # only for ivl policy
+    if is_shop?
+      return false if renewal_candidate.employer_id.blank?
+      employer = find_employer(policy_cv)
+      return false if employer.blank?
+      return false unless renewal_candidate.employer_id == employer.id
+    end
     return false unless renewal_candidate.present? # matching renewal_candidate not found
     return false if renewal_candidate.plan.blank?
     return false if existing_plan.blank?
@@ -478,7 +488,12 @@ module ExternalEvents
     end
 
     def plan_change_dep_add_or_drop_to_renewal_policy?(renewal_candidate, renewal_policy)
-      return false if is_shop? # only for ivl policy
+      if is_shop?
+        return false if renewal_candidate.employer_id.blank?
+        employer = find_employer(policy_cv)
+        return false if employer.blank?
+        return false unless renewal_candidate.employer_id == employer.id
+      end
       return false unless renewal_candidate.present? # matching renewal_candidate not found
       return false if renewal_candidate.plan.blank?
       return false if existing_plan.blank?
@@ -507,7 +522,12 @@ module ExternalEvents
     end
 
     def is_contiguous_policy?(pol)
-      return false if pol.is_shop?
+      if pol.is_shop?
+        return false if pol.employer_id.blank?
+        employer = find_employer(policy_cv)
+        return false if employer.blank?
+        return false unless pol.employer_id == employer.id
+      end
       return false if pol.canceled?
       return false if pol.terminated?
       return false if pol.subscriber.blank?

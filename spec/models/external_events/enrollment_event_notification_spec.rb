@@ -1082,9 +1082,9 @@ describe "#renewal_policies_to_cancel", :dbclean => :after_each do
       allow(subject).to receive(:existing_plan).and_return(active_plan)
     end
 
-    it "should not return renewal policy" do
+    it "should return renewal policy" do
       expect(renewal_policy.is_shop?).to eq true
-      expect(subject.renewal_policies_to_cancel).to eq []
+      expect(subject.renewal_policies_to_cancel).to eq [renewal_policy]
     end
   end
 
@@ -1342,8 +1342,12 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
       let(:employer_id) { employer.hbx_id }
       let(:coverage_end) { nil}
 
-      it "should return false" do
-        expect(subject.dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
+      before do
+        allow(subject).to receive(:existing_plan).and_return(plan)
+      end
+
+      it "should return true" do
+        expect(subject.dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq true
       end
     end
 
@@ -1351,8 +1355,13 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
       let(:kind) { 'shop' }
       let(:begin_date) { (Date.today.next_year.beginning_of_year + 1.month).strftime("%Y%m%d") }
       let(:employer) { FactoryGirl.create(:employer)}
+      let!(:plan_year) { FactoryGirl.create(:plan_year, employer: employer, start_date: Date.new(Date.today.year, 1, 1), end_date: Date.new(Date.today.year, 12, 31))}
       let(:employer_id) { employer.hbx_id }
       let(:coverage_end) { nil}
+
+      before do
+        allow(subject).to receive(:existing_plan).and_return(plan)
+      end
 
       it "should return false" do
         expect(subject.dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
@@ -1422,10 +1431,14 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
       let(:employer) { FactoryGirl.create(:employer)}
       let!(:plan_year) { FactoryGirl.create(:plan_year, employer: employer, start_date: Date.new(Date.today.year, 1, 1), end_date: Date.new(Date.today.year, 12, 31))}
       let(:employer_id) { employer.hbx_id }
-      let(:coverage_end) { nil}
+      let(:coverage_end) { Date.today.beginning_of_month}
 
-      it "should return false" do
-        expect(subject.dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
+      before do
+        allow(subject).to receive(:existing_plan).and_return(plan)
+      end
+
+      it "should return true" do
+        expect(subject.dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq true
       end
     end
 
@@ -1433,8 +1446,13 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
       let(:kind) { 'shop' }
       let(:begin_date) { (Date.today.next_year.beginning_of_year + 1.month).strftime("%Y%m%d") }
       let(:employer) { FactoryGirl.create(:employer)}
+      let!(:plan_year) { FactoryGirl.create(:plan_year, employer: employer, start_date: Date.new(Date.today.year, 1, 1), end_date: Date.new(Date.today.year, 12, 31))}
       let(:employer_id) { employer.hbx_id }
       let(:coverage_end) { nil}
+
+      before do
+        allow(subject).to receive(:existing_plan).and_return(plan)
+      end
 
       it "should return false" do
         expect(subject.dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
@@ -1693,8 +1711,12 @@ describe "#plan_change_dep_add_or_drop_to_renewal_policy?", :dbclean => :after_e
       let(:employer_id) { employer.hbx_id }
       let(:coverage_end) { nil}
 
-      it "should return false" do
-        expect(subject.plan_change_dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
+      before do
+        allow(subject).to receive(:existing_plan).and_return(plan2)
+      end
+
+      it "should return true" do
+        expect(subject.plan_change_dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq true
       end
     end
 
@@ -1702,8 +1724,13 @@ describe "#plan_change_dep_add_or_drop_to_renewal_policy?", :dbclean => :after_e
       let(:kind) { 'shop' }
       let(:begin_date) { (Date.today.next_year.beginning_of_year + 1.month).strftime("%Y%m%d") }
       let(:employer) { FactoryGirl.create(:employer)}
+      let!(:plan_year) { FactoryGirl.create(:plan_year, employer: employer, start_date: Date.new(Date.today.year, 1, 1), end_date: Date.new(Date.today.year, 12, 31))}
       let(:employer_id) { employer.hbx_id }
       let(:coverage_end) { nil}
+
+      before do
+        allow(subject).to receive(:existing_plan).and_return(plan2)
+      end
 
       it "should return false" do
         expect(subject.plan_change_dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
@@ -1757,7 +1784,11 @@ describe "#plan_change_dep_add_or_drop_to_renewal_policy?", :dbclean => :after_e
       let(:employer_id) { employer.hbx_id }
       let(:coverage_end) { nil}
 
-      it "should return false" do
+      before do
+        allow(subject).to receive(:existing_plan).and_return(plan2)
+      end
+
+      it "should return true" do
         expect(subject.plan_change_dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
       end
     end
@@ -1766,8 +1797,13 @@ describe "#plan_change_dep_add_or_drop_to_renewal_policy?", :dbclean => :after_e
       let(:kind) { 'shop' }
       let(:begin_date) { (Date.today.next_year.beginning_of_year + 1.month).strftime("%Y%m%d") }
       let(:employer) { FactoryGirl.create(:employer)}
+      let!(:plan_year) { FactoryGirl.create(:plan_year, employer: employer, start_date: Date.new(Date.today.year, 1, 1), end_date: Date.new(Date.today.year, 12, 31))}
       let(:employer_id) { employer.hbx_id }
       let(:coverage_end) { nil}
+
+      before do
+        allow(subject).to receive(:existing_plan).and_return(plan2)
+      end
 
       it "should return false" do
         expect(subject.plan_change_dep_add_or_drop_to_renewal_policy?(active_policy, renewal_policy)).to eq false
@@ -1927,17 +1963,26 @@ describe "#is_retro_renewal_policy?", :dbclean => :after_each do
     let(:employer_id) { employer.hbx_id }
     let(:coverage_end) { nil}
 
-    it "should return false" do
-      expect(subject.is_retro_renewal_policy?).to eq false
+    before do
+      allow(subject).to receive(:existing_plan).and_return(plan)
+    end
+
+    it "should return true" do
+      expect(subject.is_retro_renewal_policy?).to eq true
     end
   end
 
   context "SHOP: renewal policy with initial event has contiguous active coverage" do
     let(:kind) { 'shop' }
     let(:employer) { FactoryGirl.create(:employer)}
+    let!(:plan_year) { FactoryGirl.create(:plan_year, employer: employer, start_date: Date.new(Date.today.year, 1, 1), end_date: Date.new(Date.today.year, 12, 31))}
     let(:employer_id) { employer.hbx_id }
     let(:dep_coverage_start) { Date.today.next_year.beginning_of_year + 1.month }
-    let(:coverage_end) { nil}
+    let(:coverage_end) { Date.today.end_of_month}
+
+    before do
+      allow(subject).to receive(:existing_plan).and_return(plan)
+    end
 
     it "should return false" do
       expect(subject.is_retro_renewal_policy?).to eq false
