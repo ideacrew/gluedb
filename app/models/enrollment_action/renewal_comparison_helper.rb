@@ -113,14 +113,19 @@ module EnrollmentAction
 
     def has_prev_coverage(e_event)
       subscriber_person = Person.find_by_member_id(e_event.subscriber_id)
+      employer = find_employer(e_event.policy_cv)
       return false unless subscriber_person
       subscriber_person.policies.select do |pol|
-        has_active_coverage_for?(pol, e_event.existing_plan, e_event.subscriber_id, e_event.subscriber_start)
+        has_active_coverage_for?(pol, e_event.existing_plan, e_event.subscriber_id, e_event.subscriber_start, employer)
       end
     end
 
-    def has_active_coverage_for?(pol, plan, subscriber_id, subscriber_start)
-      return true if pol.is_shop?
+    def has_active_coverage_for?(pol, plan, subscriber_id, subscriber_start, employer)
+      if pol.is_shop?
+        return false if pol.employer_id.blank?
+        return false if employer.blank?
+        return false unless pol.employer_id == employer.id
+      end
       return false if (pol.subscriber.m_id != subscriber_id)
       return false unless (pol.plan.year == plan.year)
       return false unless (plan.coverage_type == pol.plan.coverage_type)
