@@ -120,7 +120,7 @@ module EnrollmentAction
     end
 
     def has_active_coverage_for?(pol, plan, subscriber_id, subscriber_start)
-      return false if pol.is_shop?
+      return true if pol.is_shop?
       return false if (pol.subscriber.m_id != subscriber_id)
       return false unless (pol.plan.year == plan.year)
       return false unless (plan.coverage_type == pol.plan.coverage_type)

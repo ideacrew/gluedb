@@ -124,6 +124,9 @@ module EnrollmentAction
       if @action
         @action.drop_not_yet_implemented!(self.class.name.to_s, batch_id, idx)
       end
+      if @additional_action
+        @additional_action.drop_not_yet_implemented!(self.class.name.to_s, batch_id, idx)
+      end
     end
 
     def persist_failed!(persist_errors)
@@ -135,6 +138,9 @@ module EnrollmentAction
       end
       if @action
         @action.persist_failed!(self.class.name.to_s, persist_errors, batch_id, idx)
+      end
+      if @additional_action
+        @additional_action.persist_failed!(self.class.name.to_s, persist_errors, batch_id, idx)
       end
     end
 
@@ -148,6 +154,9 @@ module EnrollmentAction
       if @action
         @action.publish_failed!(self.class.name.to_s, publish_errors, batch_id, idx)
       end
+      if @additional_action
+        @additional_action.publish_failed!(self.class.name.to_s, publish_errors, batch_id, idx)
+      end
     end
 
     def flow_successful!
@@ -158,6 +167,9 @@ module EnrollmentAction
       end
       if @action
         @action.flow_successful!(self.class.name.to_s, batch_id, idx)
+      end
+      if @additional_action
+        @additional_action.flow_successful!(self.class.name.to_s, batch_id, idx)
       end
     end
 
