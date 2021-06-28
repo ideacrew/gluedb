@@ -56,6 +56,22 @@ class PoliciesController < ApplicationController
 
   end
 
+  # Handles a PUT request
+  # @note This method may modify our termination reason on policy
+  # @param request [Request] the request object
+  # @return [String] the resulting webpage
+  def change_npt_indicator
+    altered_npt_indicator = params[:policy][:npt_indicator]
+    policy = Policy.find(params[:policy][:id])
+    response = policy.change_npt_indicator(policy, altered_npt_indicator, current_user.email)
+    if response
+      message = {notice: "The NPT Indicator was successfully updated to '#{altered_npt_indicator.capitalize}'."}
+    else
+      message = {error: "An error occurred: The NPT Indicator was unable to be updated with the new value selected."}
+    end
+    redirect_to cancelterminate_policy_path({ :id => params[:policy][:id]}), flash: message
+  end
+
   def index
     @q = params[:q]
     @qf = params[:qf]
@@ -68,9 +84,9 @@ class PoliciesController < ApplicationController
     end
 
     respond_to do |format|
-	    format.html # index.html.erb
-	    format.json { render json: @policies }
-	  end
+      format.html # index.html.erb
+      format.json { render json: @policies }
+    end
   end
 
   def generate_tax_document

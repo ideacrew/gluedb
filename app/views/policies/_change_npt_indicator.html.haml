@@ -1,0 +1,31 @@
+%ul.breadcrumb
+  NPT Indicator
+= form_for policy, url: change_npt_indicator_policy_path(policy.id) do |f|
+  .panel.panel-default
+    .panel-body
+      = f.hidden_field :id, value: policy.id
+      .row
+        .col-md-12
+          .control-group.npt_indicator_radio
+            = f.radio_button :npt_indicator, true, onclick: "handleClick(this, #{policy.term_for_np});", checked: policy.term_for_np
+            = f.label true
+            = f.radio_button :npt_indicator, false, onclick: "handleClick(this, #{policy.term_for_np});", checked: (policy.term_for_np == false)
+            = f.label false
+      .row
+        .col-md-2
+          .form_actions
+            = f.submit 'Submit', id: "npt_submit_button", class: 'btn btn-inverse', confirm: 'WARNING: This action will change the policy NPT Indicator value. Are you sure you want to continue?'
+
+:javascript
+  $(document).ready(function() {
+    $('#npt_submit_button').attr('disabled', true);
+  });
+  var currentValue = 0;
+  function handleClick(myRadio, npt_value) {
+    if (npt_value.toString() == myRadio.value) {
+      $('#npt_submit_button').attr('disabled', true);
+    }
+    else{
+      $('#npt_submit_button').attr('disabled', false);
+    }
+  }

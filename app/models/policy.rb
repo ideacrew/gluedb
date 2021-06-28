@@ -966,6 +966,46 @@ class Policy
     end
   end
 
+  # Changing the NPT indicator on a Policy with certain rules they are:
+  # * NPT indicator value can be change to true if and if only the state of a policy is in termination
+  # * NPT indicator value can be changed to false regardless of policy state
+  # * NPT indicator value won't be updated if the exisiting value is same
+  # @return [Boolean]
+  def change_npt_indicator(policy, altered_npt_indicator, submitted_by)
+    old_npt = policy.term_for_np
+    if (altered_npt_indicator == "true") && (policy.term_for_np == false) && ["terminated", "canceled"].include?(policy.aasm_state)
+      policy.update_attributes!(term_for_np: true)
+      Observers::PolicyUpdated.notify(policy)
+      log_npt_altering(policy, old_npt, submitted_by)
+      true
+    elsif (altered_npt_indicator == "false") && (policy.term_for_np == true)
+      policy.update_attributes!(term_for_np: false)
+      Observers::PolicyUpdated.notify(policy)
+      log_npt_altering(policy, old_npt, submitted_by)
+      true
+    else
+      false
+    end
+  end
+
+  # Logging the transaction when NPT indicator is succesfully updated
+  def log_npt_altering(policy, old_npt, submitted_by)
+    broadcast_info = {
+      :routing_key => "info.events.policy.non_payment_indicator_altered",
+      :app_id => "gluedb",
+      :headers => {
+        "policy_id" =>  policy.id.to_s,
+        "eg_id" => policy.eg_id,
+        "old_npt" => old_npt,
+        "new_npt" => policy.term_for_np,
+        "submitted_by"  => submitted_by
+      }
+    }
+    Amqp::EventBroadcaster.with_broadcaster do |eb|
+      eb.broadcast(broadcast_info, policy.id.to_s)
+    end
+  end
+
   protected
   def generate_enrollment_group_id
     self.eg_id = self.eg_id || self._id.to_s

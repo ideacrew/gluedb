@@ -18,6 +18,10 @@ class CancelTerminate
   attr_accessor :people
   attr_accessor :policy
 
+  # Controls the npt_indicator value.
+  # @return [Boolean]
+  attr_accessor :npt_indicator
+
   validate :term_date_valid?, :unless => :is_cancel?
   validate :selected_at_least_one?
   validate :non_aptc_dependents?

@@ -139,4 +139,92 @@ describe PoliciesController, :dbclean => :after_each do
       end
     end
   end
+
+  describe "Change NPT indicator" do
+
+    let(:mock_event_broadcaster) do
+        instance_double(Amqp::EventBroadcaster)
+      end
+    let(:submitted_by) {"example@example.com"}
+
+    context "Sending True NPT Indicator" do
+      before do
+        allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+        allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
+      end
+
+      context "when aasm_state of a policy is in termination state" do
+        it "displays success message" do
+          policy.update_attributes!(aasm_state: "terminated")
+          allow(mock_event_broadcaster).to receive(:broadcast).with(
+            {
+              :routing_key => "info.events.policy.non_payment_indicator_altered",
+              :app_id => "gluedb",
+              :headers => {
+                "policy_id" =>  policy.id.to_s,
+                "eg_id" => policy.eg_id,
+                "old_npt" => false,
+                "new_npt" => true,
+                "submitted_by"  => submitted_by
+              }
+            },
+            policy.id.to_s
+          )
+          put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "true"}}
+          expect(response).to redirect_to(cancelterminate_policy_path(:id => policy.id))
+          expect(flash[:notice]).to match(/The NPT Indicator was successfully updated/)
+        end
+
+        it "displays failure message when policy NPT indicator is already true" do
+          policy.update_attributes!(aasm_state: "terminated", term_for_np: true)
+          put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "true"}}
+          expect(flash[:error]).to match(/The NPT Indicator was unable to be updated with the new value selected./)
+        end
+      end
+
+      context "when aasm_state of a policy is not in termination state" do
+        it "displays failure message" do
+          put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "true"}}
+          expect(flash[:error]).to match(/The NPT Indicator was unable to be updated with the new value selected./)
+        end
+      end
+    end
+
+    context "Sending False NPT Indicator" do
+      before do
+        allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+        allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
+      end
+
+      context "when aasm_state of a policy is in termination state" do
+        it "displays success message" do
+          policy.update_attributes!(aasm_state: "terminated", term_for_np: true)
+          allow(mock_event_broadcaster).to receive(:broadcast).with(
+            {
+              :routing_key => "info.events.policy.non_payment_indicator_altered",
+              :app_id => "gluedb",
+              :headers => {
+                "policy_id" =>  policy.id.to_s,
+                "eg_id" => policy.eg_id,
+                "old_npt" => true,
+                "new_npt" => false,
+                "submitted_by"  => submitted_by
+              }
+            },
+            policy.id.to_s
+          )
+          put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "false"}}
+          expect(response).to redirect_to(cancelterminate_policy_path(:id => policy.id))
+          expect(flash[:notice]).to match(/The NPT Indicator was successfully updated/)
+        end
+      end
+
+      context "when aasm_state of a policy is not in termination state" do
+        it "displays failure message" do
+          put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "false"}}
+          expect(flash[:error]).to match(/The NPT Indicator was unable to be updated with the new value selected./)
+        end
+      end
+    end
+  end
 end

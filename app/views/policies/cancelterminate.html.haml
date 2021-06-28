@@ -50,3 +50,6 @@
         .col-md-2
           = f.label "Transmit?"
           = f.check_box :transmit, checked: true
+
+- unless @policy.employer_id.present? || ["submitted", "resubmitted", "effectuated", "canceled"].include?(@policy.aasm_state)
+  = render 'policies/change_npt_indicator', policy: @policy
