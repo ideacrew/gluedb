@@ -125,4 +125,18 @@ describe PoliciesController, :dbclean => :after_each do
     end
   end
 
+  describe "POST trigger_1095A_H41" do
+
+    context "success" do
+      before do
+        allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+        post :trigger_1095A_H41, {id: policy.id, person_id: person.id}
+      end
+
+      it 'redirects to `person_path`' do
+        expect(response).to redirect_to(generate_tax_document_form_policy_path(policy.id, {person_id: person.id}))
+        expect(flash[:notice]).to match(/Triggered 1095A and H41 for policy_id/)
+      end
+    end
+  end
 end
