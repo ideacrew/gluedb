@@ -75,6 +75,9 @@ class VocabUpload
       elsif change_request.cancel? && policy.aasm_state == 'submitted' && pol.versions.last.try(:term_for_np) == true && term_or_cancel_carefirst_policy_exists?(pol, change_request)
         pol.update_attributes!(term_for_np: true)
         Observers::PolicyUpdated.notify(pol)
+      elsif change_request.reinstate? && policy.aasm_state == 'canceled' && pol.term_for_np == true && term_or_cancel_carefirst_policy_exists?(pol, change_request)
+        pol.update_attributes!(term_for_np: false)
+        Observers::PolicyUpdated.notify(pol)
       elsif change_request.terminate? && policy.aasm_state == 'terminated' && policy.term_for_np == true
         policy.update_attributes!(term_for_np: false)
         Observers::PolicyUpdated.notify(policy)
