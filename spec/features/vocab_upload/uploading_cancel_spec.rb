@@ -7,8 +7,7 @@ feature 'uploading a cancel/term CV', :dbclean => :after_each do
 
   let!(:member) { FactoryGirl.build :member, hbx_member_id: '123456' }
   let!(:person) { FactoryGirl.create :person, name_first: 'Example', name_last: 'Person', members: [ member ] }
-  let!(:policy1) { Policy.new(eg_id: '1', enrollees: [enrollee1], plan: plan, carrier: carrier, aasm_state: 'resubmitted' ) }
-  let!(:policy2) { Policy.new(eg_id: '2', enrollees: [enrollee2], plan: plan, carrier: carrier, employer_id: nil, aasm_state: "terminated", term_for_np: true ) }
+  let!(:policy1) { Policy.new(eg_id: '1', enrollees: [enrollee1], plan: plan, carrier: carrier, aasm_state: 'submitted' ) }
   let!(:plan) { build(:plan, id: '5f77432ac09d079fd44c1ae9') }
   let!(:carrier) {create(:carrier, id: '53e67210eb899a4603000004', hbx_carrier_id: '116036')}
   let!(:enrollee1) do
@@ -30,7 +29,6 @@ feature 'uploading a cancel/term CV', :dbclean => :after_each do
   end
 
   let!(:policy) { Policy.new(eg_id: '7654321', enrollees: [enrollee2], plan: plan, carrier: carrier, employer_id: nil, aasm_state: "terminated", term_for_np: true ) }
-  # let(:policy) { FactoryGirl.create(:policy, eg_id: '7654321', aasm_state: 'resubmitted', employer_id: nil, term_for_np: true) }
   given(:premium) do
     PremiumTable.new(
       rate_start_date: Date.new(2020, 1, 1),
@@ -54,8 +52,6 @@ feature 'uploading a cancel/term CV', :dbclean => :after_each do
     person.update_attributes!(:authority_member_id => person.members.first.hbx_member_id)
     policy.save!
     policy1.save!
-    policy2.save!
-    allow(Observers::PolicyUpdated).to receive(:notify).with(policy2)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 
@@ -113,8 +109,10 @@ feature 'uploading a cancel/term CV', :dbclean => :after_each do
 
     attach_file('vocab_upload_vocab', file_path)
     expect(policy1.term_for_np).to eq false
+    policy.update_attributes!(term_for_np: false)
     click_button "Upload"
-    expect(policy.term_for_np).to eq true
+    expect(policy.term_for_np).to eq false
+    expect(policy.versions.last.term_for_np).to eq true
     expect(page).to have_content 'Uploaded successfully.'
   end
 
