@@ -65,11 +65,12 @@ class PoliciesController < ApplicationController
     policy = Policy.find(params[:policy][:id])
     response = policy.change_npt_indicator(policy, altered_npt_indicator, current_user.email)
     if response
-      message = {notice: "The NPT Indicator has been updated to '#{altered_npt_indicator.capitalize}'."}
+      message = {notice: "The NPT Indicator was successfully updated to '#{altered_npt_indicator.capitalize}'."}
     else
-      message = {error: "The NPT Indicator has not been updated to '#{altered_npt_indicator.capitalize}'."}
+      message = {error: "An error occurred: The NPT Indicator was unable to be updated with the new value selected."}
     end
-    redirect_to cancelterminate_policy_path({ :id => params[:policy][:id]}), flash: message
+    person = Policy.find(params[:policy][:id]).subscriber.person
+    redirect_to person_path(person), flash: message
   end
 
   def index
