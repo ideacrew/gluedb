@@ -147,11 +147,37 @@ describe PoliciesController, :dbclean => :after_each do
       end
     let(:submitted_by) {"example@example.com"}
 
+    let(:plan)           { FactoryGirl.create(:plan) }
+    let(:calender_year)  { 2018 }
+    let(:coverage_start) { Date.new(calender_year, 1, 1) }
+    let(:coverage_end)   { Date.new(calender_year, 6, 30) }
+
+    let!(:primary) {
+      person = FactoryGirl.create :person, dob: Date.new(1970, 5, 1), name_first: "John", name_last: "Roberts"
+      person.update(authority_member_id: person.members.first.hbx_member_id)
+      person
+    }
+
+    let!(:child)   {
+      person = FactoryGirl.create :person, dob: Date.new(1998, 9, 6), name_first: "Adam", name_last: "Roberts"
+      person.update(authority_member_id: person.members.first.hbx_member_id)
+      person
+    }
+
+    let!(:policy) {
+      policy = FactoryGirl.create :policy, plan_id: plan.id, coverage_start: coverage_start, coverage_end: coverage_end
+      policy.enrollees[0].m_id = primary.authority_member.hbx_member_id
+      policy.enrollees[1].m_id = child.authority_member.hbx_member_id
+      policy.enrollees[1].rel_code ='child'; policy.save
+      policy
+    }
+
+    before do
+      allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+      allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
+    end
+
     context "Sending True NPT Indicator" do
-      before do
-        allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
-        allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
-      end
 
       context "when aasm_state of a policy is in termination state" do
         it "displays success message" do
@@ -170,31 +196,20 @@ describe PoliciesController, :dbclean => :after_each do
             },
             policy.id.to_s
           )
-          put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "true"}}
-          expect(response).to redirect_to(cancelterminate_policy_path(:id => policy.id))
+          put :change_npt_indicator, {id: policy.id, person_id: primary.id, policy: {id: policy.id, npt_indicator: "true"}}
+          expect(response).to redirect_to(person_path(primary))
           expect(flash[:notice]).to match(/The NPT Indicator was successfully updated/)
         end
 
         it "displays failure message when policy NPT indicator is already true" do
           policy.update_attributes!(aasm_state: "terminated", term_for_np: true)
-          put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "true"}}
-          expect(flash[:error]).to match(/The NPT Indicator was unable to be updated with the new value selected./)
-        end
-      end
-
-      context "when aasm_state of a policy is not in termination state" do
-        it "displays failure message" do
-          put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "true"}}
+          put :change_npt_indicator, {id: policy.id, person_id: primary.id, policy: {id: policy.id, npt_indicator: "true"}}
           expect(flash[:error]).to match(/The NPT Indicator was unable to be updated with the new value selected./)
         end
       end
     end
 
     context "Sending False NPT Indicator" do
-      before do
-        allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
-        allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(mock_event_broadcaster)
-      end
 
       context "when aasm_state of a policy is in termination state" do
         it "displays success message" do
@@ -213,15 +228,15 @@ describe PoliciesController, :dbclean => :after_each do
             },
             policy.id.to_s
           )
-          put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "false"}}
-          expect(response).to redirect_to(cancelterminate_policy_path(:id => policy.id))
+          put :change_npt_indicator, {id: policy.id, person_id: primary.id, policy: {id: policy.id, npt_indicator: "false"}}
+          expect(response).to redirect_to(person_path(primary))
           expect(flash[:notice]).to match(/The NPT Indicator was successfully updated/)
         end
       end
 
       context "when aasm_state of a policy is not in termination state" do
         it "displays failure message" do
-          put :change_npt_indicator, {id: policy.id, policy: {id: policy.id, npt_indicator: "false"}}
+          put :change_npt_indicator, {id: policy.id, person_id: primary.id, policy: {id: policy.id, npt_indicator: "false"}}
           expect(flash[:error]).to match(/The NPT Indicator was unable to be updated with the new value selected./)
         end
       end

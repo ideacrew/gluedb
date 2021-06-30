@@ -69,7 +69,8 @@ class PoliciesController < ApplicationController
     else
       message = {error: "An error occurred: The NPT Indicator was unable to be updated with the new value selected."}
     end
-    redirect_to cancelterminate_policy_path({ :id => params[:policy][:id]}), flash: message
+    person = Policy.find(params[:policy][:id]).subscriber.person
+    redirect_to person_path(person), flash: message
   end
 
   def index
