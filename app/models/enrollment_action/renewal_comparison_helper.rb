@@ -131,7 +131,6 @@ module EnrollmentAction
       return false unless (plan.coverage_type == pol.plan.coverage_type)
       return false if pol.canceled?
       return false if pol.terminated?
-      return false unless (plan.carrier_id == pol.plan.carrier_id)
       pol.coverage_period.include?(subscriber_start)
     end
 
