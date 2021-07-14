@@ -1,5 +1,5 @@
 %ul.breadcrumb
-  Re-print and Mail ONLY of 1095A Document:
+  Re-print and Mail ONLY of 1095A Document: Policy ID
   = @policy.id
 = form_tag generate_tax_document_policy_path(@policy, {person_id:@person.id}), :method => "post", :id => '1095A_generation_form', :onsubmit => "return validate_1095A_form()"  do
   .panel.panel-default
@@ -69,7 +69,7 @@
 
 - if show_1095A_document_button?(@policy) && @policy.coverage_year.first.year > 2017
   %ul.breadcrumb
-    Automated 1095A/H41 Trigger (to Consumer and IRS):
+    Automated 1095A/H41 Trigger (to Consumer and IRS): Policy ID
     = @policy.id
   .panel.panel-default
     .panel-body
