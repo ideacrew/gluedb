@@ -490,10 +490,18 @@ module ExternalEvents
     end
 
     def contiguous_active_coverage_policy
-      subscriber = existing_policy.subscriber
-      subscriber_person = subscriber.person
-      subscriber_person.policies.select do |pol|
-        is_contiguous_policy?(pol)
+      begin
+        subscriber = existing_policy.subscriber
+        subscriber_person = subscriber.person
+        subscriber_person.policies.select do |pol|
+          is_contiguous_policy?(pol)
+        end
+      rescue => e
+        Rails.logger.error { "issue policy: #{existing_policy.eg_id} - #{e.backtrace}" }
+        puts "issue_policy: #{existing_policy.eg_id}" unless Rails.env.test?
+        $stderr.puts e.message
+        $stderr.puts e.inspect
+        $stderr.puts e.backtrace.join("\n")
       end
     end
 
