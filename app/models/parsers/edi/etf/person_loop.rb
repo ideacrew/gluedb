@@ -15,7 +15,23 @@ module Parsers
 
         def carrier_member_id
           # TODO: Memoize this, but account for nil
-          get_carrier_member_id
+          # Some carriers send different IDs for the subscriber
+          # As carrier assigned subscriber id and carrier assigned
+          # Member ID.  In this case we should always pull the carrier
+          # assigned subscriber ID.
+          if subscriber?
+            subscriber_id = get_carrier_subscriber_id
+            subscriber_id || get_carrier_member_id
+          else
+            get_carrier_member_id
+          end
+        end
+
+        def get_carrier_subscriber_id
+          c_member_seg = (@loop["REFs"].detect do |r|
+            r[1] == "ZZ"
+          end)
+          c_member_seg.nil? ? nil : c_member_seg[2]
         end
 
         def get_carrier_member_id
@@ -109,6 +125,12 @@ module Parsers
 
         def zip
           @loop["L2100A"]["N4"][3]
+        end
+
+        def county_code
+          return nil unless @loop["L2100A"]["N4"][5] == 'CY'
+          result = @loop["L2100A"]["N4"][6]
+          ((result.blank?) ? nil : result)
         end
 
         def name_prefix

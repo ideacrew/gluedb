@@ -12,6 +12,7 @@ class Address
   field :city, type: String
   field :county, type: String
   field :state, type: String
+  field :location_county_code, type: String
   field :location_state_code, type: String
   field :zip, type: String
   field :zip_extension, type: String
@@ -44,7 +45,7 @@ class Address
 
   def match(another_address)
     return(false) if another_address.nil?
-    attrs_to_match = [:address_type, :address_1, :address_2, :city, :state, :zip]
+    attrs_to_match = [:address_type, :address_1, :address_2, :city, :state, :zip, :location_county_code]
     attrs_to_match.all? { |attr| attribute_matches?(attr, another_address) }
   end
 
@@ -77,7 +78,8 @@ class Address
       :address_2,
       :city,
       :state,
-      :zip
+      :zip,
+      :location_county_code
     )
   end
 

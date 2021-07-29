@@ -60,8 +60,8 @@ describe EnrollmentAction::AssistanceChange, "being published" do
   let(:amqp_connection) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
 
-  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago) }
-  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => "CARRIER ASSIGNED SUBSCRIBER ID", :cp_id => nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :c_id => "CARRIER ASSIGNED MEMBER ID", :cp_id => nil) }
   let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }
 
   let(:subscriber_start) { double }
@@ -100,6 +100,8 @@ describe EnrollmentAction::AssistanceChange, "being published" do
     allow(action_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
     allow(action_publish_helper).to receive(:keep_member_ends).with([])
     allow(action_publish_helper).to receive(:assign_assistance_date).with(subscriber_start)
+    allow(action_publish_helper).to receive(:set_carrier_assigned_ids).with(enrollee_primary)
+    allow(action_publish_helper).to receive(:set_carrier_assigned_ids).with(enrollee_new)
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, new_enrollment_event.hbx_enrollment_id, new_enrollment_event.employer_hbx_id)
   end
 

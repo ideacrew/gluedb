@@ -92,7 +92,7 @@ describe EnrollmentAction::TerminatePolicyWithEarlierDate, "given a valid enroll
   let(:reinstate_action_helper) { double }
   let(:carrier) { instance_double(Carrier, requires_reinstate_for_earlier_termination: true) }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
-  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago) }
+  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil) }
   let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, carrier: carrier) }
 
   let(:termination_event) { instance_double(

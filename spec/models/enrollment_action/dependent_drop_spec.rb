@@ -96,8 +96,8 @@ describe EnrollmentAction::DependentDrop, "given a qualified enrollment set, bei
   let(:termination_event_xml) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
-  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago) }
-  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
   let(:carrier) { instance_double(Carrier, :renewal_dependent_drop_transmitted_as_renewal => true) }
   let(:plan) { instance_double(Plan, :id => 1, ) }
   let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, carrier: carrier) }
@@ -219,11 +219,11 @@ describe "given renewal event, dependent drop from IVL renewal policy", :dbclean
   }
   let(:prim_coverage_start) { Date.today.next_year.beginning_of_year }
   let(:dep_coverage_start) { Date.today.next_year.beginning_of_year }
-  let(:active_enrollee1) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: Date.today.beginning_of_year, coverage_end: '')}
-  let(:active_enrollee2) { Enrollee.new(m_id: dep.authority_member.hbx_member_id, rel_code: 'child', coverage_start: Date.today.beginning_of_month, coverage_end: Date.today.beginning_of_month,)}
-  let(:active_enrollee3) { Enrollee.new(m_id: dep2.authority_member.hbx_member_id, rel_code: 'child', coverage_start: Date.today.beginning_of_month, coverage_end: Date.today.beginning_of_month,)}
-  let(:renewal_enrollee1) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: prim_coverage_start, coverage_end: '')}
-  let(:renewal_enrollee2) { Enrollee.new(m_id: dep.authority_member.hbx_member_id, rel_code: 'child', coverage_start: dep_coverage_start, coverage_end: '')}
+  let(:active_enrollee1) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: Date.today.beginning_of_year, coverage_end: '', :c_id => nil, :cp_id => nil)}
+  let(:active_enrollee2) { Enrollee.new(m_id: dep.authority_member.hbx_member_id, rel_code: 'child', coverage_start: Date.today.beginning_of_month, coverage_end: Date.today.beginning_of_month, :c_id => nil, :cp_id => nil)}
+  let(:active_enrollee3) { Enrollee.new(m_id: dep2.authority_member.hbx_member_id, rel_code: 'child', coverage_start: Date.today.beginning_of_month, coverage_end: Date.today.beginning_of_month, :c_id => nil, :cp_id => nil)}
+  let(:renewal_enrollee1) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: prim_coverage_start, coverage_end: '', :c_id => nil, :cp_id => nil)}
+  let(:renewal_enrollee2) { Enrollee.new(m_id: dep.authority_member.hbx_member_id, rel_code: 'child', coverage_start: dep_coverage_start, coverage_end: '', :c_id => nil, :cp_id => nil)}
   let!(:active_policy) {
     policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, hbx_enrollment_ids: ["123"], carrier_id: carrier_id, plan: active_plan, carrier: carrier, coverage_start: Date.today.beginning_of_month, coverage_end: nil, kind: kind)
     policy.update_attributes(enrollees: [active_enrollee1, active_enrollee2, active_enrollee3])

@@ -52,7 +52,8 @@ describe EnrollmentAction::InitialEnrollment, "with an initial enrollment event,
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:carrier) { instance_double(Carrier, :retro_renewal_transmitted_as_renewal => true) }
-  let(:policy) { instance_double(Policy, carrier: carrier) }
+  let!(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:policy) { instance_double(Policy, carrier: carrier, :enrollees => [enrollee_primary]) }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
   let(:enrollment_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,

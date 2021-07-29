@@ -54,6 +54,10 @@ class Carrier
     carrier_profiles.first.fein
   end
 
+  def require_term_drop?
+    carrier_profiles.first.requires_term_init_for_plan_change
+  end
+
   def self.individual_market_health
   	where(individual_market_health: true)
 	end

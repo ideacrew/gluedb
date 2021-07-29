@@ -6,6 +6,8 @@
   - unless address.address_3.blank?
     %address_line_3= address.address_3
   %location_city_name= address.city
+  - unless address.location_county_code.blank?
+    %location_county_code= address.location_county_code
   %location_state_code= address.state
   %postal_code= address.zip
   - unless address.zip_extension.blank?
