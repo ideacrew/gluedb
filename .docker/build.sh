@@ -12,11 +12,11 @@ cp .docker/config/mongoid.yml config/
 cp .docker/config/unicorn.rb config/
 cp .docker/config/secrets.yml config/
 
-cp -r ../designmodo-flatuipro-rails .
-cp -r ../edi_codec .
+# cp -r ../designmodo-flatuipro-rails .
+# cp -r ../edi_codec .
 
 ls -ltr 
-
+docker pull ruby:2.1.7
 docker build --build-arg BUNDLER_VERSION_OVERRIDE='1.17.3' \
              --build-arg EDIDB_DB_HOST='host.docker.internal' \
              --build-arg EDIDB_DB_PORT="27017" \
