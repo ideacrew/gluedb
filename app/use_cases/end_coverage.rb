@@ -14,10 +14,9 @@ class EndCoverage
     @policy = @policy_repo.find(request[:policy_id])
 
     enrollees_not_already_canceled = @policy.enrollees.select { |e| !e.canceled? }
-
     update_policy(affected_enrollee_ids)
     notify_if_qualifies(request, @policy)
-
+    alter_npt_flag(request, @policy)
     action = @action_factory.create_for(request)
     action_request = {
       policy_id: @policy.id,
@@ -196,6 +195,54 @@ class EndCoverage
       Date.strptime(requested_coverage_end,"%m/%d/%Y")
     elsif requested_coverage_end.split('-').first.size == 2
       Date.strptime(requested_coverage_end,"%m-%d-%Y")
+    end
+  end
+
+ def alter_npt_flag(request, policy)
+    begin
+      if policy.carrier.hbx_carrier_id == "116036" #hbx_carrier_id of CareFirst carrier
+        alter_carefirst_npt_flag(request, policy)
+      else
+        alter_non_carefirst_npt_flag(request, policy)
+      end
+    rescue Exception => e
+      puts e.to_s
+      puts "policy_id: #{policy.id}"
+    end
+  end
+
+  def alter_carefirst_npt_flag(request, policy)
+    reinstate_policy_m_id = policy.subscriber.m_id
+    pols = Person.where(authority_member_id: reinstate_policy_m_id).first.policies
+    pols.each do |pol|
+      if request[:operation] == 'cancel' && policy.aasm_state == 'submitted' && pol.versions.last.try(:term_for_np) == true && term_or_cancel_carefirst_policy_exists?(pol, policy)
+        pol.update_attributes!(term_for_np: true)
+        Observers::PolicyUpdated.notify(pol)
+      end
+    end
+  end
+
+  def term_or_cancel_carefirst_policy_exists?(pol, policy)
+    reinstate_policy_plan_id = policy.plan_id
+    reinstate_policy_carrier_id = policy.carrier_id
+    term_policy_end_date = policy.policy_start - 1.day
+    term_en_ids = pol.enrollees.map(&:m_id).sort
+    reinstate_en_ids = policy.enrollees.map(&:m_id).sort
+    return false unless pol.employer_id == nil
+    return false unless (pol.aasm_state == "terminated" && pol.policy_end == term_policy_end_date)
+    return false unless pol.plan_id.to_s == reinstate_policy_plan_id
+    return false unless pol.carrier_id.to_s == reinstate_policy_carrier_id
+    return false unless term_en_ids.count == reinstate_en_ids.count
+    return false unless term_en_ids == reinstate_en_ids
+    true
+  end
+
+  def alter_non_carefirst_npt_flag(request, policy)
+    if request[:operation] == 'cancel' && policy.aasm_state == 'resubmitted'
+      unless policy.versions.empty?
+        last_version_npt = policy.versions.last.term_for_np
+        policy.update_attributes!(term_for_np: last_version_npt)
+      end
     end
   end
 
