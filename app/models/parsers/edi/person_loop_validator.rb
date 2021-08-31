@@ -4,6 +4,10 @@ module Parsers
       def validate(person_loop, listener, policy)
         valid = true
         carrier_member_id = person_loop.carrier_member_id
+        if person_loop.reinstate?
+          listener.inbound_reinstate_blocked
+          valid = false
+        end
         if policy
           enrollee = policy.enrollee_for_member_id(person_loop.member_id)
           if enrollee.blank?

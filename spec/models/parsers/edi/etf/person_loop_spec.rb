@@ -252,4 +252,46 @@ describe Parsers::Edi::Etf::PersonLoop do
     end
   end
 
+  it "is not a reinstate" do
+    expect(person_loop.reinstate?).to be_falsey
+  end
+end
+
+describe Parsers::Edi::Etf::PersonLoop, "representing a reinstate" do
+  subject(:person_loop) { Parsers::Edi::Etf::PersonLoop.new(raw_loop) }
+
+  let(:ssn_qual) { "34" }
+
+  let(:raw_loop) do
+    {
+      'L2100A' => {
+        "N3" => ['', street1, street2, ''],
+        'N4' => ['', city, state, zip],
+        'NM1' => ['', '', '', name_last, name_first, name_middle, name_prefix, name_suffix, ssn_qual, ssn],
+        'DMG' => ['', '', dob, gender],
+      },
+      'REFs' => [['', '17', member_id ]],
+      'INS' => ['', '', '', change_type]
+    }
+  end
+
+  let(:street1) { 'something' }
+  let(:street2) { 'something' }
+  let(:city) { 'Atlanta' }
+  let(:state) { 'GA' }
+  let(:zip) { '20002' }
+  let(:member_id) { '666'}
+  let(:name_prefix) { 'Mrs' }
+  let(:name_first) { 'Jane' }
+  let(:name_middle) { 'X' }
+  let(:name_last) { 'Doe' }
+  let(:name_suffix) { 'Jr' }
+  let(:ssn) { '111111111'}
+  let(:gender) { 'M' }
+  let(:dob) { '1970-01-01'}
+  let(:change_type) { '025' }
+
+  it "is a reinstate" do
+    expect(person_loop.reinstate?).to be_truthy
+  end
 end

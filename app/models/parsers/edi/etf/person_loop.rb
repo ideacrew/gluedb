@@ -57,6 +57,13 @@ module Parsers
           @emp_stat ||= @loop["INS"][8]
         end
 
+        def reinstate?
+          return false if @loop["INS"].blank?
+          ins_03 = @loop["INS"][3]
+          return false if ins_03.blank?
+          "025" == ins_03.strip
+        end
+
         def cancellation_or_termination?
           if !@loop["INS"].blank?
             ['024'].include?(@loop["INS"][3].strip)
