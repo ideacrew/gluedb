@@ -1,6 +1,31 @@
 require "rails_helper"
 
-describe EnrollmentAction::PlanChangeSameCarrier, "Plan change same carrier and require term/drop" do
+describe EnrollmentAction::PlanChangeSameCarrier, "Plan change same carrier and require term/drop, with the same plan" do
+
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => true) }
+  let(:plan_1) { instance_double(Plan, :id => 1, :carrier_id => 1) }
+  let(:plan_2) { instance_double(Plan, :id => 1, :carrier_id => 1) }
+
+  let(:member_ids_1) { [1,2] }
+  let(:member_ids_2) { [1,2,3] }
+
+  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan_1, :all_member_ids => member_ids_1) }
+  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan_2, :all_member_ids => member_ids_2) }
+  let(:event_set) { [event_1, event_2] }
+
+  subject { EnrollmentAction::PlanChangeSameCarrier }
+
+  before do
+    allow(plan_1).to receive(:carrier).and_return(carrier)
+    allow(plan_2).to receive(:carrier).and_return(carrier)
+  end
+
+  it "does not qualify" do
+    expect(subject.qualifies?(event_set)).to be_falsey
+  end
+end
+
+describe EnrollmentAction::PlanChangeSameCarrier, "Plan change same carrier and require term/drop, with different plan" do
 
   let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => true) }
   let(:plan_1) { instance_double(Plan, :id => 1, :carrier_id => 1) }

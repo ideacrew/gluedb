@@ -8,6 +8,7 @@ module EnrollmentAction
     def self.qualifies?(chunk)
       return false unless chunk.length > 1
       return false if carriers_are_different?(chunk)
+      return false if same_plan?(chunk)
       carrier_requires_term_drop?(chunk)
     end
 
