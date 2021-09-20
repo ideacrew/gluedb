@@ -45,7 +45,7 @@ development:
     default:
       # Defines the name of the default database that Mongoid can connect to.
       # (required).
-      database: <%= ENV['EDIDB_DB_NAME_DEV'] %>
+      database: <%= ENV['EDIDB_DB_NAME'] %>_dev
       <% if ENV['EDIDB_DB_AUTH'] %>
       username: <%= ENV['EDIDB_DB_USERNAME'] %>
       password: <%= ENV['EDIDB_DB_PASSWORD'] %>

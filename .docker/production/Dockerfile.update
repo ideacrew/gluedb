@@ -1,0 +1,164 @@
+########################
+### app/rails config ###
+########################
+
+FROM ruby:2.1.7 AS base
+
+LABEL author="IdeaCrew"
+
+# Install required packages/libraries
+RUN apt-get update && \
+    apt-get -yq dist-upgrade && \
+    apt-get install -y git gcc openssl libyaml-dev libyaml-cpp-dev libyaml-cpp0.5 libffi-dev libffi6 libreadline-dev \
+                       zlibc libgdbm-dev libncurses-dev autoconf fontconfig unzip zip sshpass bzip2 libxrender1 libxext6 \
+                       build-essential && \
+    apt-get autoremove -y
+
+# Configure bundler and PATH, install bundler version
+ENV LANG=C.UTF-8 \
+    GEM_HOME=/bundle \
+    BUNDLE_JOBS=4 \
+    BUNDLE_RETRY=3
+ENV BUNDLE_PATH $GEM_HOME
+ENV BUNDLE_APP_CONFIG=$BUNDLE_PATH \
+    BUNDLE_BIN=$BUNDLE_PATH/bin
+ENV PATH $BUNDLE_BIN:$GEM_HOME/gems/bin:$PATH
+
+ARG BUNDLER_VERSION_OVERRIDE
+ENV BUNDLER_VERSION=$BUNDLER_VERSION_OVERRIDE
+RUN gem install bundler:$BUNDLER_VERSION
+
+# Configure app home directory
+ENV HOME /edidb
+RUN mkdir -p $HOME
+WORKDIR $HOME
+COPY . $HOME
+RUN mkdir -p /edidb/log
+
+# Adding gems
+COPY Gemfile Gemfile
+COPY Gemfile.lock Gemfile.lock
+
+# Setting env up
+ARG GEM_OAUTH_TOKEN
+ARG EDIDB_SECRET_KEY_BASE
+ARG EDIDB_DB_HOST
+ARG EDIDB_DB_PORT
+ARG EDIDB_DB_NAME
+ARG RABBITMQ_URL
+ARG EDIDB_DEVISE_SECRET_KEY
+ARG EDIDB_FQDN
+ARG RECEIVER_ID
+ENV RAILS_ENV='production'
+ENV NODE_ENV='production'
+ENV EDIDB_DB_HOST=$EDIDB_DB_HOST
+ENV EDIDB_DB_PORT=$EDIDB_DB_PORT
+ENV EDIDB_DB_NAME=$EDIDB_DB_NAME
+ENV RABBITMQ_URL=$RABBITMQ_URL
+ENV EDIDB_SECRET_KEY_BASE=$EDIDB_SECRET_KEY_BASE
+ENV EDIDB_DEVISE_SECRET_KEY=$EDIDB_DEVISE_SECRET_KEY
+ENV EDIDB_FQDN=$EDIDB_FQDN
+ENV RECEIVER_ID=$RECEIVER_ID
+ENV BUNDLE_GITHUB__COM=x-access-token:"$GEM_OAUTH_TOKEN"
+
+RUN bundle install --jobs 20 --retry 5 --without development test 
+
+RUN git clone https://"$GEM_OAUTH_TOKEN"@github.com/dchbx/ediparser.git
+RUN git clone https://"$GEM_OAUTH_TOKEN"@github.com/health-connector/hbx_oracle.git
+#CMD ["./entrypoints/docker-entrypoint.sh"]
+
+FROM ruby:2.1.7 AS app
+
+# Install mongodb shell
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+RUN echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/3.4 main" | tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+
+# Install required packages/libraries
+RUN apt-get update && \
+    apt-get -yq dist-upgrade && \
+    apt-get install -y git gcc openssl libyaml-dev libyaml-cpp-dev libyaml-cpp0.5 libffi-dev libffi6 libreadline-dev \
+                       zlibc libgdbm-dev libncurses-dev autoconf fontconfig unzip zip sshpass bzip2 libxrender1 libxext6 \
+                       build-essential mongodb-org-shell default-jdk && \
+    apt-get autoremove -y
+
+RUN cd /root && curl -O https://downloads.haskell.org/~ghc/8.0.2/ghc-8.0.2-x86_64-deb8-linux.tar.xz && tar xf ghc-8.0.2-x86_64-deb8-linux.tar.xz && cd ghc-8.0.2 && ./configure && make install
+RUN apt-get install -y libgmp-dev
+RUN cd /root && git clone https://github.com/haskell/cabal.git && cd cabal && git checkout Cabal-v1.24.2.0 && cd cabal-install && ./bootstrap.sh
+ENV PATH=$PATH:/root/.cabal/bin
+#RUN ls -alF /root && ls -alF /root/.ghc/ && ls -alF /root/.cabal/ && ls -alF .cabal && sleep 11
+RUN cabal update
+
+# Configure bundler and PATH, install bundler version
+ENV LANG=C.UTF-8 \
+    GEM_HOME=/bundle \
+    BUNDLE_JOBS=4 \
+    BUNDLE_RETRY=3
+ENV BUNDLE_PATH $GEM_HOME
+ENV BUNDLE_APP_CONFIG=$BUNDLE_PATH \
+    BUNDLE_BIN=$BUNDLE_PATH/bin
+ENV PATH $BUNDLE_BIN:$GEM_HOME/gems/bin:$PATH
+
+ARG BUNDLER_VERSION_OVERRIDE
+ENV BUNDLER_VERSION=$BUNDLER_VERSION_OVERRIDE
+#RUN gem install bundler:$BUNDLER_VERSION
+
+# Configure app home directory
+ENV HOME /edidb
+RUN mkdir -p $HOME
+WORKDIR $HOME
+COPY . $HOME
+RUN mkdir -p /edidb/log
+
+# Adding gems
+COPY Gemfile Gemfile
+COPY Gemfile.lock Gemfile.lock
+
+# Setting env up
+ENV RAILS_ENV='production'
+ENV NODE_ENV='production'
+
+COPY --from=base /edidb /edidb
+COPY --from=base /bundle /bundle
+
+RUN echo '\ngem "rubycritic"' >> Gemfile
+RUN bundle install --jobs 20 --retry 5 --without development test
+#RUN git clone https://github.com/rbenv/rbenv.git ~/.rbenv && mkdir ~/.rbenv/plugins
+#RUN git clone https://github.com/rbenv/ruby-build.git  ~/.rbenv/plugins/ruby-build/
+#RUN echo 'export PATH=/edidb/.rbenv/bin:$PATH' >> /root/.bashrc && echo 'eval "$(rbenv init -)"' >> /root/.bashrc
+#RUN cat /root/.bashrc && . /root/.bashrc
+#ENV PATH=/edidb/.rbenv/bin:$PATH
+#RUN wget https://repo1.maven.org/maven2/org/jruby/jruby-dist/1.7.27/jruby-dist-1.7.27-bin.zip  && unzip jruby-dist-1.7.27-bin.zip
+#RUN ls -ltr && leep 45
+#ENV ORIG_PATH $PATH
+#ENV LANG=C.UTF-8 \
+#    GEM_HOME=/bundle_jruby \
+#    BUNDLE_JOBS=4 \
+#    BUNDLE_RETRY=3
+#ENV BUNDLE_PATH $GEM_HOME
+#ENV BUNDLE_APP_CONFIG=$BUNDLE_PATH \
+#    BUNDLE_BIN=$BUNDLE_PATH/bin
+#ENV PATH $BUNDLE_BIN:$GEM_HOME/gems/bin:$ORIG_PATH
+
+#ENV PATH=/edidb/jruby-1.7.27/bin:$PATH
+#RUN cd /edidb/hbx_oracle && gem install bundler -v '< 2' && bundle install --gemfile=Gemfile --shebang jruby
+RUN cd /edidb/ediparser && cabal update && cabal install --dependencies-only && cabal build && cabal configure
+RUN mkdir -p /edidb/scripts
+RUN cp /edidb/.docker/config/prepare_dev.js /edidb/scripts/prepare_dev.js
+RUN cp /edidb/.docker/config/prepare_prod.js /edidb/scripts/prepare_prod.js
+RUN cp /edidb/.docker/config/database.rb /edidb/hbx_oracle/config/database.rb
+RUN cp /edidb/.docker/config/glue_update.sh /edidb/scripts/glue_update.sh && chmod 744 /edidb/scripts/glue_update.sh
+RUN cp /edidb/.docker/config/update_variables.sh /edidb/scripts/update_variables.sh && chmod 744 /edidb/scripts/update_variables.sh
+
+########################
+### web/nginx config ###
+######################## 
+
+FROM nginx:1.17.6-alpine as web
+
+RUN mkdir /edidb
+
+# copy assets from the app build and nginx config
+COPY --from=app /edidb/public /edidb/
+COPY .docker/production/nginx.conf /etc/nginx/conf.d/edidb.conf
+RUN mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf-bkp
+
