@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  gluedb:
+    image: gluedb:release_0.11.0
+    build:
+      context: .
+      dockerfile: ./.docker/development/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/gluedb:cached
+      - rails_cache:/gluedb/tmp/cache
+      - bundle:/bundle
+      - node_modules:/gluedb/node_modules
+      - packs:/gluedb/public/packs
+    # env_file:
+    #   - ./.env
+    environment:
+      BLIND_INDEX_MASTER_KEY: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+      # INTERFACE: "0.0.0.0"
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_VHOST: event_source
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_URL_EVENT_SOURCE: ${RABBITMQ_URL_EVENT_SOURCE:-amqp://guest:guest@amqp:5672}
+      RABBITMQ_USERNAME: ${AMQP_USERNAME:-guest}
+      RAILS_ENV: ${RAILS_ENV:-development}
+    depends_on:
+      - mongodb
+      - rabbitmq
+    tmpfs:
+      - /tmp
+    command: bash -c "rm -rf tmp/pids/server.pid && mkdir -p tmp/pids && bundle exec bundle install &&  bin/rails server --port 3000 --binding 0.0.0.0"
+
+  mongodb:
+    image: mongo:2.4
+    volumes:
+      - mongodb:/data/db
+      - mongodb:/data/var/log/mongodb/
+      # - mongodb_config:/data/configdb
+    ports:
+      - 27017:27017
+
+  rabbitmq:
+    build: .docker/rabbitmq
+    hostname: rabbitmq
+    env_file:
+      - .docker/rabbitmq/rabbitmq.env
+    volumes:
+      - rabbitmq_etc:/etc/rabbitmq/
+      - rabbitmq_data:/var/lib/rabbitmq/
+      - rabbitmq_logs:/var/log/rabbitmq/
+      - ./.docker/rabbitmq/rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
+      - ./.docker/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+volumes:
+  bundle:
+  rails_cache:
+  node_modules:
+  packs:
+  mongodb:
+  # mongodb_config:
+  rabbitmq_etc:
+  rabbitmq_data:
+  rabbitmq_logs:
