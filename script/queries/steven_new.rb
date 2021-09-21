@@ -1,11 +1,29 @@
+#Usage
+#rails r script/queries/steven_new.rb BEGIN-DATE -e production
+#BEGIN-DATE, format = MMDDYYYY
+#E.g. rails r script/queries/steven_new.rb "01012017" -e production
+
 require 'csv'
 timey = Time.now
 puts "Report started at #{timey}"
+
+begin
+  @begin_date = Date.strptime(ARGV[0], "%m%d%Y")
+  puts "begin_date #{@begin_date}"
+rescue Exception => e
+  puts "Error #{e.message}"
+  puts "Usage:"
+  puts "rails r script/queries/steven_new.rb BEGIN-DATE"
+  puts "rails r script/queries/steven_new.rb 01012018"
+  exit
+end
+
+
 policies = Policy.no_timeout.where(
   {"eg_id" => {"$not" => /DC0.{32}/},
    :enrollees => {"$elemMatch" =>
       {:rel_code => "self",
-            :coverage_start => {"$gt" => Date.new(2017,12,31)}}}}
+            :coverage_start => {"$gte" => @begin_date}}}}
 )
 
 policies = policies.reject{|pol| pol.market == 'individual' && 
@@ -31,7 +49,7 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
             "First Name", "Last Name","SSN", "DOB", "Gender", "Relationship",
             "Plan Name", "HIOS ID", "Plan Metal Level", "Carrier Name",
             "Premium Amount", "Premium Total", "Policy APTC", "Policy Employer Contribution",
-            "Coverage Start", "Coverage End",
+            "Coverage Start", "Coverage End", "Benefit Status",
             "Employer Name", "Employer DBA", "Employer FEIN", "Employer HBX ID",
             "Home Address", "Mailing Address","Email","Phone Number","Broker"]
     policies.each do |pol|
@@ -82,6 +100,7 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                   en.pre_amt, pol.pre_amt_tot,pol.applied_aptc, pol.tot_emp_res_amt,
                   en.coverage_start.blank? ? nil : en.coverage_start.strftime("%Y%m%d"),
                   en.coverage_end.blank? ? nil : en.coverage_end.strftime("%Y%m%d"),
+                  en.ben_stat == "cobra" ? en.ben_stat : nil,
                   pol.employer_id.blank? ? nil : employer.name,
                   pol.employer_id.blank? ? nil : employer.dba,
                   pol.employer_id.blank? ? nil : employer.fein,

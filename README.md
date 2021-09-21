@@ -1,10 +1,12 @@
-#Gluedb
+Docs site: https://gluedb.docs.openhbx.org/
+
+# Gluedb
 
 *This document is intended for the internal development team.*
 
-##Setup
+## Setup
 
-###Setup the Rails Project
+### Setup the Rails Project
 
 Some of the gems are private, and you will need to consult devops for access.
 
@@ -14,7 +16,7 @@ cd gluedb
 bundle install
 ```
 
-###Setup Mongodb
+### Setup Mongodb
 
 You will need mongo <= 3.4.
 
