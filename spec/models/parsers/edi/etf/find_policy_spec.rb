@@ -18,6 +18,16 @@ describe Parsers::Edi::FindPolicy do
   end
 
   context 'policy exists' do
+    before :each do
+      Policy.destroy_all
+    end
+
+    after :each do
+      if @policy
+        @policy.destroy
+      end
+    end
+
     it 'notifies listener of policy found by fein' do
       subkeys = {
         eg_id: '1234',
@@ -25,13 +35,13 @@ describe Parsers::Edi::FindPolicy do
         hios_plan_id: '1234'
       }
       plan = Plan.create!(:coverage_type => "health", :carrier_id => subkeys[:carrier_id], hios_plan_id: subkeys[:carrier_id], name: "da plan")
-      policy = Policy.create(eg_id: subkeys[:eg_id], carrier_id: subkeys[:carrier_id], plan: plan)
+      @policy = Policy.create(eg_id: subkeys[:eg_id], carrier_id: subkeys[:carrier_id], plan: plan)
 
       listener = double
       find_policy = Parsers::Edi::FindPolicy.new(listener)
 
       expect(listener).to receive(:policy_found)
-      expect(find_policy.by_subkeys(subkeys)).to eq policy
+      expect(find_policy.by_subkeys(subkeys)).to eq @policy
     end
   end
 end
