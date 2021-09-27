@@ -73,5 +73,7 @@ tax_document:
         active_false: '2020-1095A-VOID-ACTIVE-FALSE.pdf'
         active_true: '2020-1095A-VOID-ACTIVE-TRUE.pdf'
     coverage_page_no: 3
+  2021:
+    slcsp: '48396ME0710074-01'
   documents_root_path: '/tmp/'
   documents_folder: 'irs_notices'
