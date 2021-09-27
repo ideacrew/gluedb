@@ -42,7 +42,7 @@ module Generators::Reports
           xml.FileInformation do 
             xml.FileId "#{Time.now.utc.strftime('%Y%m%d%H%M%S')}#{hios_prefix}"
             xml.FileCreateDateTime Time.now.utc.iso8601
-            xml.TenantId 'DC0'
+            xml.TenantId Settings.site.source_exchange_code
             xml.CoverageYear calender_year
             xml.IssuerFileInformation do 
               xml.IssuerId hios_prefix
@@ -66,7 +66,7 @@ module Generators::Reports
     end
 
     def merge
-      file_name = "FEP0020DC.EPS.SBMI.D#{Time.now.utc.strftime('%y%m%d')}.T#{Time.now.utc.strftime('%H%M%S')}000.P.IN"
+      file_name = "#{Settings.sbmi_generation.sbmi_file_name}.EPS.SBMI.D#{Time.now.utc.strftime('%y%m%d')}.T#{Time.now.utc.strftime('%H%M%S')}000.P.IN"
       @data_file_path = "#{sbmi_folder_path}/#{file_name}"
 
       File.open(@data_file_path, 'w') do |file|
