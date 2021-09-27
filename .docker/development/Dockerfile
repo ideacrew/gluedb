@@ -1,7 +1,7 @@
 FROM public.ecr.aws/ideacrew/gluedb:base as gluedb
 
-ENV HOME /gluedb
-RUN mkdir -p $HOME
+# ENV HOME /gluedb
+# RUN mkdir -p $HOME
 # WORKDIR $HOME
 
 # RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
@@ -24,11 +24,11 @@ RUN mkdir -p $HOME
 
 # ENV PATH $GEM_HOME/bin:$GEM_HOME/gems/bin:$PATH
 
-COPY . $HOME
+# COPY . $HOME
 
 # RUN gem install --source "https://rubygems.org" bundler --version '2.2.24'
 
-RUN cd $HOME && bundle install
+# RUN cd $HOME && bundle install
 # RUN cd $HOME && yarn add @rails/webpacker@5.4.0 && yarn add --dev webpack-dev-server
 # RUN cd $HOME && rails webpacker:install:erb
 # RUN cd $HOME && yarn add bootstrap && yarn add @popperjs/core
