@@ -4,7 +4,7 @@ module Generators::Reports
   class SbmiXmlMerger
 
     attr_reader :xml_docs
-    attr_accessor :sbmi_folder_path, :calender_year, :hios_prefix
+    attr_accessor :sbmi_folder_path, :calender_year, :hios_prefix, :settings
 
 
     NS = { 
@@ -16,6 +16,7 @@ module Generators::Reports
       @xml_docs = []
       @doc_count = nil
       @dir = dir
+      @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
     end
 
     def process
@@ -66,7 +67,8 @@ module Generators::Reports
     end
 
     def merge
-      file_name = "#{Settings.sbmi_generation.sbmi_file_name}.EPS.SBMI.D#{Time.now.utc.strftime('%y%m%d')}.T#{Time.now.utc.strftime('%H%M%S')}000.P.IN"
+      cms_pbp_source_sbm_id = settings[:cms_pbp_generation][:cms_pbp_source_sbm_id]
+      file_name = "#{cms_pbp_source_sbm_id}.EPS.SBMI.D#{Time.now.utc.strftime('%y%m%d')}.T#{Time.now.utc.strftime('%H%M%S')}000.P.IN"
       @data_file_path = "#{sbmi_folder_path}/#{file_name}"
 
       File.open(@data_file_path, 'w') do |file|
