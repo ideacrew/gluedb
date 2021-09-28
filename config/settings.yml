@@ -12,12 +12,7 @@ contact_center:
   address: "P.O. Box 91560"
   city: "Hartford"
   state_abbreviation: "CT"
-
   postal_code: "20090"
 
 shop_market:
   market_enabled: false
-
-sbmi_generation:
-  subdomain: "MEHBX"
-  sbmi_file_name: "SBE00ME"
