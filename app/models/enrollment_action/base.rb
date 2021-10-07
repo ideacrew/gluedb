@@ -1,12 +1,14 @@
 module EnrollmentAction
   class Base
     attr_reader :action
+    attr_reader :additional_action
     attr_reader :termination
     attr_reader :errors
 
-    def initialize(term, init)
+    def initialize(term, init, additional_init = nil)
       @termination = term
       @action = init
+      @additional_action = additional_init
       @errors = ActiveModel::Errors.new(self)
     end
 
@@ -19,8 +21,24 @@ module EnrollmentAction
       end
     end
 
+    def self.check_for_full_action(chunk)
+      selected_action = [
+          ::EnrollmentAction::RetroAddAndTerm
+      ].detect { |kls| kls.qualifies?(chunk) }
+      selected_action
+    end
+
+    def self.check_for_action_3(chunk)
+      selected_action = [
+        ::EnrollmentAction::RetroContinuityAndTerm
+      ].detect { |kls| kls.qualifies_3?(chunk) }
+      selected_action
+    end
+
     def self.select_action_for(chunk)
       selected_action = [
+        ::EnrollmentAction::RetroContinuityAndTerm,
+        ::EnrollmentAction::RetroAddAndTerm,
         ::EnrollmentAction::SimpleRenewal,
         ::EnrollmentAction::PassiveRenewal,
         ::EnrollmentAction::ActiveRenewal,
@@ -62,15 +80,22 @@ module EnrollmentAction
       end
     end
 
+    def self.qualifies_3?(chunk)
+      false
+    end
+
     def self.construct(chunk)
       term = chunk.detect { |c| c.is_termination? }
-      action = chunk.detect { |c| !c.is_termination? }
-      self.new(term, action)
+      actions = chunk.sort_by(&:active_year)
+      action = actions.detect { |c| !c.is_termination? }
+      # currently we expect max chunk length is 3.
+      additional_action = actions.select { |c| !c.is_termination? }.last if chunk.length > 2
+      self.new(term, action, additional_action)
     end
 
     # Check if an enrollment already exists - if it does and you don't want to send out a new transaction, call this method.
     def check_already_exists
-      if @action && action.existing_policy
+      if @action && action.existing_policy || @additional_action && @additional_action.existing_policy
         errors.add(:action, "enrollment already exists")
         return true
       end
@@ -99,6 +124,9 @@ module EnrollmentAction
       if @action
         @action.drop_not_yet_implemented!(self.class.name.to_s, batch_id, idx)
       end
+      if @additional_action
+        @additional_action.drop_not_yet_implemented!(self.class.name.to_s, batch_id, idx)
+      end
     end
 
     def persist_failed!(persist_errors)
@@ -110,6 +138,9 @@ module EnrollmentAction
       end
       if @action
         @action.persist_failed!(self.class.name.to_s, persist_errors, batch_id, idx)
+      end
+      if @additional_action
+        @additional_action.persist_failed!(self.class.name.to_s, persist_errors, batch_id, idx)
       end
     end
 
@@ -123,6 +154,9 @@ module EnrollmentAction
       if @action
         @action.publish_failed!(self.class.name.to_s, publish_errors, batch_id, idx)
       end
+      if @additional_action
+        @additional_action.publish_failed!(self.class.name.to_s, publish_errors, batch_id, idx)
+      end
     end
 
     def flow_successful!
@@ -133,6 +167,9 @@ module EnrollmentAction
       end
       if @action
         @action.flow_successful!(self.class.name.to_s, batch_id, idx)
+      end
+      if @additional_action
+        @additional_action.flow_successful!(self.class.name.to_s, batch_id, idx)
       end
     end
 

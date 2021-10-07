@@ -38,7 +38,7 @@ module EnrollmentAction
     def publish
       amqp_connection = termination.event_responder.connection
       action_helper = EnrollmentAction::ActionPublishHelper.new(action.event_xml)
-      if !action.is_shop? && same_carrier_renewal_candidates(action).any?
+      if same_carrier_renewal_candidates(action).any?
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#auto_renew")
       else
         existing_policy = termination.existing_policy

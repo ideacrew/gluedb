@@ -20,7 +20,7 @@ describe Listeners::EnrollmentEventBatchProcessor, :dbclean => :after_each do
   context "given batch_id on message" do
     let(:properties) do
       double(
-          headers: { batch_id: batch.id }
+        headers: { batch_id: batch.id }
       )
     end
     before(:each) do
@@ -29,14 +29,14 @@ describe Listeners::EnrollmentEventBatchProcessor, :dbclean => :after_each do
       @time_now = Time.now
       allow(Time).to receive(:now).and_return(@time_now)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "info.application.glue.enrollment_event_batch_processor.batch_processed",
-                                                               :headers=> {
-                                                                   :batch_id => batch.id,
-                                                                   :return_status => "200",
-                                                                   :submitted_timestamp=> @time_now,
-                                                               }
-                                                           }, body
-                                  )
+        :routing_key => "info.application.glue.enrollment_event_batch_processor.batch_processed",
+        :headers=> {
+          :batch_id => batch.id,
+          :return_status => "200",
+          :submitted_timestamp=> @time_now,
+        }
+      }, body
+      )
     end
 
     it "acknowledges the message" do
@@ -46,13 +46,13 @@ describe Listeners::EnrollmentEventBatchProcessor, :dbclean => :after_each do
 
     it "should broadcast batch processed message" do
       expect(event_broadcaster).to receive(:broadcast).with({
-                                                                :routing_key => "info.application.glue.enrollment_event_batch_processor.batch_processed",
-                                                                :headers=> {
-                                                                    :batch_id => batch.id,
-                                                                    :return_status => "200",
-                                                                    :submitted_timestamp=> @time_now
-                                                                }
-                                                            }, body)
+        :routing_key => "info.application.glue.enrollment_event_batch_processor.batch_processed",
+        :headers=> {
+          :batch_id => batch.id,
+          :return_status => "200",
+          :submitted_timestamp=> @time_now
+        }
+      }, body)
       subject.on_message(delivery_info, properties, body)
     end
 
@@ -75,13 +75,13 @@ describe Listeners::EnrollmentEventBatchProcessor, :dbclean => :after_each do
       @time_now = Time.now
       allow(Time).to receive(:now).and_return(@time_now)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "info.application.glue.enrollment_event_batch_processor.batch_not_found",
-                                                               :headers=> {
-                                                                   :batch_id => "1",
-                                                                   :return_status => "404",
-                                                                   :submitted_timestamp=> @time_now,
-                                                               }
-                                                           }, body)
+        :routing_key => "info.application.glue.enrollment_event_batch_processor.batch_not_found",
+        :headers=> {
+          :batch_id => "1",
+          :return_status => "404",
+          :submitted_timestamp=> @time_now,
+        }
+      }, body)
     end
 
     it "acknowledges the message" do
@@ -91,13 +91,13 @@ describe Listeners::EnrollmentEventBatchProcessor, :dbclean => :after_each do
 
     it "should broadcast batch not found message" do
       expect(event_broadcaster).to receive(:broadcast).with({
-                                                                :routing_key => "info.application.glue.enrollment_event_batch_processor.batch_not_found",
-                                                                :headers=> {
-                                                                    :batch_id => "1",
-                                                                    :return_status => "404",
-                                                                    :submitted_timestamp=> @time_now
-                                                                }
-                                                            }, body)
+        :routing_key => "info.application.glue.enrollment_event_batch_processor.batch_not_found",
+        :headers=> {
+          :batch_id => "1",
+          :return_status => "404",
+          :submitted_timestamp=> @time_now
+        }
+      }, body)
       subject.on_message(delivery_info, properties, body)
     end
   end
@@ -106,7 +106,7 @@ describe Listeners::EnrollmentEventBatchProcessor, :dbclean => :after_each do
     let(:body) { "backtrace_entry" }
     let(:properties) do
       double(
-          headers: { batch_id: batch.id }
+        headers: { batch_id: batch.id }
       )
     end
 
@@ -119,13 +119,13 @@ describe Listeners::EnrollmentEventBatchProcessor, :dbclean => :after_each do
       @time_now = Time.now
       allow(Time).to receive(:now).and_return(@time_now)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "error.application.glue.enrollment_event_batch_processor.exception",
-                                                               :headers=> {
-                                                                   :batch_id => batch.id,
-                                                                   :return_status => "500",
-                                                                   :submitted_timestamp=> @time_now,
-                                                               }
-                                                           }, body)
+        :routing_key => "error.application.glue.enrollment_event_batch_processor.exception",
+        :headers=> {
+          :batch_id => batch.id,
+          :return_status => "500",
+          :submitted_timestamp=> @time_now,
+        }
+       }, body)
     end
 
     it "acknowledges the message" do
@@ -135,13 +135,13 @@ describe Listeners::EnrollmentEventBatchProcessor, :dbclean => :after_each do
 
     it "should broadcast exception message" do
       expect(event_broadcaster).to receive(:broadcast).with({
-                                                                :routing_key => "error.application.glue.enrollment_event_batch_processor.exception",
-                                                                :headers=> {
-                                                                    :batch_id => batch.id,
-                                                                    :return_status => "500",
-                                                                    :submitted_timestamp=> @time_now
-                                                                }
-                                                            }, body)
+        :routing_key => "error.application.glue.enrollment_event_batch_processor.exception",
+        :headers=> {
+          :batch_id => batch.id,
+          :return_status => "500",
+          :submitted_timestamp=> @time_now
+        }
+      }, body)
       subject.on_message(delivery_info, properties, body)
     end
 

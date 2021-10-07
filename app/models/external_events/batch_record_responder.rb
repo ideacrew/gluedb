@@ -25,12 +25,12 @@ module ExternalEvents
     def broadcast_response(level, event_key, response_code, body = "", other_headers = {})
       event_body = (body.respond_to?(:to_s) ? body.to_s : body.inspect)
       broadcast_event({
-                          :routing_key => "#{level}.#{base_response_tag}.#{event_key}",
-                          :headers => other_headers.merge({
-                                                              :return_status => response_code.to_s,
-                                                              :batch_id => batch_id
-                                                          })
-                      }, event_body)
+        :routing_key => "#{level}.#{base_response_tag}.#{event_key}",
+        :headers => other_headers.merge({
+          :return_status => response_code.to_s,
+          :batch_id => batch_id
+        })
+      }, event_body)
     end
 
     protected
