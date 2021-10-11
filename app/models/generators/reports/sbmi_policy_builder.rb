@@ -27,13 +27,14 @@ module Generators::Reports
       sbmi_policy.coverage_start = format_date(policy.policy_start)
       sbmi_policy.coverage_end = format_date(policy.policy_end)
 
+
       sbmi_policy.effectuation_status = if policy.canceled?
         'N'
       elsif policy.aasm_state == 'resubmitted'
         'Y'  
       else
         if policy.subscriber.coverage_start > Date.new(2020, 12, 31)
-          policy.effectuated? ? 'Y' : 'N'
+          (policy.terminated? || policy.effectuated?) ? 'Y' : 'N'
         else
           'Y'
         end
