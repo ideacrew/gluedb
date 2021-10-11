@@ -18,7 +18,7 @@ module Generators::Reports
 
     def initialize(policy, options = {})
       @notice_type = options[:notice_type] || 'new'
-      @npt_policy  = options[:npt_policy]  || false
+      @npt_policy  = policy.term_for_np
 
       # multi_version = options[:multi_version] || false
       # @void = options[:void] || false
@@ -44,10 +44,10 @@ module Generators::Reports
       @notice.issuer_name = @carrier_hash[@policy.carrier_id]
 
       # Enable for IRS H36
-      # if @policy.plan.hios_plan_id.match(/^86052/)
-      #   puts "CareFirst BlueChoice -- #{@policy.id}"
-      #   @notice.issuer_name = "CareFirst BlueChoice"
-      # end
+      if @policy.plan.hios_plan_id.match(/^86052/)
+          puts "CareFirst BlueChoice -- #{@policy.id}"
+          @notice.issuer_name = "CareFirst BlueChoice"
+      end
 
       # @policy.plan.carrier.name
       @notice.qhp_id = @policy.plan.hios_plan_id.gsub('-','')
@@ -116,7 +116,14 @@ module Generators::Reports
         @notice.recipient = build_enrollee_ele(@policy.subscriber)
         @notice.spouse = build_enrollee_ele(@policy.spouse)
       end
-      @notice.covered_household = @policy_disposition.enrollees.map{ |enrollee| build_enrollee_ele(enrollee) }.compact unless void_notice
+
+      if void_notice
+        @notice.covered_household = [build_enrollee_ele(@policy.subscriber)]
+      else
+        @notice.covered_household = @policy_disposition.enrollees.map{ |enrollee| build_enrollee_ele(enrollee) }.compact
+      end
+
+      # @notice.covered_household = @policy_disposition.enrollees.map{ |enrollee| build_enrollee_ele(enrollee) }.compact #unless void_notice
     end
 
     def build_responsible_party(person)
@@ -191,9 +198,21 @@ module Generators::Reports
       # Commented to generate premiums only for REPORT_MONTHS
       @notice.monthly_premiums = (@policy_disposition.start_date.month..coverage_end_month).inject([]) do |data, i|
 
-        #premium amount calculation and prorated calculation
-        premium_amount = policy_monthly_premium_calculator.ehb_premium_for(i)
+        # premium_amount = @policy_disposition.as_of(Date.new(calender_year, i, 1)).ehb_premium
 
+        # if coverage_end_month == i && has_middle_of_month_coverage_end
+        #   premium_amount = as_dollars((@policy_disposition.end_date.day.to_f / @policy_disposition.end_date.end_of_month.day) * premium_amount)
+        # end
+
+        # Prorated Start Dates
+        #if @policy_disposition.start_date.month == i && has_middle_of_month_coverage_begin
+        #  premium_amount = as_dollars(((@policy_disposition.start_date.end_of_month.day.to_f - @policy_disposition.start_date.day.to_f + 1.0) / @policy_disposition.start_date.end_of_month.day) * premium_amount)
+        #end
+
+        #if coverage_end_month == i && has_middle_of_month_coverage_end
+        #  premium_amount = as_dollars((@policy_disposition.end_date.day.to_f / @policy_disposition.end_date.end_of_month.day) * premium_amount)
+        #end
+        premium_amount = policy_monthly_premium_calculator.ehb_premium_for(i)
         if npt_policy
           if @policy.subscriber.coverage_end.present? && ((@policy.subscriber.coverage_end.end_of_month - 1.day) == @policy.subscriber.coverage_end)
             has_middle_of_month_coverage_end = false
@@ -203,16 +222,16 @@ module Generators::Reports
             if (coverage_end_month - 1) == i
               premium_amount = 0
             end
-            
+
             # Enable for 1095A & H41
-            if coverage_end_month == i
-              premium_amount = nil
-            end
+            # if coverage_end_month == i
+            #    premium_amount = nil
+            # end
 
             # Enable for H36
-            # if coverage_end_month == i
-            #   premium_amount = 0
-            # end
+            if coverage_end_month == i
+                premium_amount = 0
+            end
 
           else
             if coverage_end_month == i
@@ -226,12 +245,44 @@ module Generators::Reports
           premium_amount: premium_amount
         }
 
+        # @notice.has_aptc = if @multi_version_pol.present? # && @multi_version_pol.assisted?
+        #   true ##@multi_version_pol
+        # else
+        #   @policy_disposition.as_of(Date.new(calender_year, i, 1)).applied_aptc > 0
+        # end
+
+        # @notice.has_aptc = @policy_disposition.as_of(Date.new(calender_year, i, 1)).applied_aptc > 0
         max_aptc_amt = policy_monthly_aptc_calculator.max_aptc_amount_for(i)
         @notice.has_aptc = max_aptc_amt > 0
 
         if @notice.has_aptc
+          # silver_plan_premium = 0
+          # if SLCSP_CORRECTIONS[@policy.id]
+          #   silver_plan_premium = SLCSP_CORRECTIONS[@policy.id]
+          # else
+          #   silver_plan = Plan.where({ "year" => 2014, "hios_plan_id" => "94506DC0390006-01" }).first
+          #   silver_plan_premium = @policy_disposition.as_of(Date.new(calender_year, i, 1), silver_plan).ehb_premium
+          # end
+
+          # aptc_amt = @multi_version_pol.nil? ?
+          # @policy_disposition.as_of(Date.new(calender_year, i, 1)).applied_aptc :
+          # @multi_version_pol.aptc_as_of(Date.new(calender_year, i, 1))
           silver_plan_premium = policy_slcsp_premium_calculator.ehb_premium_for(i)
           given_aptc_amt = policy_monthly_premium_calculator.ehb_premium_for(i)
+
+          # silver_plan = Plan.where({:year => calender_year, :hios_plan_id => settings[:tax_document][calender_year][:slcsp]}).first
+          # silver_plan_premium = @policy_disposition.as_of(Date.new(calender_year, i, 1), silver_plan).ehb_premium
+
+          # aptc_amt = @policy_disposition.as_of(Date.new(calender_year, i, 1)).applied_aptc
+
+          # Prorated Start Dates
+          # if @policy_disposition.start_date.month == i && has_middle_of_month_coverage_begin
+          #   aptc_amt = as_dollars(((@policy_disposition.start_date.end_of_month.day.to_f - @policy_disposition.start_date.day.to_f + 1.0) / @policy_disposition.start_date.end_of_month.day) * aptc_amt)
+          # end
+
+          # if coverage_end_month == i && has_middle_of_month_coverage_end
+          #   aptc_amt = as_dollars((@policy_disposition.end_date.day.to_f / @policy_disposition.end_date.end_of_month.day) * aptc_amt)
+          # end
 
           if given_aptc_amt > max_aptc_amt
             aptc_amt = max_aptc_amt
@@ -242,6 +293,9 @@ module Generators::Reports
           # NPT's
 
           if npt_policy
+            # if coverage_end_month == i && (has_middle_of_month_coverage_end || @policy_disposition.end_date != @policy_disposition.end_date.end_of_month)
+            #   aptc_amt = as_dollars((@policy_disposition.end_date.day.to_f / @policy_disposition.end_date.end_of_month.day) * aptc_amt)
+            # end
 
             if has_middle_of_month_coverage_end
               if (coverage_end_month - 1) == i
@@ -249,16 +303,16 @@ module Generators::Reports
               end
 
               # Enable for Federal 1095A & H41
-              if coverage_end_month == i
-                silver_plan_premium = nil
-                aptc_amt = nil
-              end
-               
-              # Enable this for H36
               # if coverage_end_month == i
-              #   silver_plan_premium = 0
-              #   aptc_amt = 0
+              #   silver_plan_premium = nil
+              #   aptc_amt = nil
               # end
+
+              # Enable this for H36
+                if coverage_end_month == i
+                  silver_plan_premium = 0
+                  aptc_amt = 0
+                end
             else
               if coverage_end_month == i
                 silver_plan_premium = 0
