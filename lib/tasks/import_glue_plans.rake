@@ -21,6 +21,10 @@ namespace :import do
       pd['carrier_id'] = Carrier.for_fein(pd['fein']).id.to_s
       plan = Plan.where(year: year.to_i).and(hios_plan_id: pd['hios_plan_id']).first
 
+      if pd['renewal_plan_hios_id'].present?
+        pd['renewal_plan_id'] = Plan.where(year: pd['year'].to_i + 1, hios_plan_id: pd['renewal_plan_hios_id']).first.try(:id)
+      end
+
       if plan.blank?
         plan = Plan.new(pd)
         plan.id = pd['id']
