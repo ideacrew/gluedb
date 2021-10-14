@@ -197,6 +197,10 @@ module Parsers
         @errors << "Missing Carrier Policy ID."
       end
 
+      def inbound_reinstate_blocked
+        @errors << "inbound reinstatements are blocked for legacy imports"
+      end
+
       def policy_id
         @policy ? @policy._id : nil
       end

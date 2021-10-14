@@ -17,6 +17,7 @@ describe EnrollmentAction::SimpleProductChange, "given an enrollment event set t
 -- has two events
 -- has the same plan" do
 
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => false) }
   let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
   let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
 
@@ -25,6 +26,37 @@ describe EnrollmentAction::SimpleProductChange, "given an enrollment event set t
   let(:event_set) { [event_1, event_2] }
 
   subject { EnrollmentAction::SimpleProductChange }
+
+  before do
+    allow(plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan).to receive(:carrier).and_return(carrier)
+  end
+
+  it "doesn't qualify" do
+    expect(subject.qualifies?(event_set)).to be_falsey
+  end
+end
+
+describe EnrollmentAction::SimpleProductChange, "given an enrollment event set that:
+-- has two events
+-- has different plan
+-- has same carrier
+-- with carrier requiring term/drop" do
+
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => true) }
+  let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
+  let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
+
+  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2]) }
+  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => new_plan, :all_member_ids => [1,2]) }
+  let(:event_set) { [event_1, event_2] }
+
+  subject { EnrollmentAction::SimpleProductChange }
+
+  before do
+    allow(plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan).to receive(:carrier).and_return(carrier)
+  end
 
   it "doesn't qualify" do
     expect(subject.qualifies?(event_set)).to be_falsey
@@ -35,6 +67,7 @@ describe EnrollmentAction::SimpleProductChange, "given an enrollment event set t
 -- has two events
 -- has different carriers" do
 
+  let(:carrier) { instance_double(Carrier, :id => 1, :require_term_drop? => false) }
   let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
   let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 2) }
 
@@ -43,6 +76,11 @@ describe EnrollmentAction::SimpleProductChange, "given an enrollment event set t
   let(:event_set) { [event_1, event_2] }
 
   subject { EnrollmentAction::SimpleProductChange }
+
+  before do
+    allow(plan).to receive(:carrier).and_return(carrier)
+    allow(new_plan).to receive(:carrier).and_return(carrier)
+  end
 
   it "doesn't qualify" do
     expect(subject.qualifies?(event_set)).to be_falsey
@@ -53,7 +91,7 @@ describe EnrollmentAction::SimpleProductChange, "given an enrollment event set t
 --  provides a new plan id
 --  with no dependents changed
 --  with a carrier that DOES NOT require simple plan changes" do
-  let(:non_tufts_carrier) { instance_double(Carrier, requires_simple_plan_changes?: false) }
+  let(:non_tufts_carrier) { instance_double(Carrier, requires_simple_plan_changes?: false, :require_term_drop? => false) }
   let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
   let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
 
@@ -77,7 +115,7 @@ describe EnrollmentAction::SimpleProductChange, "given an enrollment event set t
 --  provides a new plan id
 --  with no dependents changed
 --  with a carrier that requires simple plan changes" do
-  let(:tufts_carrier) { instance_double(Carrier, requires_simple_plan_changes?: true) }
+  let(:tufts_carrier) { instance_double(Carrier, requires_simple_plan_changes?: true, :require_term_drop? => false) }
   let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
   let(:new_plan) { instance_double(Plan, :id => 2, carrier_id: 1) }
 
@@ -165,8 +203,8 @@ describe EnrollmentAction::SimpleProductChange, "#publish" do
   let(:event_xml) { double }
   let(:termination_event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
-  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago) }
-  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, c_id: nil, cp_id: nil) }
 
   let(:plan) { instance_double(Plan, :id => 1) }
   let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1) }

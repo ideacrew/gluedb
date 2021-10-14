@@ -48,7 +48,8 @@ describe "people/_address.xml" do
                                               :city => city,
                                               :state => state,
                                               :zip => zip,
-                                              :zip_extension => nil
+                                              :zip_extension => nil,
+                                              :location_county_code => nil
                                             }) }
 
     it_should_behave_like "an address partial"
@@ -72,10 +73,12 @@ describe "people/_address.xml" do
   describe "Given:
               - An address_2
               - An address 3
-              - A zip extension" do
+              - A zip extension
+              - a county code" do
     let(:address_line_2) { "Some apartment number" }
     let(:address_line_3) { "Some apartment number" }
     let(:zip_extension) { "Some zip extension" }
+    let(:county_code) { "0234" }
     let(:address) { instance_double(Address, {
                                               :address_type => "home",
                                               :address_1 => address_line_1,
@@ -84,7 +87,8 @@ describe "people/_address.xml" do
                                               :city => city,
                                               :state => state,
                                               :zip => zip,
-                                              :zip_extension => zip_extension
+                                              :zip_extension => zip_extension,
+                                              :location_county_code => county_code
                                             }) }
 
     it_should_behave_like "an address partial"
@@ -102,6 +106,11 @@ describe "people/_address.xml" do
     it "has zip_extension" do
       expected_node = subject.at_xpath("//address/location_postal_extension_code")
       expect(expected_node.content).to eq zip_extension
+    end
+
+    it "has county code" do
+      expected_node = subject.at_xpath("//address/location_county_code")
+      expect(expected_node.content).to eq county_code
     end
 
   end

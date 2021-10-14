@@ -128,7 +128,7 @@ module CanonicalVocabulary
         xml['ins'].SSN(member.ssn)
       end
       xml['ins'].gender_code(member.gender)
-      xml['ins'].tobacco_use("Unknown")
+      xml['ins'].tobacco_use(person.authority_member.hlh)
       xml['ins'].coverage do |xml|
         xml['ins'].plan_id_ref(policy.plan_id)
         xml['ins'].premium_amount(en.pre_amt)

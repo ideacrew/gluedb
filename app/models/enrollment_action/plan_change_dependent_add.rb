@@ -10,7 +10,8 @@ module EnrollmentAction
     def self.qualifies?(chunk)
       return false if chunk.length < 2
       return false if same_plan?(chunk)
-      (!carriers_are_different?(chunk)) && dependents_added?(chunk)
+      return false if carrier_requires_term_drop?(chunk)
+      (!carriers_are_different?(chunk)) && !carrier_requires_term_drop?(chunk) && dependents_added?(chunk)
     end
 
     def added_dependents
@@ -49,6 +50,14 @@ module EnrollmentAction
       else
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#change_product_member_add")
         action_helper.filter_affected_members(added_dependents)
+      end
+      enrollees = termination.existing_policy.try(:enrollees)
+      if enrollees.present?
+        enrollees.each do |en|
+          if en.c_id.present? || en.cp_id.present?
+            action_helper.set_carrier_assigned_ids(en)
+          end
+        end
       end
       action_helper.keep_member_ends([])
       publish_edi(amqp_connection, action_helper.to_xml, action.hbx_enrollment_id, action.employer_hbx_id)

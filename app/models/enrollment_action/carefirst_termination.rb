@@ -53,10 +53,13 @@ module EnrollmentAction
     def publish
       existing_policy = termination.existing_policy
       member_date_map = {}
+      action_helper = ActionPublishHelper.new(termination.event_xml)
       existing_policy.enrollees.each do |en|
         member_date_map[en.m_id] = en.coverage_start
+        if en.c_id.present? || en.cp_id.present?
+          action_helper.set_carrier_assigned_ids(en)
+        end
       end
-      action_helper = ActionPublishHelper.new(termination.event_xml)
       action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
       action_helper.set_policy_id(existing_policy.eg_id)
       action_helper.set_member_starts(member_date_map)

@@ -4,6 +4,7 @@
   %member
     %id
       %id= "urn:openhbx:hbx:dc0:resources:v1:person:hbx_id##{person.authority_member.hbx_member_id}"
+      = render :partial => "enrollment_events/alias_id", :locals => { :enrollee => enrollee }
     %person
       %id
         %id= "urn:openhbx:hbx:dc0:resources:v1:person:hbx_id##{person.authority_member.hbx_member_id}"

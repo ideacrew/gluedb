@@ -88,12 +88,14 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
   let(:event_xml) { double }
   let(:termination_event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
-  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago) }
-  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
 
   let(:plan) { instance_double(Plan, :id => 1) }
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, plan: instance_double(Plan, id: 1), carrier: carrier) }
+  let(:policy) do
+    instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, plan: instance_double(Plan, id: 1), carrier: carrier)
+  end
 
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -139,6 +141,8 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
     allow(termination_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
     allow(termination_publish_helper).to receive(:set_policy_id).with(1)
     allow(termination_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
+    allow(termination_publish_helper).to receive(:set_carrier_assigned_ids).with(enrollee_primary)
+    allow(termination_publish_helper).to receive(:set_carrier_assigned_ids).with(enrollee_new)
     allow(subject).to receive(:publish_edi).with(amqp_connection, termination_helper_result_xml, termination_event.existing_policy.eg_id, termination_event.employer_hbx_id).and_return([true, {}])
     allow(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#initial")
     allow(action_publish_helper).to receive(:keep_member_ends).with([])

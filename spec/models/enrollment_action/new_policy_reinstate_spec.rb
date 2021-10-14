@@ -101,10 +101,13 @@ end
 describe EnrollmentAction::NewPolicyReinstate, "with an cobra reinstate enrollment event, being published" do
   let(:amqp_connection) { double }
   let(:event_xml) { double }
+  let!(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary], :eg_id => 1) }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
   let(:enrollment_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     :event_responder => event_responder,
+    :existing_policy => policy,
     :event_xml => event_xml,
     :hbx_enrollment_id => hbx_enrollment_id,
     :employer_hbx_id => employer_hbx_id

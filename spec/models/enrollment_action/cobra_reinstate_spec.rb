@@ -108,7 +108,7 @@ describe EnrollmentAction::CobraReinstate, "with an cobra reinstate enrollment e
   let(:hbx_enrollment_id) { double }
   let(:employer_hbx_id) { double }
   let(:existing_policy) { instance_double(Policy, :enrollees => existing_enrollees, :eg_id => "enrollment_group_id") }
-  let(:subscriber) { instance_double(Enrollee, :m_id => "1", :coverage_start => "coverage_start_date") }
+  let(:subscriber) { instance_double(Enrollee, :m_id => "1", :coverage_start => "coverage_start_date", :c_id => nil, :cp_id => nil) }
   let(:existing_enrollees) { [subscriber] }
 
   subject do

@@ -12,7 +12,8 @@
         != active_menu_item("People", people_path, :people)
         - if can? :read, current_user
           != active_menu_item("Policies", policies_path, :policies)
-          != active_menu_item("Employers", employers_path, :employers)
+          - if Settings.shop_market.market_enabled
+            != active_menu_item("Employers", employers_path, :employers)
           != active_menu_item("Brokers", brokers_path, :brokers)
           != active_menu_item("Carriers", carriers_path, :carriers)
         %li.dropdown

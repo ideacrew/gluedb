@@ -3,22 +3,25 @@ require 'csv'
 module Generators::Reports  
   class SbmiSerializer
 
-    CALENDER_YEAR = 2019
+    CALENDER_YEAR = 2021
     # CANCELED_DATE = Date.new(2017,12,8)
 
-    attr_accessor :pbp_final
+    attr_accessor :pbp_final, :settings, :calender_year, :hios_prefix_ids, :subdirectory_prefix
 
     def initialize
       @sbmi_root_folder = "#{Rails.root}/sbmi"
+      @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
+      @calender_year = @settings[:cms_pbp_generation][:calender_year]
+      @hios_prefix_ids = @settings[:cms_pbp_generation][:hios_prefix_ids]
+      @subdirectory_prefix = @settings[:cms_pbp_generation][:subdirectory_prefix]
       # @sbmi_folder_name = "DCHBX_SBMI_78079_17_00_01_06_2017"
-      # hios_prefix = "78079"
-      # CALENDER_YEAR = 2017
 
       create_directory @sbmi_root_folder
     end
 
     def process
-      %w(86052 78079 94506 81334 92479 95051).each do |hios_prefix|
+      #%w(86052 78079 94506 81334 92479 95051).each do |hios_prefix|  (DCHBX hios_prefix)
+      hios_prefix_ids.each do |hios_prefix| #(33653 48396 MEHBX hios_prefix)
         plan_ids = Plan.where(hios_plan_id: /^#{hios_prefix}/, year: CALENDER_YEAR).pluck(:_id)
         puts "Processing #{hios_prefix}"
 
@@ -139,7 +142,7 @@ module Generators::Reports
     private
 
     def create_sbmi_folder(hios_prefix)
-      @sbmi_folder_name = "DCHBX_SBMI_#{hios_prefix}_#{Time.now.strftime('%H_%M_%d_%m_%Y')}"
+      @sbmi_folder_name = "#{subdirectory_prefix}_SBMI_#{hios_prefix}_#{Time.now.strftime('%H_%M_%d_%m_%Y')}"
       create_directory "#{@sbmi_root_folder}/#{@sbmi_folder_name}"
     end
 
