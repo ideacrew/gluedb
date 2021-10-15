@@ -1,6 +1,7 @@
 require 'spreadsheet'
 require 'csv'
-module Generators::Reports  
+module Generators::Reports
+  # This class generates the CMS policy based payments (PBP), SBMI file
   class SbmiSerializer
 
     CALENDER_YEAR = 2021

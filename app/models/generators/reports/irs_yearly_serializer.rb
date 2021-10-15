@@ -14,7 +14,7 @@ module Generators::Reports
       @hbx_member_id = nil
 
       @report_names = {}
-      @xml_output = false
+      @xml_output = xml_output #runtime parameter, if true, it will generates either H41 XML or PDF (1095A). The method is been called generate_notices
 
       @pdf_set  = 0
       @irs_set  = 0
@@ -317,14 +317,15 @@ module Generators::Reports
     end
 
     def build_notice_input(policy)
-      irs_input = Generators::Reports::IrsInputBuilder.new(policy, { notice_type: notice_params[:type], npt_policy: notice_params[:npt] })
+      #Generators::Reports::IrsInputBuilder this class helps to generate H41, 1095A or H36 reports
+      irs_input = Generators::Reports::IrsInputBuilder.new(policy, { notice_type: notice_params[:type], npt_policy: notice_params[:npt], report_type: 'h41_1095A' })
       irs_input.carrier_hash = @carriers
       irs_input.settings = @settings
       irs_input.process
       irs_input
     end
 
-    def generate_h41
+    def generate_h41 #this code is to generate a single policy H41 XML
       policy = Policy.find(notice_params[:policy_id])
       begin
         process_policy(policy, true)
@@ -371,7 +372,7 @@ module Generators::Reports
 
         notice.active_policies = []
         notice.canceled_policies = []
-        if xml_output
+        if xml_output #This is generating only H41 with all policies
           create_report_names
           render_xml(notice)
 
@@ -380,7 +381,7 @@ module Generators::Reports
             @folder_count += 1
             create_new_irs_folder
           end
-        elsif h41
+        elsif h41 #this generates single policy H41
           @count = 1
           sequential_number = @count.to_s
           sequential_number = prepend_zeros(sequential_number, 5)
@@ -389,7 +390,7 @@ module Generators::Reports
           }
           create_individual_h41_folder
           xml = render_individual_h41_xml(notice)
-        else
+        else #this generates 1095A PDF
           create_report_names
           render_pdf(notice)
           #append_report_row(notice)
@@ -460,7 +461,7 @@ module Generators::Reports
       @calender_year = policy.subscriber.coverage_start.year
       @policy_id = policy.id
       @hbx_member_id = policy.subscriber.person.authority_member.hbx_member_id
-      irs_input = Generators::Reports::IrsInputBuilder.new(policy, {void: true})
+      irs_input = Generators::Reports::IrsInputBuilder.new(policy, {void: true, report_type: 'h41_1095A'})
       irs_input.carrier_hash = @carriers
       irs_input.settings = @settings
       irs_input.process
@@ -496,7 +497,7 @@ module Generators::Reports
         @policy_id = policy.id
         @hbx_member_id = policy.subscriber.person.authority_member.hbx_member_id
 
-        notice = Generators::Reports::IrsInputBuilder.new(policy, void: true).notice
+        notice = Generators::Reports::IrsInputBuilder.new(policy, void: true, {report_type: 'h41_1095A' }).notice
         notice.corrected_record_seq_num = record_seq_num
 
         create_report_names
