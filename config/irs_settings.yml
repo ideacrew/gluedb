@@ -92,3 +92,14 @@ cms_pbp_generation:
   cms_pbp_source_sbm_id: "SBE00ME"
   hios_prefix_ids: ["33653", "48396"]
   subdirectory_prefix: "MEHBX"
+
+irs_h36_generation:
+  calender_year: 2021
+
+irs_h41_generation:
+  calender_year: 2021
+  subdirectory_prefix: "MEHBX_H41"
+  irs_h41_source_sbm_id: "SBE00ME"
+
+irs_1095A:
+  subdirectory_prefix: 'MEEXCHANGE'

@@ -6,13 +6,13 @@ module Generators::Reports
     IRS_XML_PATH = "#{@irs_path}/h41/"
     IRS_PDF_PATH = "#{@irs_path}/irs1095a/"
 
-    attr_accessor :notice_params, :calender_year, :qhp_type, :notice_absolute_path, :xml_output
+    attr_accessor :notice_params, :calender_year, :qhp_type, :notice_absolute_path, :xml_output, :settings
 
     def initialize(options = {})
       @count = 0
       @policy_id = nil
       @hbx_member_id = nil
-
+      @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
       @report_names = {}
       @xml_output = xml_output #runtime parameter, if true, it will generates either H41 XML or PDF (1095A). The method is been called generate_notices
 
@@ -82,8 +82,8 @@ module Generators::Reports
 
     def generate_notices
       create_enclosed_folder
-      load_npt_data
-      load_responsible_party_data
+      #load_npt_data
+      #load_responsible_party_data
       workbook = create_excel_workbook
 
       count = 0
@@ -104,6 +104,7 @@ module Generators::Reports
             next if count > 300
 
             if policy.responsible_party_id.present?
+              # RP data alignment task is been corrected by project 201_task 6.0.0
               if @responsible_party_data[policy.id].blank?
                 puts "RP data missing for #{policy.id}"
                 next
@@ -246,20 +247,20 @@ module Generators::Reports
       # end
 
 
-      book = Spreadsheet.open "#{Rails.root}/CF_Responsible_Party_1095A_February_Standard_Assisted_20170224.xls"
-      @responsible_party_data = book.worksheets.first.inject({}) do |data, row|
-        if row[2].to_s.strip.match(/Responsible Party SSN/i) || (row[2].to_s.strip.blank? && row[3].to_s.strip.blank?)
-        else
-          if row[2].to_s.strip.blank?
-            data[row[0].to_s.strip.to_i] = [nil, Date.strptime(row[3].to_s.split("T")[0], "%Y-%m-%d")]
-          else
-            data[row[0].to_s.strip.to_i] = [prepend_zeros(row[2].to_i.to_s, 9), Date.strptime(row[3].to_s.split("T")[0], "%Y-%m-%d")]
-          end
-        end
-        data
-      end
+      # book = Spreadsheet.open "#{Rails.root}/CF_Responsible_Party_1095A_February_Standard_Assisted_20170224.xls"
+      # @responsible_party_data = book.worksheets.first.inject({}) do |data, row|
+      #   if row[2].to_s.strip.match(/Responsible Party SSN/i) || (row[2].to_s.strip.blank? && row[3].to_s.strip.blank?)
+      #   else
+      #     if row[2].to_s.strip.blank?
+      #       data[row[0].to_s.strip.to_i] = [nil, Date.strptime(row[3].to_s.split("T")[0], "%Y-%m-%d")]
+      #     else
+      #       data[row[0].to_s.strip.to_i] = [prepend_zeros(row[2].to_i.to_s, 9), Date.strptime(row[3].to_s.split("T")[0], "%Y-%m-%d")]
+      #     end
+      #   end
+      #   data
+      # end
 
-      puts @responsible_party_data.inspect
+      # puts @responsible_party_data.inspect
 
       ids.each do |id|
         id = Policy.find(id)
@@ -271,14 +272,21 @@ module Generators::Reports
       set_default_directory
       policy = Policy.find(notice_params[:policy_id])
       if policy.responsible_party_id.present?
-        return if notice_params[:responsible_party_ssn].blank? && notice_params[:responsible_party_dob].blank?
+        # Refactor code for extracting the responsible_party_data like ssn and dob from the database not from the external file
+        # return if notice_params[:responsible_party_ssn].blank? && notice_params[:responsible_party_dob].blank?
 
-        if notice_params[:responsible_party_ssn].present?
-          ssn = prepend_zeros(notice_params[:responsible_party_ssn].gsub('-','').to_i.to_s, 9)
-        end
+        # if notice_params[:responsible_party_ssn].present?
+        #   ssn = prepend_zeros(notice_params[:responsible_party_ssn].gsub('-','').to_i.to_s, 9)
+        # end
+        #
+        # @responsible_party_data = {
+        #   policy.id => [ssn, notice_params[:responsible_party_dob]]
+        # }
 
+        person = Person.where("responsible_parties._id" => policy.responsible_party_id).first
+        auth_mem = person.try(:authority_member)
         @responsible_party_data = { 
-          policy.id => [ssn, notice_params[:responsible_party_dob]]
+          policy.id => [auth_mem.try(:ssn), auth_mem.try(:dob)]
         }
       end
 
@@ -585,7 +593,7 @@ module Generators::Reports
 
       pdf_notice = Generators::Reports::IrsYearlyPdfReport.new(notice, options)
       pdf_notice.settings = @settings
-      pdf_notice.responsible_party_data = @responsible_party_data[notice.policy_id.to_i] if @responsible_party_data.present? # && ![87085,87244,87653,88495,88566,89129,89702,89922,95250,115487].include?(notice.policy_id.to_i)
+      pdf_notice.responsible_party_data = @responsible_party_data[notice.policy_id.to_i] if @responsible_party_data.present?
       pdf_notice.process
       @notice_absolute_path = "#{@irs_pdf_path + @irs1095_folder_name}/#{@report_names[:pdf]}.pdf"
       pdf_notice.render_file(@notice_absolute_path)
@@ -594,20 +602,23 @@ module Generators::Reports
     def create_new_pdf_folder
       @pdf_set += 1
       folder_number = prepend_zeros(@pdf_set.to_s, 3)
-      @irs1095_folder_name = "DCEXCHANGE_#{Time.now.strftime('%Y%m%d')}_1095A_#{folder_number}"
+      irs_1095A_sub_dir_prefix = settings[:irs_1095A][:subdirectory_prefix]
+      @irs1095_folder_name = "#{irs_1095A_sub_dir_prefix}_#{Time.now.strftime('%Y%m%d')}_1095A_#{folder_number}"
       create_directory @irs_pdf_path + @irs1095_folder_name
     end
 
     def create_new_irs_folder
       @irs_set += 1
       folder_number = prepend_zeros(@irs_set.to_s, 3)
-      @h41_folder_name = "DCHBX_H41_#{Time.now.strftime('%H_%M_%d_%m_%Y')}_#{folder_number}"
+      irs_h41_sub_dir_prefix = settings[:irs_h41_generation][:subdirectory_prefix]
+      @h41_folder_name = "#{irs_h41_sub_dir_prefix}_#{Time.now.strftime('%H_%M_%d_%m_%Y')}_#{folder_number}"
       create_directory @irs_xml_path + @h41_folder_name
     end
 
     def create_individual_h41_folder
+      irs_h41_source_sbm_id = settings[:irs_h41_generation][:irs_h41_source_sbm_id]
       @irs_xml_path = ''
-      @h41_folder_name ||= "FEP0020DC.DSH.EOYIN.D#{Time.now.strftime('%Y%m%d')[2..-1]}.T#{Time.now.strftime("%H%M%S") + "000"}.P.IN"
+      @h41_folder_name ||= "#{irs_h41_source_sbm_id}.DSH.EOYIN.D#{Time.now.strftime('%Y%m%d')[2..-1]}.T#{Time.now.strftime("%H%M%S") + "000"}.P.IN"
       find_or_create_directory @irs_xml_path + @h41_folder_name
     end
 

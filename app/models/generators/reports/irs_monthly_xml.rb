@@ -4,7 +4,6 @@ module Generators::Reports
     include ActionView::Helpers::NumberHelper
 
     DURATION = 12
-    CALENDER_YEAR = 2018
 
     NS = { 
       "xmlns" => "urn:us:gov:treasury:irs:common",
@@ -13,12 +12,14 @@ module Generators::Reports
       # "xmlns:n1" => "urn:us:gov:treasury:irs:msg:sbmpolicylevelenrollment"  # CMS
     }
 
-    attr_accessor :folder_path
+    attr_accessor :folder_path, :calender_year
 
     def initialize(irs_group, e_case_id)
       @irs_group = irs_group
       @folder_path = folder_path
       @e_case_id = e_case_id
+      @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
+      @calender_year = @settings[:irs_h36_generation][:calender_year]
     end
     
     def serialize
@@ -32,7 +33,7 @@ module Generators::Reports
         xml['n1'].HealthExchange(NS) do
           xml.SubmissionYr Date.today.year.to_s
           xml.SubmissionMonthNum Date.today.month.to_s
-          xml.ApplicableCoverageYr CALENDER_YEAR
+          xml.ApplicableCoverageYr calender_year
           xml.IndividualExchange do |xml|
             xml.HealthExchangeId "02.DC*.SBE.001.001"
             serialize_irs_group(xml)
@@ -164,11 +165,11 @@ module Generators::Reports
           xml.TotalQHPMonthlyPremiumAmt premium.premium_amount
           xml.APTCPaymentAmt monthly_aptc 
 
-          if policy.covered_household_as_of(premium.serial, CALENDER_YEAR).empty?
-            raise "Missing enrollees #{policy.policy_id} #{premium.serial} #{CALENDER_YEAR}"
+          if policy.covered_household_as_of(premium.serial, calender_year).empty?
+            raise "Missing enrollees #{policy.policy_id} #{premium.serial} #{calender_year}"
           end
 
-          policy.covered_household_as_of(premium.serial, CALENDER_YEAR).each do |individual|
+          policy.covered_household_as_of(premium.serial, calender_year).each do |individual|
             serialize_covered_individual(xml, individual)
           end
         end
