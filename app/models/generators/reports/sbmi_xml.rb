@@ -109,7 +109,7 @@ module Generators::Reports
 
     def chop_special_characters(name)
       return name if name.blank?
-      name.gsub(/[!@#$%^&*()=_+|;:,<>?`]/, '').gsub(/[ñáéè]/, {"ñ" => "n", "á" => "a", "é" => "e", "è" => "e", "ì" => "i"})
+      name.gsub(/[!@#$%^&*()=_+|;:,<>?`]/, '').gsub(/[ñáéèìí]/, {"ñ" => "n", "á" => "a", "é" => "e", "è" => "e", "ì" => "i", "í" => "i"}).gsub(/\d/, ' ')
     end
   end
 end

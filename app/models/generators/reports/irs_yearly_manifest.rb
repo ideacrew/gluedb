@@ -1,10 +1,10 @@
 module Generators::Reports  
   class IrsYearlyManifest
 
-    attr_accessor :notice_params, :policy, :most_recent_original_transmission
+    CALENDER_YEAR = 2020
 
     NS = {
-      "xmlns"  => "http://birsrep.dsh.cms.gov/exchange/1.0",
+      "xmlns:ns0"  => "http://birsrep.dsh.cms.gov/exchange/1.0",
       "xmlns:ns3"  => "http://hix.cms.gov/0.1/hix-core", 
       "xmlns:ns4"  => "http://birsrep.dsh.cms.gov/extension/1.0",
       "xmlns:ns5"  => "http://niem.gov/niem/niem-core/2.0"
@@ -12,11 +12,8 @@ module Generators::Reports
       # "xmlns:wsa"  => "http://www.w3.org/2005/08/addressing"      
     }
 
-    def create(folder, notice_params = nil)
+    def create(folder)
       @folder = folder
-      @notice_params = notice_params
-      @policy = Policy.find(notice_params[:policy_id])
-      @most_recent_original_transmission = policy.federal_transmissions.where(report_type: 'ORIGINAL').last
       @manifest = OpenStruct.new({
         file_count: Dir.glob(@folder+'/*.xml').count,
       })
@@ -28,7 +25,7 @@ module Generators::Reports
 
     def serialize
       Nokogiri::XML::Builder.new { |xml|
-        xml['ns5'].BatchHandlingServiceRequest(NS) do |xml|
+        xml.BatchHandlingServiceRequest(NS) do |xml|
           serialize_batch_data(xml)
           serialize_transmission_data(xml)
           serialize_service_data(xml)
@@ -45,28 +42,18 @@ module Generators::Reports
           checksum: Digest::SHA256.file(file).hexdigest,
           binarysize: File.size(file),
           filename: File.basename(file),
-          sequence_id: File.basename(file).match(/\d{5}/)[0] # Has only 5 digits total
+          sequence_id: File.basename(file).match(/\d{5}/)[0]
         })
       end
     end
 
     def serialize_batch_data(xml)
-      type = notice_params[:type]
       xml['ns3'].BatchMetadata do |xml|
         xml.BatchID Time.now.utc.iso8601
         xml.BatchPartnerID '02.DC*.SBE.001.001'
         xml.BatchAttachmentTotalQuantity @manifest.file_count
-        # This are lowercase strings in irs_yearly_serializer
-        if type.match(/corrected/i)
-          xml['ns4'].BatchCategoryCode 'IRS_EOY_SUBMIT_CORRECTED_RECORDS_REQ'
-          xml.BatchTransmissionQuantity 1
-        elsif type.match(/void/i)
-          xml['ns4'].BatchCategoryCode 'IRS_EOY_SUBMIT_VOID_RECORDS_REQ'
-          xml.BatchTransmissionQuantity 1
-        else # original/new
-          xml['ns4'].BatchCategoryCode 'IRS_EOY_REQ'
-          xml.BatchTransmissionQuantity 1
-        end
+        xml['ns4'].BatchCategoryCode 'IRS_EOY_REQ'
+        xml.BatchTransmissionQuantity 1
       end
     end
 
@@ -80,9 +67,8 @@ module Generators::Reports
     def serialize_service_data(xml)
       xml['ns4'].ServiceSpecificData do |xml|
         xml.ReportPeriod do |xml|
-          xml['ns5'].Year notice_params[:calender_year]
+          xml['ns5'].Year CALENDER_YEAR
         end
-        xml['ns4'].OriginalBatchID most_recent_original_transmission.batch_id.to_s
       end
     end
 

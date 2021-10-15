@@ -35,10 +35,6 @@ module Generators::Reports
     def build_policy(pol)
       builder = Generators::Reports::IrsInputBuilder.new(pol)
       builder.carrier_hash = @carrier_hash
-      if @npt_policies.include?(pol.id.to_s)
-        builder.npt_policy = true
-        puts "found NPT policy ---- #{pol.id}"
-      end
       builder.settings = settings
       builder.process
       
@@ -46,12 +42,6 @@ module Generators::Reports
       if notice.covered_household.empty?
         puts "coverage household is empty!"
       end
-
-      # if notice.monthly_premiums.empty?
-      # puts pol.id.to_s
-      #   puts notice.monthly_premiums.inspect
-      #   puts pol.id.to_s
-      # end
 
       if notice.monthly_premiums.reject{|mp| mp.premium_amount.nil? }.map{|mp| mp.premium_amount }.inject(:+) == 0
         puts "Total monthly premiums is zero"

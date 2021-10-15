@@ -2,10 +2,10 @@ module Generators::Reports
   class IrsYearlyXml
     include ActionView::Helpers::NumberHelper
 
-    attr_accessor :record_sequence_num, :corrected_record_sequence_num, :voided_record_sequence_num, :notice_params
+    attr_accessor :record_sequence_num, :corrected_record_sequence_num, :voided_record_sequence_num
 
     NS = {
-      "xmlns:air5.0" => "urn:us:gov:treasury:irs:ext:aca:air:ty19a",
+      "xmlns:air5.0" => "urn:us:gov:treasury:irs:ext:aca:air:ty20a",
       "xmlns:irs" => "urn:us:gov:treasury:irs:common",
       "xmlns:batchreq" => "urn:us:gov:treasury:irs:msg:form1095atransmissionupstreammessage",
       "xmlns:batchresp"=> "urn:us:gov:treasury:irs:msg:form1095atransmissionexchrespmessage",
@@ -13,28 +13,14 @@ module Generators::Reports
       "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance"
     }
 
-    NS_OLD = {
-      "xmlns:air5.0" => "urn:us:gov:treasury:irs:ext:aca:air:ty18a",
-      "xmlns:irs" => "urn:us:gov:treasury:irs:common",
-      "xmlns:batchreq" => "urn:us:gov:treasury:irs:msg:form1095atransmissionupstreammessage",
-      "xmlns:batchresp"=> "urn:us:gov:treasury:irs:msg:form1095atransmissionexchrespmessage",
-      "xmlns:reqack"=> "urn:us:gov:treasury:irs:msg:form1095atransmissionexchackngmessage",
-      "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance"
-    }
-
-    def initialize(notice, options = {})
+    def initialize(notice)
       # @sequence_num = sequence_num
       @notice = notice
-      @notice_params = options
-    end
-
-    def fetch_ns
-      (notice_params[:calender_year].to_s == "2018") ? NS_OLD : NS
     end
 
     def serialize
       Nokogiri::XML::Builder.new { |xml|
-        xml['batchreq'].Form1095ATransmissionUpstream(fetch_ns) do |xml|
+        xml['batchreq'].Form1095ATransmissionUpstream(NS) do |xml|
           xml['air5.0'].Form1095AUpstreamDetail(:recordType => "", :lineNum => "0") do |xml|
             serialize_headers(xml)
             serialize_policy(xml)
@@ -50,17 +36,11 @@ module Generators::Reports
     def serialize_headers(xml)
       # xml['air5.0'].RecordSequenceNum @sequence_num
       xml['air5.0'].RecordSequenceNum @notice.policy_id.to_i
-      xml['air5.0'].TaxYr notice_params[:calender_year]
+      xml['air5.0'].TaxYr 2020
       xml['air5.0'].CorrectedInd (corrected_record_sequence_num.present? ? 1 : 0)
-      if corrected_record_sequence_num.present?
-        ft = Policy.find(corrected_record_sequence_num.to_s).federal_transmissions.where(report_type: /original/i).first
-        xml['air5.0'].CorrectedRecordSequenceNum "#{ft.batch_id}|#{ft.content_file}|#{corrected_record_sequence_num}"
-      end
+      xml['air5.0'].CorrectedRecordSequenceNum corrected_record_sequence_num if corrected_record_sequence_num.present?
       xml['air5.0'].VoidInd (voided_record_sequence_num.present? ? 1 : 0)
-      if voided_record_sequence_num.present?
-        ft = Policy.find(voided_record_sequence_num.to_s).federal_transmissions.where(report_type: /original/i).first
-        xml['air5.0'].VoidedRecordSequenceNum "#{ft.batch_id}|#{ft.content_file}|#{voided_record_sequence_num}"
-      end
+      xml['air5.0'].VoidedRecordSequenceNum voided_record_sequence_num if voided_record_sequence_num.present?
       xml['air5.0'].MarketplaceId "02.DC*.SBE.001.001"  
     end
 
@@ -105,9 +85,9 @@ module Generators::Reports
     def serialize_individual(xml, individual)
       xml['air5.0'].OtherCompletePersonName do |xml|
         xml.PersonFirstNm individual.name_first
-        xml.PersonMiddleNm individual.name_middle
+        xml.PersonMiddleNm individual.name_middle unless individual.name_middle.blank?
         xml.PersonLastNm individual.name_last
-        xml.SuffixNm individual.name_sfx
+        xml.SuffixNm individual.name_sfx unless individual.name_sfx.blank?
       end
 
       xml['irs'].SSN individual.ssn unless individual.ssn.blank?
@@ -117,7 +97,7 @@ module Generators::Reports
     def serialize_address(xml, address)
       xml['air5.0'].USAddressGrp do |xml|
         xml.AddressLine1Txt address.street_1
-        xml.AddressLine2Txt address.street_2
+        xml.AddressLine2Txt address.street_2 unless address.street_2.blank?
         xml['irs'].CityNm address.city
         xml.USStateCd address.state
         xml['irs'].USZIPCd address.zip
