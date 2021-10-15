@@ -30,7 +30,7 @@ class ClientConfigurationToggler < MongoidMigrationTask
   end
 
   def copy_target_configuration_to_system_folder
-    target_configuration_files = Dir.glob("#{target_config_folder}/system/**/*.yml")
+    target_configuration_files = Dir.glob("#{target_config_folder}/system/*.yml")
     raise("No configuration files present in target directory.") if target_configuration_files.blank?
     `rm -rf #{Rails.root}/system` if Dir.exist?("#{Rails.root}/system")
     `cp -r #{target_config_folder}/system #{Rails.root}`
