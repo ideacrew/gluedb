@@ -3,7 +3,7 @@
 ########################
 
 #FROM ruby:2.1.7 AS base
-FROM public.ecr.aws/ideacrew/gluedb:me-pvt AS base
+FROM public.ecr.aws/ideacrew/gluedb:base AS base
 
 LABEL author="IdeaCrew"
 
