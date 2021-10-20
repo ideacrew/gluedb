@@ -16,7 +16,7 @@ class ClientConfigurationToggler < MongoidMigrationTask
 
   def old_configured_state_abbreviation
     # Refigure this when we have more than two clients
-    ["me", "dc"].detect { |client_abbreviations| client_abbreviation != @target_client_state_abbreviation}
+    ["me", "dc"].detect { |client_abbreviation| client_abbreviation != @target_client_state_abbreviation}
   end
 
   def target_client_state_abbreviation
@@ -34,12 +34,6 @@ class ClientConfigurationToggler < MongoidMigrationTask
     raise("No configuration files present in target directory.") if target_configuration_files.blank?
     `rm -rf #{Rails.root}/system` if Dir.exist?("#{Rails.root}/system")
     `cp -r #{target_config_folder}/system #{Rails.root}`
-    if File.exist?("#{target_config_folder}/config/settings.yml")
-      puts("Settings.yml present for target configuration, setting it as current settings.")
-    else
-      puts("No settings.yml file present for target configuration")
-    end
-    `cp -r #{target_config_folder}/config/settings.yml config/settings.yml`
   end
 
 
@@ -47,12 +41,6 @@ class ClientConfigurationToggler < MongoidMigrationTask
     @old_configured_state_abbreviation = old_configured_state_abbreviation
     @target_client_state_abbreviation = target_client_state_abbreviation
     copy_target_configuration_to_system_folder
-    puts("Client configuration toggle complete system complete. enroll_app.yml file is now set to:")
-    # Figure otu what the file is
-    # configuration_result = `cat todo filename`
-    # puts(resource_registry_result[0..800])
-    # puts("Settings yml now set to:")
-    # settings_yml_result = `cat config/settings.yml`
-    # puts(settings_yml_result[0..400])
+    puts("Client configuration toggle complete system complete")
   end
 end
