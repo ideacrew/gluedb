@@ -268,7 +268,7 @@ describe EnrollmentAction::PlanChangeSameCarrier, "given a qualified enrollment 
     end
 
     it "publishes renewal event for continuous coverage" do
-      expect(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#auto_renew")
+      expect(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#initial_enrollment")
       subject.publish
     end
   end
