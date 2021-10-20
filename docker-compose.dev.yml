@@ -1,0 +1,29 @@
+version: "3.4"
+services:
+  edidb:
+    build:
+      context: .
+      dockerfile: ./.docker/development/Dockerfile
+      args:
+        GEM_OAUTH_TOKEN: PUT YOUR GITHUB PERSONAL ACCESS TOKEN HERE
+    links:
+      - db
+    ports:
+      - "3000:3000"
+    volumes:
+        - .:/usr/src/app
+        - .docker/development/mongoid.yml:/usr/src/app/config/mongoid.yml
+  db:
+    build:
+      context: .
+      dockerfile: ./.docker/development/Dockerfile.mongodb
+    volumes:
+      - edidb_mongodb:/data/db
+      - edidb_mongodb_config:/data/db_config
+    ports:
+      - "27017:27017"
+    command: mongod
+volumes:
+  edidb_mongodb:
+  edidb_mongodb_config:
+
