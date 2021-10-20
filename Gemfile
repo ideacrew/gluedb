@@ -6,7 +6,7 @@ gem 'rails', '3.2.22.5'
 gem "mongoid", "~> 3.1.7"
 gem "origin", "~> 1.1.0"
 gem "aasm", "~> 3.0.26"
-gem "nokogiri", "~> 1.6.8.1"
+gem "nokogiri", "~> 1.7.2"
 gem "bunny", '1.4.1'
 gem 'amq-protocol', '2.0.1'
 gem 'jquery-rails', '3.1.3'
@@ -30,8 +30,8 @@ group 'development', 'test' do
 end
 
 group :development, :assets, :test do
-  gem 'libv8', "~> 3.16.14.17"
-  gem 'therubyracer', '0.12.2', :platforms => :ruby
+  gem 'libv8', "~> 3.16.14.18"
+  # gem 'therubyracer', '0.12.3', :platforms => :ruby
   gem 'sass-rails',   '~> 3.2.3'
   gem 'coffee-rails', '~> 3.2.1'
   gem 'less-rails-bootstrap', '3.2.0'
@@ -49,7 +49,7 @@ group :development, :test do
 end
 
 group :test do
-  gem 'test-unit', "~> 3.2.3"
+  # gem 'test-unit', "~> 3.2.3"
   gem 'mongoid-rspec', "~> 1.13.0"
   gem 'rspec-rails', '3.3.3'
   gem 'rspec-collection_matchers', '1.1.2'
@@ -65,8 +65,8 @@ end
 
 group :production do
   gem 'unicorn', '4.8.2'
-  gem 'eye', '0.6.4'
-  gem 'celluloid', '0.15.2'
+  gem 'eye', '0.10.0'
+  gem 'celluloid', '0.17.3'
   gem 'nio4r', '1.1.1'
 end
 
