@@ -31,7 +31,7 @@ end
 
 group :development, :assets, :test do
   gem 'libv8', "~> 3.16.14.18"
-  # gem 'therubyracer', '0.12.3', :platforms => :ruby
+  gem 'therubyracer', '0.12.3', :platforms => :ruby
   gem 'sass-rails',   '~> 3.2.3'
   gem 'coffee-rails', '~> 3.2.1'
   gem 'less-rails-bootstrap', '3.2.0'
