@@ -30,7 +30,6 @@ module Listeners
                                            :event_time => event_time.to_i.to_s
                                        })
       end
-      channel.ack(delivery_info.delivery_tag, false)
     end
     def create_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
       EnrollmentEvents::Batch.create_batch_transaction_and_yield(parsed_event, body, m_headers, event_time) do |transaction|
