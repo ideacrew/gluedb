@@ -16,6 +16,10 @@ production:
         replica_set: <%= ENV['EDIDB_DB_REPLICA_SET_NAME'] %>
         <% end %> 
 
+        write:
+          w: 1
+          j: true
+
         skip_version_check: true
       # Change whether the session persists in safe mode by default.
       # (default: false)
