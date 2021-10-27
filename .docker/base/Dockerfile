@@ -3,7 +3,7 @@
 ########################
 
 #FROM ruby:2.1.7 AS base
-FROM public.ecr.aws/ideacrew/gluedb:base AS base
+FROM public.ecr.aws/ideacrew/gluedb:me-pvt AS base
 
 LABEL author="IdeaCrew"
 
@@ -12,7 +12,7 @@ RUN apt-get update && \
     apt-get -yq dist-upgrade && \
     apt-get install -y git gcc openssl libyaml-dev libyaml-cpp-dev libyaml-cpp0.5 libffi-dev libffi6 libreadline-dev \
                        zlibc libgdbm-dev libncurses-dev autoconf fontconfig unzip zip sshpass bzip2 libxrender1 libxext6 \
-                       build-essential && \
+                       build-essential nmap && \
     apt-get autoremove -y
 
 # Configure bundler and PATH, install bundler version
@@ -27,7 +27,9 @@ ENV PATH $BUNDLE_BIN:$GEM_HOME/gems/bin:$PATH
 
 ARG BUNDLER_VERSION_OVERRIDE
 ENV BUNDLER_VERSION=$BUNDLER_VERSION_OVERRIDE
-#RUN gem install bundler:$BUNDLER_VERSION
+#RUN openssl s_client -connect rubygems.org:443 -tls1_2 -servername rubygems.org && sleep 60
+#RUN curl -Lks 'https://git.io/rg-ssl' | ruby && sleep 60
+#RUN gem install bundler:$BUNDLER_VERSION 
 
 # Configure app home directory
 ENV HOME /edidb
@@ -64,7 +66,7 @@ ENV BUNDLE_GITHUB__COM=x-access-token:"$GEM_OAUTH_TOKEN"
 
 RUN bundle install --jobs 20 --retry 5 --without development test 
 
-RUN bundle exec rake assets:precompile 
+#RUN bundle exec rake assets:precompile 
 
 #CMD ["./entrypoints/docker-entrypoint.sh"]
 
@@ -75,7 +77,7 @@ RUN apt-get update && \
     apt-get -yq dist-upgrade && \
     apt-get install -y git gcc openssl libyaml-dev libyaml-cpp-dev libyaml-cpp0.5 libffi-dev libffi6 libreadline-dev \
                        zlibc libgdbm-dev libncurses-dev autoconf fontconfig unzip zip sshpass bzip2 libxrender1 libxext6 \
-                       build-essential && \
+                       build-essential  nmap && \
     apt-get autoremove -y
 
 # Configure bundler and PATH, install bundler version
@@ -90,7 +92,7 @@ ENV PATH $BUNDLE_BIN:$GEM_HOME/gems/bin:$PATH
 
 ARG BUNDLER_VERSION_OVERRIDE
 ENV BUNDLER_VERSION=$BUNDLER_VERSION_OVERRIDE
-RUN gem install bundler:$BUNDLER_VERSION
+#RUN gem install bundler:$BUNDLER_VERSION
 
 # Configure app home directory
 ENV HOME /edidb
