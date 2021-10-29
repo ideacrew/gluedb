@@ -10,7 +10,8 @@ GIT
 
 GIT
   remote: https://github.com/ideacrew/edi_codec.git
-  revision: bbd593e0312c7e9992bc0491d5bf7ce56ef61f7a
+  revision: 6d1e67f170c329fcf953a93064d72f1b7ab147e1
+  branch: trunk
   specs:
     edi_codec (0.1.2)
       activesupport (>= 3.2)
