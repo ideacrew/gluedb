@@ -3,16 +3,18 @@ on: push
 
 jobs:
   rspec:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
-      - name: Set up Ruby 2.1.10
+      - name: Get Packages for Ruby Prerequisites
         run: |
-          sudo add-apt-repository -y ppa:brightbox/ruby-ng
           sudo apt-get -y update
-          sudo apt-get -y install ruby2.1 ruby2.1-dev ruby-switch
-          sudo apt-get -y install ruby-switch
-          sudo ruby-switch --list
-          sudo ruby-switch --set ruby2.1
+          sudo apt-get -y install git curl libssl1.0-dev libreadline-dev zlib1g-dev autoconf bison build-essential libyaml-dev libreadline-dev libncurses5-dev libffi-dev libgdbm-dev
+      - name: Install Ruby
+        run: |
+          curl -O https://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.10.tar.bz2
+          tar xjf ruby-2.1.10.tar.bz2
+          cd ruby-2.1.10 && ./configure && make -j 2
+          sudo make install
       - name: Launch MongoDB
         uses: wbari/start-mongoDB@v0.2
         with:
