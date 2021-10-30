@@ -36,7 +36,7 @@ module Listeners
 
     def request_resource(employer_id, plan_year_id = nil)
       begin
-        di, rprops, resp_body = request({:headers => {:employer_id => employer_id, :plan_year_id => plan_year_id}, :routing_key => "resource.employer"},"", 30)
+        di, rprops, resp_body = request({:headers => {:employer_id => employer_id, :plan_year_id => plan_year_id}, :routing_key => "resource.employer"},"", 90)
         r_headers = (rprops.headers || {}).to_hash.stringify_keys
         r_code = r_headers['return_status'].to_s
         if r_code == "200"
