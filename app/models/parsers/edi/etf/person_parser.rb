@@ -78,15 +78,15 @@ module Parsers
               :email_type => "home",
               :email_address => @email.downcase
             )
-            new_person.merge_email(new_email)
-            new_person.update_email(new_email)
+            #new_person.merge_email(new_email)
+            #new_person.update_email(new_email)
           end
           unless @phone.blank?
             new_phone = Phone.new(
               :phone_type => "home",
               :phone_number => @phone
             )
-            new_person.update_phone(new_phone)
+            # new_person.update_phone(new_phone)
           end
 
 
