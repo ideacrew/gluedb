@@ -73,6 +73,10 @@ module Parsers
             end
           end
 
+          # Below we've disabled updating emails
+          # and phones using EDI as our primary source.
+          # This prevents thrashing from the ambiguous
+          # way EDI encodes work phones and emails.
           unless @email.blank?
             new_email = Email.new(
               :email_type => "home",
