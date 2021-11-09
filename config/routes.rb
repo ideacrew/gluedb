@@ -194,6 +194,9 @@ Gluedb::Application.routes.draw do
       resources :application_groups, :controller => :families, :only => [:show, :index]
       post 'generate_quote', to: 'quote_generator#generate'
     end
+    namespace :event_source do
+      resources :enrolled_subjects,:only => [:index]
+    end
   end
 
   resources :special_enrollment_periods, only: [:new, :create]
