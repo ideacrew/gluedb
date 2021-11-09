@@ -13,10 +13,8 @@ module EnrollmentAction
     def persist
       if termination.existing_policy
         policy_to_term = termination.existing_policy
-        unless policy_to_term.is_shop?
-          policy_to_term.reload
-          return false if policy_to_term.canceled?
-        end
+        policy_to_term.reload
+        return false if policy_to_term.canceled?
         existing_npt = policy_to_term.term_for_np
         result = policy_to_term.terminate_as_of(termination.subscriber_end)
         if termination.existing_policy.carrier.termination_cancels_renewal

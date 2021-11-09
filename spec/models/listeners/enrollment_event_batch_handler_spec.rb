@@ -25,69 +25,69 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
       )
     end
     let(:body) { <<-EVENTXML
-       <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
-       <header>
-         <hbx_id>29035</hbx_id>
-         <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
-       </header>
-       <event>
-         <body>
-           <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
-             <affected_members>
-             </affected_members>
-             <enrollment xmlns="http://openhbx.org/api/terms/1.0">
-               <policy>
-                 <id>
-                   <id>123</id>
-                 </id>
-                 <enrollees>
-                   <enrollee>
-                     <member>
-                       <id><id>#{subscriber_hbx_id}</id></id>
-                     </member>
-                     <is_subscriber>true</is_subscriber>
-                     <benefit>
-                       <premium_amount>111.11</premium_amount>
-                       <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
-                     </benefit>
-                   </enrollee>
-                 </enrollees>
-                 <enrollment>
-                   <plan>
-                     <id>
-                       <id>1</id>
-                     </id>
-                     <name>BluePreferred PPO Standard Platinum $0</name>
-                     <active_year>2020</active_year>
-                     <is_dental_only>false</is_dental_only>
-                     <carrier>
-                       <id>
-                         <id>1</id>
-                       </id>
-                       <name>CareFirst</name>
-                     </carrier>
-                     <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
-                     <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
-                     <ehb_percent>99.64</ehb_percent>
-                   </plan>
-                   <individual_market>
-                     <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
-                     <applied_aptc_amount>100.00</applied_aptc_amount>
-                   </individual_market>
-                   <shop_market>
-                     <employer_link>
-                       <id><id>urn:openhbx:terms:v1:employer:id##{employer_hbx_id}</id></id>
-                     </employer_link>
-                   </shop_market>
-                   <premium_total_amount>56.78</premium_total_amount>
-                   <total_responsible_amount>123.45</total_responsible_amount>
-                 </enrollment>
-               </policy>
-             </enrollment>
-             </enrollment_event_body>
-         </body>
-       </event>
-     </enrollment_event>
+      <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+      <header>
+        <hbx_id>29035</hbx_id>
+        <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+      </header>
+      <event>
+        <body>
+          <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+            <affected_members>
+            </affected_members>
+            <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+              <policy>
+                <id>
+                  <id>123</id>
+                </id>
+                <enrollees>
+                  <enrollee>
+                    <member>
+                      <id><id>#{subscriber_hbx_id}</id></id>
+                    </member>
+                    <is_subscriber>true</is_subscriber>
+                    <benefit>
+                      <premium_amount>111.11</premium_amount>
+                      <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+                    </benefit>
+                  </enrollee>
+                </enrollees>
+                <enrollment>
+                  <plan>
+                    <id>
+                      <id>1</id>
+                    </id>
+                    <name>BluePreferred PPO Standard Platinum $0</name>
+                    <active_year>2020</active_year>
+                    <is_dental_only>false</is_dental_only>
+                    <carrier>
+                      <id>
+                        <id>1</id>
+                      </id>
+                      <name>CareFirst</name>
+                    </carrier>
+                    <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+                    <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+                    <ehb_percent>99.64</ehb_percent>
+                  </plan>
+                  <individual_market>
+                    <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
+                    <applied_aptc_amount>100.00</applied_aptc_amount>
+                  </individual_market>
+                  <shop_market>
+                    <employer_link>
+                      <id><id>urn:openhbx:terms:v1:employer:id##{employer_hbx_id}</id></id>
+                    </employer_link>
+                  </shop_market>
+                  <premium_total_amount>56.78</premium_total_amount>
+                  <total_responsible_amount>123.45</total_responsible_amount>
+                </enrollment>
+              </policy>
+            </enrollment>
+            </enrollment_event_body>
+        </body>
+      </event>
+    </enrollment_event>
     EVENTXML
     }
 
@@ -97,31 +97,31 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
       @time_now = Time.now
       allow(Time).to receive(:now).and_return(@time_now)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "info.application.glue.enrollment_event_handler.batch_created",
-                                                               :headers=> {
-                                                                   :employer_hbx_id => "1",
-                                                                   :subscriber_hbx_id => "1",
-                                                                   :benefit_kind => "health",
-                                                                   :batch_id => "",
-                                                                   :event_time=> "#{@time_now.to_i}",
-                                                                   :return_status => "200",
-                                                                   :submitted_timestamp=> @time_now }
-                                                           },
-                                                           body
-                                  )
+        :routing_key => "info.application.glue.enrollment_event_handler.batch_created",
+        :headers=> {
+          :employer_hbx_id => "1",
+          :subscriber_hbx_id => "1",
+          :benefit_kind => "health",
+          :batch_id => "",
+          :event_time=> "#{@time_now.to_i}",
+          :return_status => "200",
+          :submitted_timestamp=> @time_now }
+        },
+      body
+      )
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "info.application.glue.enrollment_event_handler.batch_transactions_updated",
-                                                               :headers=> {
-                                                                   :employer_hbx_id => "1",
-                                                                   :subscriber_hbx_id => "1",
-                                                                   :benefit_kind => "health",
-                                                                   :batch_id => "",
-                                                                   :event_time=> "#{@time_now.to_i}",
-                                                                   :return_status => "200",
-                                                                   :submitted_timestamp=> @time_now }
-                                                           },
-                                                           body
-                                  )
+        :routing_key => "info.application.glue.enrollment_event_handler.batch_transactions_updated",
+        :headers=> {
+          :employer_hbx_id => "1",
+          :subscriber_hbx_id => "1",
+          :benefit_kind => "health",
+          :batch_id => "",
+          :event_time=> "#{@time_now.to_i}",
+          :return_status => "200",
+          :submitted_timestamp=> @time_now }
+        },
+      body
+      )
     end
 
     it "acknowledges the message" do
@@ -158,29 +158,29 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
 
     it "should broadcast batch created and transaction updated message" do
       expect(event_broadcaster).to receive(:broadcast).with({
-                                                                :routing_key => "info.application.glue.enrollment_event_handler.batch_created",
-                                                                :headers=> {
-                                                                    :employer_hbx_id => "1",
-                                                                    :subscriber_hbx_id => "1",
-                                                                    :benefit_kind => "health",
-                                                                    :batch_id => "",
-                                                                    :event_time=> "#{@time_now.to_i}",
-                                                                    :return_status => "200",
-                                                                    :submitted_timestamp=> @time_now }
-                                                            },
-                                                            body)
+        :routing_key => "info.application.glue.enrollment_event_handler.batch_created",
+        :headers=> {
+          :employer_hbx_id => "1",
+          :subscriber_hbx_id => "1",
+          :benefit_kind => "health",
+          :batch_id => "",
+          :event_time=> "#{@time_now.to_i}",
+          :return_status => "200",
+          :submitted_timestamp=> @time_now }
+        },
+      body)
       expect(event_broadcaster).to receive(:broadcast).with({
-                                                                :routing_key => "info.application.glue.enrollment_event_handler.batch_transactions_updated",
-                                                                :headers=> {
-                                                                    :employer_hbx_id => "1",
-                                                                    :subscriber_hbx_id => "1",
-                                                                    :benefit_kind => "health",
-                                                                    :batch_id => "",
-                                                                    :event_time=> "#{@time_now.to_i}",
-                                                                    :return_status => "200",
-                                                                    :submitted_timestamp=> @time_now}
-                                                            },
-                                                            body)
+        :routing_key => "info.application.glue.enrollment_event_handler.batch_transactions_updated",
+        :headers=> {
+          :employer_hbx_id => "1",
+           :subscriber_hbx_id => "1",
+           :benefit_kind => "health",
+           :batch_id => "",
+           :event_time=> "#{@time_now.to_i}",
+           :return_status => "200",
+           :submitted_timestamp=> @time_now}
+        },
+      body)
       subject.on_message(delivery_info, properties, body)
     end
 
@@ -207,64 +207,64 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
       )
     end
     let(:body) { <<-EVENTXML
-       <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
-       <header>
-         <hbx_id>29035</hbx_id>
-         <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
-       </header>
-       <event>
-         <body>
-           <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
-             <affected_members>
-             </affected_members>
-             <enrollment xmlns="http://openhbx.org/api/terms/1.0">
-               <policy>
-                 <id>
-                   <id>123</id>
-                 </id>
-                 <enrollees>
-                   <enrollee>
-                     <member>
-                       <id><id>#{subscriber_hbx_id}</id></id>
-                     </member>
-                     <is_subscriber>true</is_subscriber>
-                     <benefit>
-                       <premium_amount>111.11</premium_amount>
-                       <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
-                     </benefit>
-                   </enrollee>
-                 </enrollees>
-                 <enrollment>
-                   <plan>
-                     <id>
-                       <id>1</id>
-                     </id>
-                     <name>BluePreferred PPO Standard Platinum $0</name>
-                     <active_year>2020</active_year>
-                     <is_dental_only>true</is_dental_only>
-                     <carrier>
-                       <id>
-                         <id>1</id>
-                       </id>
-                       <name>CareFirst</name>
-                     </carrier>
-                     <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
-                     <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
-                     <ehb_percent>99.64</ehb_percent>
-                   </plan>
-                   <individual_market>
-                     <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
-                     <applied_aptc_amount>100.00</applied_aptc_amount>
-                   </individual_market>
-                   <premium_total_amount>56.78</premium_total_amount>
-                   <total_responsible_amount>123.45</total_responsible_amount>
-                 </enrollment>
-               </policy>
-             </enrollment>
-             </enrollment_event_body>
-         </body>
-       </event>
-     </enrollment_event>
+      <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+      <header>
+        <hbx_id>29035</hbx_id>
+        <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+      </header>
+      <event>
+        <body>
+          <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+            <affected_members>
+            </affected_members>
+            <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+              <policy>
+                <id>
+                  <id>123</id>
+                </id>
+                <enrollees>
+                  <enrollee>
+                    <member>
+                      <id><id>#{subscriber_hbx_id}</id></id>
+                    </member>
+                    <is_subscriber>true</is_subscriber>
+                    <benefit>
+                      <premium_amount>111.11</premium_amount>
+                      <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+                    </benefit>
+                  </enrollee>
+                </enrollees>
+                <enrollment>
+                  <plan>
+                    <id>
+                      <id>1</id>
+                    </id>
+                    <name>BluePreferred PPO Standard Platinum $0</name>
+                    <active_year>2020</active_year>
+                    <is_dental_only>true</is_dental_only>
+                    <carrier>
+                      <id>
+                        <id>1</id>
+                      </id>
+                      <name>CareFirst</name>
+                    </carrier>
+                    <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+                    <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+                    <ehb_percent>99.64</ehb_percent>
+                  </plan>
+                  <individual_market>
+                    <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
+                    <applied_aptc_amount>100.00</applied_aptc_amount>
+                  </individual_market>
+                  <premium_total_amount>56.78</premium_total_amount>
+                  <total_responsible_amount>123.45</total_responsible_amount>
+                </enrollment>
+              </policy>
+            </enrollment>
+            </enrollment_event_body>
+        </body>
+      </event>
+    </enrollment_event>
     EVENTXML
     }
 
@@ -274,27 +274,27 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
       @time_now = Time.now
       allow(Time).to receive(:now).and_return(@time_now)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "info.application.glue.enrollment_event_handler.batch_created",
-                                                               :headers=> {
-                                                                   :employer_hbx_id => nil,
-                                                                   :subscriber_hbx_id => "1",
-                                                                   :benefit_kind => "dental",
-                                                                   :batch_id => "",
-                                                                   :event_time=> "#{@time_now.to_i}",
-                                                                   :return_status => "200",
-                                                                   :submitted_timestamp=> @time_now }
-                                                           }, body)
+       :routing_key => "info.application.glue.enrollment_event_handler.batch_created",
+       :headers=> {
+         :employer_hbx_id => nil,
+         :subscriber_hbx_id => "1",
+         :benefit_kind => "dental",
+         :batch_id => "",
+         :event_time=> "#{@time_now.to_i}",
+         :return_status => "200",
+         :submitted_timestamp=> @time_now }
+       }, body)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "info.application.glue.enrollment_event_handler.batch_transactions_updated",
-                                                               :headers=> {
-                                                                   :employer_hbx_id => nil,
-                                                                   :subscriber_hbx_id => "1",
-                                                                   :benefit_kind => "dental",
-                                                                   :batch_id => "",
-                                                                   :event_time=> "#{@time_now.to_i}",
-                                                                   :return_status => "200",
-                                                                   :submitted_timestamp=> @time_now }
-                                                           }, body)
+        :routing_key => "info.application.glue.enrollment_event_handler.batch_transactions_updated",
+        :headers=> {
+          :employer_hbx_id => nil,
+          :subscriber_hbx_id => "1",
+          :benefit_kind => "dental",
+          :batch_id => "",
+          :event_time=> "#{@time_now.to_i}",
+          :return_status => "200",
+          :submitted_timestamp=> @time_now }
+        }, body)
     end
 
     it "acknowledges the message" do
@@ -348,69 +348,69 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
     let(:event_time) { Time.now }
     let(:properties) do
       double(
-          headers: headers,
-          timestamp: event_time
+        headers: headers,
+        timestamp: event_time
       )
     end
     let(:body) { <<-EVENTXML
-       <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
-       <header>
-         <hbx_id>29035</hbx_id>
-         <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
-       </header>
-       <event>
-         <body>
-           <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
-             <affected_members>
-             </affected_members>
-             <enrollment xmlns="http://openhbx.org/api/terms/1.0">
-               <policy>
-                 <id>
-                   <id>123</id>
-                 </id>
-                 <enrollees>
-                   <enrollee>
-                     <member>
-                       <id><id>#{subscriber_hbx_id}</id></id>
-                     </member>
-                     <is_subscriber>true</is_subscriber>
-                     <benefit>
-                       <premium_amount>111.11</premium_amount>
-                       <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
-                     </benefit>
-                   </enrollee>
-                 </enrollees>
-                 <enrollment>
-                   <plan>
-                     <id>
-                       <id>1</id>
-                     </id>
-                     <name>BluePreferred PPO Standard Platinum $0</name>
-                     <active_year>2020</active_year>
-                     <is_dental_only>false</is_dental_only>
-                     <carrier>
-                       <id>
-                         <id>1</id>
-                       </id>
-                       <name>CareFirst</name>
-                     </carrier>
-                     <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
-                     <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
-                     <ehb_percent>99.64</ehb_percent>
-                   </plan>
-                   <individual_market>
-                     <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
-                     <applied_aptc_amount>100.00</applied_aptc_amount>
-                   </individual_market>
-                   <premium_total_amount>56.78</premium_total_amount>
-                   <total_responsible_amount>123.45</total_responsible_amount>
-                 </enrollment>
-               </policy>
-             </enrollment>
-             </enrollment_event_body>
-         </body>
-       </event>
-     </enrollment_event>
+      <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+      <header>
+        <hbx_id>29035</hbx_id>
+        <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+      </header>
+      <event>
+        <body>
+          <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+            <affected_members>
+            </affected_members>
+            <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+              <policy>
+                <id>
+                  <id>123</id>
+                </id>
+                <enrollees>
+                  <enrollee>
+                    <member>
+                      <id><id>#{subscriber_hbx_id}</id></id>
+                    </member>
+                    <is_subscriber>true</is_subscriber>
+                    <benefit>
+                      <premium_amount>111.11</premium_amount>
+                      <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+                    </benefit>
+                  </enrollee>
+                </enrollees>
+                <enrollment>
+                  <plan>
+                    <id>
+                      <id>1</id>
+                    </id>
+                    <name>BluePreferred PPO Standard Platinum $0</name>
+                    <active_year>2020</active_year>
+                    <is_dental_only>false</is_dental_only>
+                    <carrier>
+                      <id>
+                        <id>1</id>
+                      </id>
+                      <name>CareFirst</name>
+                    </carrier>
+                    <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+                    <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+                    <ehb_percent>99.64</ehb_percent>
+                  </plan>
+                  <individual_market>
+                    <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
+                    <applied_aptc_amount>100.00</applied_aptc_amount>
+                  </individual_market>
+                  <premium_total_amount>56.78</premium_total_amount>
+                  <total_responsible_amount>123.45</total_responsible_amount>
+                </enrollment>
+              </policy>
+            </enrollment>
+            </enrollment_event_body>
+        </body>
+      </event>
+    </enrollment_event>
     EVENTXML
     }
 
@@ -421,53 +421,53 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
       @time_now = Time.now
       allow(Time).to receive(:now).and_return(@time_now)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "info.application.glue.enrollment_event_handler.batch_created",
-                                                               :headers=> {
-                                                                   :employer_hbx_id => nil,
-                                                                   :subscriber_hbx_id => "1",
-                                                                   :benefit_kind => "health",
-                                                                   :batch_id => "",
-                                                                   :event_time=> "#{@time_now.to_i}",
-                                                                   :return_status => "200",
-                                                                   :submitted_timestamp=> @time_now
-                                                               }
-                                                           }, body)
+        :routing_key => "info.application.glue.enrollment_event_handler.batch_created",
+        :headers=> {
+          :employer_hbx_id => nil,
+          :subscriber_hbx_id => "1",
+          :benefit_kind => "health",
+          :batch_id => "",
+          :event_time=> "#{@time_now.to_i}",
+          :return_status => "200",
+          :submitted_timestamp=> @time_now
+        }
+      }, body)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "info.application.glue.enrollment_event_handler.batch_transactions_updated",
-                                                               :headers=> {
-                                                                   :employer_hbx_id => nil,
-                                                                   :subscriber_hbx_id => "1",
-                                                                   :benefit_kind => "health",
-                                                                   :batch_id => "",
-                                                                   :event_time=> "#{@time_now.to_i}",
-                                                                   :return_status => "200",
-                                                                   :submitted_timestamp=> @time_now
-                                                               }
-                                                           }, body)
+        :routing_key => "info.application.glue.enrollment_event_handler.batch_transactions_updated",
+        :headers=> {
+          :employer_hbx_id => nil,
+          :subscriber_hbx_id => "1",
+          :benefit_kind => "health",
+          :batch_id => "",
+          :event_time=> "#{@time_now.to_i}",
+          :return_status => "200",
+          :submitted_timestamp=> @time_now
+        }
+      }, body)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "info.application.glue.enrollment_event_handler.batch_cut",
-                                                               :headers=> {
-                                                                   :return_status => "200",
-                                                                   :submitted_timestamp=> @time_now
-                                                               }
-                                                           }, "")
+        :routing_key => "info.application.glue.enrollment_event_handler.batch_cut",
+        :headers=> {
+          :return_status => "200",
+          :submitted_timestamp=> @time_now
+        }
+      }, "")
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                               :routing_key => "info.application.glue.enrollment_event_handler.batch_processing",
-                                                               :headers=> {
-                                                                   :batch_id => batch.id,
-                                                                   :return_status => "200",
-                                                                   :submitted_timestamp=> @time_now
-                                                               }
-                                                           }, "")
+        :routing_key => "info.application.glue.enrollment_event_handler.batch_processing",
+        :headers=> {
+          :batch_id => batch.id,
+          :return_status => "200",
+          :submitted_timestamp=> @time_now
+        }
+      }, "")
       allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(event_broadcaster)
       allow(event_broadcaster).to receive(:broadcast).with(
-                                      {
-                                          :headers => { batch_id: batch.id },
-                                          :routing_key => "info.events.enrollment_batch.process"
+        {
+          :headers => { batch_id: batch.id },
+          :routing_key => "info.events.enrollment_batch.process"
 
-                                      },
-                                      "",
-                                  )
+        },
+        "",
+      )
     end
 
     it "should update batch from open to pending state" do
@@ -482,12 +482,12 @@ describe Listeners::EnrollmentEventBatchHandler, :dbclean => :after_each do
     it "should publish batch process event" do
       batch = EnrollmentEvents::Batch.all.first
       expect(event_broadcaster).to receive(:broadcast).with(
-                                       {
-                                           :headers => { batch_id: batch.id },
-                                           :routing_key => "info.events.enrollment_batch.process"
-                                       },
-                                       "",
-                                   )
+        {
+          :headers => { batch_id: batch.id },
+          :routing_key => "info.events.enrollment_batch.process"
+        },
+        "",
+      )
       delivery_info = double(delivery_tag: delivery_tag, routing_key: "info.events.enrollment_batch.cut")
       subject.on_message(delivery_info, properties, body)
     end

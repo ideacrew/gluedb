@@ -8,11 +8,11 @@ module Listeners
     def resource_event_broadcast(level, event_key, r_code, body = "", other_headers = {})
       event_body = (body.respond_to?(:to_s) ? body.to_s : body.inspect)
       broadcast_event({
-                          :routing_key => "#{level}.application.glue.enrollment_event_batch_processor.#{event_key}",
-                          :headers => other_headers.merge({
-                                                              :return_status => r_code.to_s,
-                                                              :submitted_timestamp => Time.now})
-                      }, event_body)
+        :routing_key => "#{level}.application.glue.enrollment_event_batch_processor.#{event_key}",
+        :headers => other_headers.merge({
+          :return_status => r_code.to_s,
+          :submitted_timestamp => Time.now})
+        }, event_body)
     end
 
     def resource_error_broadcast(event_key, r_code, body = "", other_headers = {})
@@ -23,8 +23,8 @@ module Listeners
       m_headers = (properties.headers || {}).to_hash.stringify_keys
       batch_id = m_headers["batch_id"].to_s
       responder = ::ExternalEvents::BatchRecordResponder.new(
-          "application.gluedb.enrollment_event_batch_processor",
-          channel, batch_id
+        "application.gluedb.enrollment_event_batch_processor",
+        channel, batch_id
       )
       begin
         batch = EnrollmentEvents::Batch.where(id: batch_id, aasm_state: "pending_transmission").first
@@ -32,11 +32,11 @@ module Listeners
           events = []
           batch.transactions.each do |transaction|
             event_message = ExternalEvents::EnrollmentEventNotification.new(
-                responder,
-                "",
-                transaction.event_time,
-                transaction.payload,
-                transaction.headers
+              responder,
+              "",
+              transaction.event_time,
+              transaction.payload,
+              transaction.headers
             )
             events << event_message
           end
@@ -58,24 +58,24 @@ module Listeners
       event_topic_exchange_name = "#{ec.hbx_id}.#{ec.environment}.e.topic.events"
       event_ex = chan.topic(event_topic_exchange_name, { :durable => true })
       q = chan.queue(
-          self.queue_name,
-          {
-              :durable => true,
-              :arguments => {
-                  "x-dead-letter-exchange" => (self.queue_name + "-retry")
-              }
+        self.queue_name,
+        {
+          :durable => true,
+          :arguments => {
+              "x-dead-letter-exchange" => (self.queue_name + "-retry")
           }
+        }
       )
       q.bind(event_ex, {:routing_key => "info.events.enrollment_batch.process"})
       retry_q = chan.queue(
-          (self.queue_name + "-retry"),
-          {
-              :durable => true,
-              :arguments => {
-                  "x-dead-letter-exchange" => (self.queue_name + "-requeue"),
-                  "x-message-ttl" => 1000
-              }
+        (self.queue_name + "-retry"),
+        {
+          :durable => true,
+          :arguments => {
+              "x-dead-letter-exchange" => (self.queue_name + "-requeue"),
+              "x-message-ttl" => 1000
           }
+        }
       )
       retry_exchange = chan.fanout(
           (self.queue_name + "-retry")

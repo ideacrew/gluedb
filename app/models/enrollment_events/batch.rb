@@ -37,11 +37,11 @@ module EnrollmentEvents
 
     def self.new_batch?(parsed_event)
       self.where({
-                     subscriber_hbx_id: parsed_event.subscriber_id,
-                     employer_hbx_id: parsed_event.employer_hbx_id,
-                     benefit_kind: benefit_kind(parsed_event),
-                     aasm_state: 'open'
-                 }).any?
+        subscriber_hbx_id: parsed_event.subscriber_id,
+        employer_hbx_id: parsed_event.employer_hbx_id,
+        benefit_kind: benefit_kind(parsed_event),
+        aasm_state: 'open'
+      }).any?
     end
 
     def self.find_batch(parsed_event)
@@ -60,10 +60,10 @@ module EnrollmentEvents
 
     def self.create_batch(parsed_event)
       self.create!({
-                       subscriber_hbx_id: parsed_event.subscriber_id,
-                       employer_hbx_id: parsed_event.employer_hbx_id,
-                       benefit_kind: benefit_kind(parsed_event)
-                   })
+        subscriber_hbx_id: parsed_event.subscriber_id,
+        employer_hbx_id: parsed_event.employer_hbx_id,
+        benefit_kind: benefit_kind(parsed_event)
+      })
     end
 
     def self.benefit_kind(parsed_event)
@@ -77,10 +77,12 @@ module EnrollmentEvents
 
     def self.create_transaction(batch, new_payload, m_headers, event_time)
       batch.transactions.create!({
-                                     payload: new_payload,
-                                     headers: m_headers,
-                                     event_time: event_time
-                                 })
+        payload: new_payload,
+        headers: m_headers,
+        event_time: event_time
+      })
     end
   end
 end
+
+
