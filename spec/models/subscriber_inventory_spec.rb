@@ -5,7 +5,7 @@ describe SubscriberInventory do
     let(:plan) { instance_double(Plan, :_id => "SOME BOGUS ID") }
 
     it "has no results for #subscriber_ids_for" do
-      expect(SubscriberInventory.subscriber_ids_for(plan)).to eq []
+      expect(SubscriberInventory.subscriber_ids_for(plan).to_a).to eq []
     end
   end
 
@@ -30,7 +30,12 @@ describe SubscriberInventory do
 
     it "returns the subscriber" do
       policy
-      expect(SubscriberInventory.subscriber_ids_for(plan)).to eq ["subscriber_id"]
+      expect(SubscriberInventory.subscriber_ids_for(plan).to_a).to eq ["subscriber_id"]
     end
+  end
+
+  describe "given a person with a coverage history" do
+
+    it "returns the coverage history in the format ACA Entities expects"
   end
 end

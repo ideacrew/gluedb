@@ -18,6 +18,16 @@ module Api
           end
         end
       end
+
+      def show
+        member_id = params[:id]
+        person = Person.find_for_member_id(member_id)
+        if person.blank?
+          render :status => 404, :nothing => true
+        else
+          render :status => 200, :json => SubscriberInventory.coverage_inventory_for(person)
+        end
+      end
     end
   end
 end

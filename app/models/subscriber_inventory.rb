@@ -9,8 +9,14 @@ class SubscriberInventory
       {"$unwind" => "$enrollees"},
       {"$match" => {"enrollees.rel_code" => "self"}},
       {"$group" => {"_id" => "$enrollees.m_id"}}
-    ]).map do |rec|
+    ]).lazy.map do |rec|
       rec["_id"]
     end
+  end
+
+  # TODO: Implement coverage serialization as a JSON structure that
+  #       matches what ACA Entities expects.
+  def self.coverage_inventory_for(person)
+    {}
   end
 end
