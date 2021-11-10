@@ -4,7 +4,7 @@ module Generators::Reports
   class SbmiXmlMerger
 
     attr_reader :xml_docs
-    attr_accessor :sbmi_folder_path, :calender_year, :hios_prefix, :settings
+    attr_accessor :sbmi_folder_path, :calendar_year, :hios_prefix, :settings
 
 
     NS = { 
@@ -44,7 +44,7 @@ module Generators::Reports
             xml.FileId "#{Time.now.utc.strftime('%Y%m%d%H%M%S')}#{hios_prefix}"
             xml.FileCreateDateTime Time.now.utc.iso8601
             xml.TenantId Settings.site.source_exchange_code
-            xml.CoverageYear calender_year
+            xml.CoverageYear calendar_year
             xml.IssuerFileInformation do 
               xml.IssuerId hios_prefix
             end

@@ -3,7 +3,7 @@ require 'csv'
 module Generators::Reports  
   class IrsMonthlySerializer
 
-    attr_accessor :calender_year
+    attr_accessor :calendar_year
 
     def initialize
       @logger = Logger.new("#{Rails.root}/log/h36_exceptions.log")
@@ -15,7 +15,7 @@ module Generators::Reports
       # load_npt_policies
       @npt_policies = []
       @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
-      @calender_year = @settings[:irs_h36_generation][:calender_year]
+      @calendar_year = @settings[:irs_h36_generation][:calendar_year]
 
       @h36_root_folder = "#{Rails.root}/irs/h36_#{Time.now.strftime('%m_%d_%Y_%H_%M')}"
       create_directory @h36_root_folder
@@ -227,7 +227,7 @@ module Generators::Reports
       builder = Generators::Reports::IrsGroupBuilder.new(family)
       builder.carrier_hash = @carriers
       builder.npt_policies = @npt_policies
-      builder.calender_year = calender_year
+      builder.calendar_year = calendar_year
       builder.settings = @settings
       builder.process
       builder.npt_policies = []

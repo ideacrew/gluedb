@@ -11,7 +11,7 @@ describe Generators::Reports::IrsYearlySerializer, :dbclean => :after_each do
 
   let(:params) { {  policy_id: policy.id, type: "new", void_cancelled_policy_ids: [ Moped::BSON::ObjectId.new ] , void_active_policy_ids: [ Moped::BSON::ObjectId.new ], npt: policy.term_for_np } }
   let(:household) {double(name:"name", ssn:"00000000")}
-  let(:options) { { multiple: false, calender_year: 2018, qhp_type: "assisted", notice_type: 'new'} }
+  let(:options) { { multiple: false, calendar_year: 2018, qhp_type: "assisted", notice_type: 'new'} }
   let(:premium) {double(premium_amount:100, slcsp_premium_amount: 200, aptc_amount:0)}
   let(:monthly_premiums) { [OpenStruct.new({serial: (1), premium_amount: 0.0, premium_amount_slcsp: 0.0, monthly_aptc: 0.0})] }  
   let(:h41_folder_name)  { "FEP0020DC.DSH.EOYIN.D#{Time.now.strftime('%Y%m%d')[2..-1]}.T#{Time.now.strftime("%H%M%S") + "000"}.P.IN" }

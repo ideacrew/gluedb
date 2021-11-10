@@ -2,7 +2,7 @@ module Generators::Reports
   class IrsInputBuilder
     include MoneyMath
 
-    attr_accessor :notice, :carrier_hash, :npt_policy, :settings, :calender_year, :notice_type, :report_type
+    attr_accessor :notice, :carrier_hash, :npt_policy, :settings, :calendar_year, :notice_type, :report_type
  
     REPORT_MONTHS = 12
 
@@ -28,7 +28,7 @@ module Generators::Reports
       @policy = policy
       @policy_disposition = PolicyDisposition.new(policy)
       @subscriber = @policy.subscriber.person
-      @calender_year = policy.subscriber.coverage_start.year
+      @calendar_year = policy.subscriber.coverage_start.year
 
       # multi_version = options[:multi_version] || false
       # if multi_version
@@ -173,16 +173,16 @@ module Generators::Reports
       coverage_end_month = @policy_disposition.end_date.month
       # coverage_end_month = coverage_end_month - 1 if (@policy_disposition.end_date.day == 1)
 
-      if @policy_disposition.end_date.year != calender_year || coverage_end_month > REPORT_MONTHS
+      if @policy_disposition.end_date.year != calendar_year || coverage_end_month > REPORT_MONTHS
         coverage_end_month = REPORT_MONTHS
       end
 
-      policy_monthly_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calender_year: calender_year)
+      policy_monthly_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calendar_year: calendar_year)
 
-      silver_plan = Plan.where({:year => calender_year, :hios_plan_id => settings[:tax_document][calender_year][:slcsp]}).first
-      policy_slcsp_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calender_year: calender_year, silver_plan: silver_plan)
+      silver_plan = Plan.where({:year => calendar_year, :hios_plan_id => settings[:tax_document][calendar_year][:slcsp]}).first
+      policy_slcsp_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calendar_year: calendar_year, silver_plan: silver_plan)
 
-      policy_monthly_aptc_calculator = Services::PolicyMonthlyAptcCalculator.new(policy_disposition: @policy_disposition, calender_year: calender_year)
+      policy_monthly_aptc_calculator = Services::PolicyMonthlyAptcCalculator.new(policy_disposition: @policy_disposition, calendar_year: calendar_year)
 
       has_middle_of_month_coverage_end = false
       has_middle_of_month_coverage_begin = false
