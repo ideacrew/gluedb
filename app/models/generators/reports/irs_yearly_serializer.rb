@@ -326,7 +326,7 @@ module Generators::Reports
 
     def build_notice_input(policy)
       #Generators::Reports::IrsInputBuilder this class helps to generate H41, 1095A or H36 reports
-      irs_input = Generators::Reports::IrsInputBuilder.new(policy, { notice_type: notice_params[:type], npt_policy: notice_params[:npt], report_type: 'h41_1095A' })
+      irs_input = Generators::Reports::IrsInputBuilder.new(policy, { notice_type: notice_params[:type], npt_policy: notice_params[:npt], report_type: notice_params[:report_type] })
       irs_input.carrier_hash = @carriers
       irs_input.settings = @settings
       irs_input.process
@@ -469,7 +469,7 @@ module Generators::Reports
       @calender_year = policy.subscriber.coverage_start.year
       @policy_id = policy.id
       @hbx_member_id = policy.subscriber.person.authority_member.hbx_member_id
-      irs_input = Generators::Reports::IrsInputBuilder.new(policy, {void: true, report_type: 'h41_1095A'})
+      irs_input = Generators::Reports::IrsInputBuilder.new(policy, {void: true, report_type: notice_params[:report_type]})
       irs_input.carrier_hash = @carriers
       irs_input.settings = @settings
       irs_input.process
@@ -505,7 +505,7 @@ module Generators::Reports
         @policy_id = policy.id
         @hbx_member_id = policy.subscriber.person.authority_member.hbx_member_id
 
-        notice = Generators::Reports::IrsInputBuilder.new(policy, void: true, {report_type: 'h41_1095A' }).notice
+        notice = Generators::Reports::IrsInputBuilder.new(policy, {void: true, report_type: notice_params[:report_type] }).notice
         notice.corrected_record_seq_num = record_seq_num
 
         create_report_names
