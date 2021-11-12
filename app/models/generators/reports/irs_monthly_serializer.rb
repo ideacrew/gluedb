@@ -1,11 +1,12 @@
 require 'spreadsheet'
 require 'csv'
-module Generators::Reports  
+module Generators::Reports
   class IrsMonthlySerializer
+  # To generate irs yearly policies need to send a run time calendar_year params i.e. Generators::Reports::IrsMonthlySerializer.new({calendar_year: 2021}) instead of sending hard coded year
 
     attr_accessor :calendar_year
 
-    def initialize
+    def initialize(options = {})
       @logger = Logger.new("#{Rails.root}/log/h36_exceptions.log")
 
       @carriers = Carrier.all.inject({}){|hash, carrier| hash[carrier.id] = carrier.name; hash}
@@ -15,7 +16,7 @@ module Generators::Reports
       # load_npt_policies
       @npt_policies = []
       @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
-      @calendar_year = @settings[:irs_h36_generation][:calendar_year]
+      @calendar_year = options[:calendar_year]
 
       @h36_root_folder = "#{Rails.root}/irs/h36_#{Time.now.strftime('%m_%d_%Y_%H_%M')}"
       create_directory @h36_root_folder
@@ -171,7 +172,7 @@ module Generators::Reports
           #   end
           # end
 
-          group_xml = IrsMonthlyXml.new(irs_group, family.e_case_id)
+          group_xml = IrsMonthlyXml.new(irs_group, family.e_case_id, {calendar_year: calendar_year})
           group_xml.folder_path = "#{@h36_root_folder}/#{@h36_folder_name}"
           group_xml.serialize
 

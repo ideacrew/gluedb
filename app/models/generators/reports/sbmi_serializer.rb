@@ -3,15 +3,15 @@ require 'csv'
 module Generators::Reports
   # This class generates the CMS policy based payments (PBP), SBMI file
   class SbmiSerializer
-
+    # To generate irs yearly policies need to send a run time calendar_year params i.e. Generators::Reports::SbmiSerializer.new({calendar_year: 2021}) instead sending hard coded year
     # CANCELED_DATE = Date.new(2017,12,8)
 
     attr_accessor :pbp_final, :settings, :calendar_year, :hios_prefix_ids, :subdirectory_prefix
 
-    def initialize
+    def initialize(options = {})
       @sbmi_root_folder = "#{Rails.root}/sbmi"
       @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
-      @calendar_year = @settings[:cms_pbp_generation][:calendar_year]
+      @calendar_year = options[:calendar_year]
       @hios_prefix_ids = @settings[:cms_pbp_generation][:hios_prefix_ids]
       @subdirectory_prefix = @settings[:cms_pbp_generation][:subdirectory_prefix]
       # @sbmi_folder_name = "DCHBX_SBMI_78079_17_00_01_06_2017"

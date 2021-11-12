@@ -1,5 +1,6 @@
 module Generators::Reports  
   class IrsMonthlyXml
+  # To generate irs yearly policies need to send a run time calendar_year params i.e. Generators::Reports::IrsMonthlyXml.new(irs_group, e_case_id, {calendar_year: 2021}) instead of sending hard coded year
 
     include ActionView::Helpers::NumberHelper
 
@@ -14,12 +15,12 @@ module Generators::Reports
 
     attr_accessor :folder_path, :calendar_year
 
-    def initialize(irs_group, e_case_id)
+    def initialize(irs_group, e_case_id, options = {})
       @irs_group = irs_group
       @folder_path = folder_path
       @e_case_id = e_case_id
       @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
-      @calendar_year = @settings[:irs_h36_generation][:calendar_year]
+      @calendar_year = options[:calendar_year]
     end
     
     def serialize

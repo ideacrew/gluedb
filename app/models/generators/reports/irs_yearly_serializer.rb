@@ -1,7 +1,8 @@
 require 'spreadsheet'
 require 'csv'
-module Generators::Reports  
+module Generators::Reports
   class IrsYearlySerializer
+  # To generate irs yearly policies need to send a run time calendar_year params i.e. Generators::Reports::IrsYearlySerializer.new({calendar_year: 2021}) instead sending hard coded year
 
     IRS_XML_PATH = "#{@irs_path}/h41/"
     IRS_PDF_PATH = "#{@irs_path}/irs1095a/"
@@ -658,8 +659,9 @@ module Generators::Reports
           p_repo[member.hbx_member_id] = person._id
         end
       end
-
-      pols = PolicyStatus::Active.between(Date.new(2017,12,31), Date.new(2018,12,31)).results.where({
+      year = notice_params[:calendar_year]
+      prev_year = year - 1
+      pols = PolicyStatus::Active.between(Date.new(prev_year,12,31), Date.new(year,12,31)).results.where({
         :plan_id => {"$in" => plans}, :employer_id => nil
         }).group_by { |p| p_repo[p.subscriber.m_id] }
     end
