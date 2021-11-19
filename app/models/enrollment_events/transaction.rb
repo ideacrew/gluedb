@@ -4,7 +4,6 @@ module EnrollmentEvents
     include Mongoid::Timestamps
     extend Mongorder
 
-    field :batch_id, type: Time
     field :payload, type: String
     field :headers, type: Hash
     field :event_time, type: Time
