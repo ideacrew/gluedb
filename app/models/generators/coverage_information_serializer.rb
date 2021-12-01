@@ -1,6 +1,8 @@
 module Generators
   class CoverageInformationSerializer
-    attr_accessor :policies, :primary_person, :plan, :policy
+    include MoneyMath
+
+    attr_accessor :policies, :person
 
     def initialize(person, plan)
       @person = person
@@ -14,12 +16,12 @@ module Generators
           policy_id: policy._id,
           enrollment_group_id: policy.eg_id,
           qhp_id: policy.plan.hios_plan_id.split('-').first,
-          allocated_aptc: policy.allocated_aptc,
-          elected_aptc: policy.elected_aptc,
-          applied_aptc: policy.applied_aptc,
+          allocated_aptc: policy.allocated_aptc.to_f,
+          elected_aptc: policy.elected_aptc.to_f,
+          applied_aptc: policy.applied_aptc.to_f,
           csr_amt: policy.csr_amt,
-          total_premium_amount: policy.total_premium_amount,
-          total_responsible_amt: policy.total_responsible_amount,
+          total_premium_amount: policy.total_premium_amount.to_f,
+          total_responsible_amt: policy.total_responsible_amount.to_f,
           coverage_start: format_date(policy.policy_start),
           coverage_end: format_date(policy.policy_end),
           coverage_kind: policy.kind,
@@ -47,7 +49,7 @@ module Generators
           last_name: person.name_last,
           name_suffix: person.name_sfx,
           hbx_member_id: enrollee.m_id,
-          premium_amount: enrollee.premium_amount,
+          premium_amount: enrollee.premium_amount.to_f,
           coverage_start: format_date(enrollee.coverage_start),
           coverage_end: format_date(enrollee.coverage_end),
           coverage_status: enrollee.coverage_status,
@@ -87,7 +89,7 @@ module Generators
           id: "#{@policy.subscriber.m_id}-#{@policy._id}-#{@policy.subscriber.m_id}-#{start_date}-#{end_date}",
           effective_start_date: format_date(financial_dates[0]),
           effective_end_date: format_date(financial_dates[1]),
-          individual_premium_amount: enrollee.premium_amount,
+          individual_premium_amount: enrollee.premium_amount.to_f,
           total_premiumum_amount: @policy_disposition.as_of(financial_dates[0]).pre_amt_tot.to_f,
           total_responsible_amount: @policy_disposition.as_of(financial_dates[0]).tot_res_amt.to_f,
           aptc_amount: @policy_disposition.as_of(financial_dates[0]).applied_aptc.to_f,

@@ -1,6 +1,10 @@
 module Api
   module EventSource
     class EnrolledSubjectsController < ApplicationController
+      skip_before_filter :authenticate_user_from_token!
+      skip_before_filter :authenticate_me!
+      skip_before_filter :verify_authenticity_token
+
       def index
         year_param = params[:year]
         hios_param = params[:hios_id]
