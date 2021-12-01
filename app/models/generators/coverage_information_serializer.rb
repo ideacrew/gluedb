@@ -183,7 +183,7 @@ module Generators
           loop_start_dates = add_loop_start_date(loop_start_dates, enrollee.coverage_start)
         end
 
-        if enrollee.coverage_end.present? && (enrollee.coverage_end != policy.policy_end)
+        if enrollee.coverage_end.present? && (enrollee.coverage_end != @policy.policy_end)
           loop_start_dates = add_loop_start_date(loop_start_dates, enrollee.coverage_end.next_day)
         end
       end
