@@ -2,7 +2,7 @@
 ### app/rails config ###
 ########################
 
-FROM ruby:2.1.7 AS base
+FROM  public.ecr.aws/ideacrew/gluedb:base AS base
 
 LABEL author="IdeaCrew"
 
@@ -26,7 +26,7 @@ ENV PATH $BUNDLE_BIN:$GEM_HOME/gems/bin:$PATH
 
 ARG BUNDLER_VERSION_OVERRIDE
 ENV BUNDLER_VERSION=$BUNDLER_VERSION_OVERRIDE
-RUN gem install bundler:$BUNDLER_VERSION
+#RUN gem install bundler:$BUNDLER_VERSION
 
 # Configure app home directory
 ENV HOME /edidb

@@ -36,7 +36,7 @@ mongo --host ${HOST_MONGO_SERVER} --authenticationDatabase 'admin' -u 'admin' -p
 
 #cd ${UPDATER_DIRECTORY}
 #padrino r scripts/gateway_transmissions.rb --start $START_DATE
-curl -H "X-API-Key: crazyTESTkey" http://B2B_HOST:8001/openhbx_b2b_x12_web/b2b_messages?start=$START_DATE > b2b_edi.csv
+curl -H "X-API-Key: B2B_SERVICE_PASSWORD" http://B2B_HOST:8001/openhbx_b2b_x12_web/b2b_messages?start=$START_DATE > b2b_edi.csv
 cp b2b_edi.csv ${PARSER_DIRECTORY}
 cat ${PARSER_DIRECTORY}/b2b_edi.csv | ${PARSER_DIRECTORY}/dist/build/InterchangeTest/InterchangeTest > ${PARSER_DIRECTORY}/all_json.csv
 mkdir -p ${GLUEDB_DIRECTORY}/db/data
