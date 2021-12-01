@@ -11,6 +11,7 @@ cp .docker/config/production.rb config/environments/
 cp .docker/config/mongoid.yml config/
 cp .docker/config/unicorn.rb config/
 cp .docker/config/secrets.yml config/
+cp .docker/config/exchange.yml config/
 
 # cp -r ../designmodo-flatuipro-rails .
 # cp -r ../edi_codec .
@@ -36,5 +37,6 @@ mv config/initializers/devise.rb.tmp config/initializers/devise.rb
 mv config/mongoid.yml.tmp config/mongoid.yml
 mv config/unicorn.rb.tmp config/unicorn.rb
 rm config/secrets.yml
+rm config/exchange.yml
 #rm -rf designmodo-flatuipro-rails 
 #rm -rf edi_codec
