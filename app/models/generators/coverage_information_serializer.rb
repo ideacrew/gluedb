@@ -13,7 +13,7 @@ module Generators
       policies.collect do |policy|
         @policy = policy
         {
-          policy_id: policy._id,
+          policy_id: policy._id.to_s,
           enrollment_group_id: policy.eg_id,
           qhp_id: policy.plan.hios_plan_id.split('-').first,
           allocated_aptc: policy.allocated_aptc.to_f,
@@ -32,7 +32,13 @@ module Generators
           last_maintenance_time: policy.updated_at.to_date.to_time.strftime("%H:%M:%S"),
           aasm_state: policy.aasm_state,
           exchange_subscriber_id: policy.subscriber.m_id,
-          effectuation_status: policy.canceled? ? 'N' : 'Y',
+          effectuation_status: if policy.canceled?
+                                 'N'
+                               elsif policy.aasm_state == 'resubmitted'
+                                 'Y'
+                               else
+                                 policy.effectuated? ? 'Y' : 'N'
+                               end,
           insurance_line_code: (policy.plan.coverage_type =~ /health/i ? 'HLT' : 'DEN'),
           csr_variant: csr_variant,
           enrollees: transform_enrollees
@@ -44,6 +50,7 @@ module Generators
       @policy.enrollees.collect do |enrollee|
         person = enrollee.person
         {
+          enrollee_demographics: construct_demograhic_info(enrollee),
           first_name: person.name_first,
           middle_name: person.name_middle,
           last_name: person.name_last,
@@ -64,6 +71,16 @@ module Generators
           segments: construct_segments(enrollee)
         }
       end
+    end
+
+    def construct_demograhic_info(enrollee)
+      member = enrollee.person.authority_member
+      {
+        dob: format_date(member.dob),
+        ssn: member.ssn,
+        gender_code: (member.gender == "male" ? 'M' : (member.gender == "female" ? 'F' : 'U')),
+        tobacco_use_code: member.tobacco_use_code
+      }
     end
 
     def construct_segments(enrollee)
@@ -145,11 +162,11 @@ module Generators
         {
           kind: phone.phone_type,
           phone_type: phone.country_code,
-          area_code: phone.area_code,
-          number: phone.phone_number,
+          area_code: phone.phone_number.slice(0..2),
+          number: phone.phone_number.slice(3..10),
           extension: phone.extension,
           primary: phone.primary,
-          full_phone_number: phone.full_phone_number
+          full_phone_number: phone.phone_number
         }
       end
     end
