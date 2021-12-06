@@ -11,9 +11,16 @@ module Generators
     end
 =end
 
-    def initialize(person)
+    def initialize(person, filter_to_plans = nil)
       @person = person
-      @policies = person.policies
+      if filter_to_plans
+        filter_ids = filter_to_plans.map(&:_id)
+        @policies = person.policies.select do |pol|
+          filter_ids.include?(pol.plan_id)
+        end
+      else
+        @policies = person.policies
+      end
     end
 
     def process

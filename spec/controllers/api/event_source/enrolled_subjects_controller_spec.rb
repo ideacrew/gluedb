@@ -101,7 +101,7 @@ describe Api::EventSource::EnrolledSubjectsController do
           person
         )
         allow(SubscriberInventory).to receive(:coverage_inventory_for).with(
-          person
+          person, {}
         ).and_return({})
       end
 

@@ -21,8 +21,21 @@ module Api
         if person.blank?
           render :status => 404, :nothing => true
         else
-          render :status => 200, :json => SubscriberInventory.coverage_inventory_for(person)
+          render :status => 200, :json => SubscriberInventory.coverage_inventory_for(person, read_show_filter_params)
         end
+      end
+
+      def read_show_filter_params
+        filter_parameters = Hash.new
+        year_param = params[:year]
+        hios_param = params[:hios_id]
+        if !year_param.blank?
+          filter_parameters[:year] = year_param.to_i
+        end
+        if !hios_param.blank?
+          filter_parameters[:hios_id] = hios_param
+        end
+        filter_parameters
       end
     end
   end

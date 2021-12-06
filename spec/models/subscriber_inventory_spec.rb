@@ -76,7 +76,7 @@ describe SubscriberInventory do
     it "returns the coverage history in the format ACA Entities expects" do
       expect(Generators::CoverageInformationSerializer).to receive(
         :new
-      ).with(person).and_return(coverage_information_serializer)
+      ).with(person, nil).and_return(coverage_information_serializer)
       expect(SubscriberInventory.coverage_inventory_for(person)).to eq({})
     end
   end
