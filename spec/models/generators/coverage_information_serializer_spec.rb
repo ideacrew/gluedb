@@ -27,7 +27,7 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
     policy
   }
 
-  subject { Generators::CoverageInformationSerializer.new(primary, plan) }
+  subject { Generators::CoverageInformationSerializer.new(primary) }
 
   it 'should build coverage information hash' do
     result = subject.process

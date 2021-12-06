@@ -4,9 +4,16 @@ module Generators
 
     attr_accessor :policies, :person
 
+=begin
     def initialize(person, plan)
       @person = person
       @policies = person.policies.where(plan_id: plan._id)
+    end
+=end
+
+    def initialize(person)
+      @person = person
+      @policies = person.policies
     end
 
     def process

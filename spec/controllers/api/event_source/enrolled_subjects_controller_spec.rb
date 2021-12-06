@@ -25,27 +25,14 @@ describe Api::EventSource::EnrolledSubjectsController do
       end
     end
 
-    describe "given a non-existant hios_id and year" do
-      let(:the_hios_id) { "SOME BOGUS HIOS ID" }
-      let(:the_year) { "SOME BOGUS YEAR" }
-
-      it "returns 404" do
-        get :index, {year: the_year, hios_id: the_hios_id, user_token: user_token}
-        expect(response).to have_http_status(:not_found)
-      end
-    end
-
     describe "given a valid hios_id and year, but no results" do
       let(:the_hios_id) { "A VALID HIOS ID" }
-      let(:the_year) { "A VALID YEAR" }
+      let(:the_year) { "2015" }
 
       before :each do
-        allow(Plan).to receive(:find_by_hios_id_and_year).with(
+        allow(SubscriberInventory).to receive(:subscriber_ids_for).with(
           the_hios_id,
           the_year.to_i
-        ).and_return(plan)
-        allow(SubscriberInventory).to receive(:subscriber_ids_for).with(
-          plan
         ).and_return([])
       end
 
@@ -62,16 +49,13 @@ describe Api::EventSource::EnrolledSubjectsController do
 
     describe "given a valid hios_id and year, and enrolled subscribers" do
       let(:the_hios_id) { "A VALID HIOS ID" }
-      let(:the_year) { "A VALID YEAR" }
+      let(:the_year) { "2015" }
       let(:matching_subscriber_id) { "A SUBSCRIBER ID" }
 
       before :each do
-        allow(Plan).to receive(:find_by_hios_id_and_year).with(
+        allow(SubscriberInventory).to receive(:subscriber_ids_for).with(
           the_hios_id,
           the_year.to_i
-        ).and_return(plan)
-        allow(SubscriberInventory).to receive(:subscriber_ids_for).with(
-          plan
         ).and_return([matching_subscriber_id])
       end
 
