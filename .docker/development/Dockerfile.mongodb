@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM --platform=linux/amd64 ubuntu:bionic
 
 CMD ["/bin/bash"]
 

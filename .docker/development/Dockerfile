@@ -1,4 +1,4 @@
-FROM ruby:2.1.7 AS base
+FROM --platform=linux/amd64 ruby:2.1.7 AS base
 
 LABEL author="IdeaCrew"
 
