@@ -7,7 +7,7 @@ class Carrier
 
   field :name, type: String
   field :abbrev, as: :abbreviation, type: String
-  field :hbx_carrier_id, type: String	# internal ID for carrier
+  field :hbx_carrier_id, type: String # internal ID for carrier
   field :ind_hlt, as: :individual_market_health, type: Boolean, default: false
   field :ind_dtl, as: :individual_market_dental, type: Boolean, default: false
   field :shp_hlt, as: :shop_market_health, type: Boolean, default: false
@@ -55,20 +55,20 @@ class Carrier
   end
 
   def self.individual_market_health
-  	where(individual_market_health: true)
-	end
+    where(individual_market_health: true)
+  end
 
-	def self.individual_market_dental
-  	where(individual_market_dental: true)
-	end
+  def self.individual_market_dental
+    where(individual_market_dental: true)
+  end
 
   def self.shop_market_health
-  	where(shop_market_health: true)
-	end
+    where(shop_market_health: true)
+  end
 
-	def self.shop_market_dental
-  	where(shop_market_dental: true)
-	end
+  def self.shop_market_dental
+    where(shop_market_dental: true)
+  end
 
   def self.for_hbx_id(hbx_val)
     Rails.cache.fetch("Carrier/find/carrier_profiles.hbx_id.#{hbx_val}") do

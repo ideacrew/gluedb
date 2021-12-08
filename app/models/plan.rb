@@ -15,10 +15,11 @@ class Plan
   field :ehb, as: :ehb_max_as_percent, type: BigDecimal, default: 0.0
   field :year, type: Integer
 
+  index({ carrier_id: 1, name: 1, hios_plan_id: 1 })
+  index({ hbx_plan_id: 1 }, { name: "exchange_plan_id_index" })
+  index({ hios_plan_id: 1 }, { unique: false, name: "hios_plan_id_index" })
   index({ name: 1 })
   index({ carrier_id: 1 })
-  index({ hbx_plan_id: 1 }, { name: "exchange_plan_id_index" })
-	index({ hios_plan_id: 1 }, { unique: false, name: "hios_plan_id_index" })
   index({ coverage_type: 1 })
   index({ metal_level: 1 })
   index({ market_type: 1 })
@@ -29,7 +30,7 @@ class Plan
   validates_inclusion_of :coverage_type, in: ["health", "dental"]
 #  validates_inclusion_of :market_type, in: ["individual", "shop"]
 
-	belongs_to :carrier, index: true
+  belongs_to :carrier, index: true
   belongs_to :renewal_plan, :class_name => "Plan"
   has_many :policies, :inverse_of => :plan
   has_and_belongs_to_many :employers
