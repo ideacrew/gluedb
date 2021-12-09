@@ -25,7 +25,7 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
     policy.enrollees[1].m_id = child.authority_member.hbx_member_id
     policy.enrollees[1].rel_code ='child'
     policy.enrollees[1].coverage_start = Date.new(calender_year, 6, 1)
-    policy.enrollees[1].coverage_start = coverage_end;
+    policy.enrollees[1].coverage_end = coverage_end;
     policy.save
     policy
   }
