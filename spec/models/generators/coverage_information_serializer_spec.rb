@@ -38,8 +38,10 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
     expect(result[0][:coverage_start]).to eq coverage_start.strftime('%Y-%m-%d')
     expect(result[0][:coverage_end]).to eq coverage_end.strftime('%Y-%m-%d')
     expect(result[0][:coverage_kind]).to eq 'individual'
+    expect(result[0][:last_maintenance_time]).to eq policy.updated_at.strftime("%H%M%S%L")
     expect(result[0][:enrollees].count).to eq 2
     expect(result[0][:enrollees][0][:segments].count).to eq 2
+    expect(result[0][:enrollees][0][:segments][0][:total_premium_amount]).to eq 250.0
     expect(result[0][:enrollees][0][:addresses]).to be_present
   end
 end
