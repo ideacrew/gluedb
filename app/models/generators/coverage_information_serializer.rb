@@ -44,7 +44,7 @@ module Generators
           # need to figure out how service area should be pulled
           service_area: "",
           last_maintenance_date: policy.updated_at.to_date.strftime("%Y-%m-%d"),
-          last_maintenance_time: policy.updated_at.to_date.to_time.strftime("%H:%M:%S"),
+          last_maintenance_time: policy.updated_at.strftime("%H%M%S%L"),
           aasm_state: policy.aasm_state,
           exchange_subscriber_id: policy.subscriber.m_id,
           effectuation_status: if policy.canceled?
@@ -122,7 +122,7 @@ module Generators
           effective_start_date: format_date(financial_dates[0]),
           effective_end_date: format_date(financial_dates[1]),
           individual_premium_amount: enrollee.premium_amount.to_f,
-          total_premiumum_amount: @policy_disposition.as_of(financial_dates[0]).pre_amt_tot.to_f,
+          total_premium_amount: @policy_disposition.as_of(financial_dates[0]).pre_amt_tot.to_f,
           total_responsible_amount: @policy_disposition.as_of(financial_dates[0]).tot_res_amt.to_f,
           aptc_amount: @policy_disposition.as_of(financial_dates[0]).applied_aptc.to_f,
           csr_variant: csr_variant
