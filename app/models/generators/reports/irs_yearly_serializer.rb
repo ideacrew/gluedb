@@ -19,7 +19,9 @@ module Generators::Reports
 
       @pdf_set  = 0
       @irs_set  = 0
+      @record_sequence_num = 1
       @notice_params = options
+      @generate_pdf = true
 
       if options.empty?
         irs_path = "#{Rails.root.to_s}/irs/irs_EOY_#{Time.now.strftime('%m_%d_%Y_%H_%M')}"
@@ -65,8 +67,7 @@ module Generators::Reports
       end
     end
 
-    def build_notice_params(policy)
-      @notice_params[:npt]  =  @npt_list.include?(policy.id)
+    def build_notice_params(policy = nil)
       @notice_params[:type] = 'new'
     end
 
@@ -85,8 +86,9 @@ module Generators::Reports
       create_enclosed_folder
       #load_npt_data
       #load_responsible_party_data
-      workbook = create_excel_workbook
-
+      # workbook = create_excel_workbook
+      @notice_params[:type] = 'new'
+      @generate_pdf = true
       count = 0
       @folder_count = 1
 
@@ -98,11 +100,9 @@ module Generators::Reports
             next if policy.kind == 'coverall'
 
             count += 1
-            if count % 1000 == 0
-              puts count
+            if count % 100 == 0
+              puts "Currently at #{count}"
             end
-
-            next if count > 300
 
             if policy.responsible_party_id.present?
               # RP data alignment task is been corrected by project 201_task 6.0.0
@@ -112,7 +112,7 @@ module Generators::Reports
               end
             end
 
-            build_notice_params(policy)
+            # build_notice_params(policy)
 
             # next if (policy.applied_aptc > 0 || policy.multi_aptc?)
             # next unless (policy.subscriber.coverage_end.present? && (policy.subscriber.coverage_end.end_of_month != policy.subscriber.coverage_end))
@@ -134,18 +134,20 @@ module Generators::Reports
       end
     end
 
-    def process_corrected_h41
+    def process_corrected_h41(filename)
       create_new_irs_folder
 
       @corrected_h41_policies = {}
-      CSV.foreach("#{Rails.root}/2018_H41_Corrected_20180807.csv") do |row|
+      CSV.foreach("#{Rails.root}/#{filename}") do |row|
+        puts row.inspect
+        next if row.empty?
         @corrected_h41_policies[row[0].strip] = row[1].strip
       end
 
-      @npt_policies = []
-      CSV.foreach("#{Rails.root}/2017_NPT_UQHP_20180126.csv", headers: :true) do |row|
-        @npt_policies << row[0].strip
-      end
+      # @npt_policies = []
+      # CSV.foreach("#{Rails.root}/2017_NPT_UQHP_20180126.csv", headers: :true) do |row|
+      #   @npt_policies << row[0].strip
+      # end
 
       count = 0
       @folder_count = 1
@@ -153,7 +155,7 @@ module Generators::Reports
       @corrected_h41_policies.keys.each do |policy_id|
         policy = Policy.find(policy_id)
 
-        # begin
+        begin
           next if policy.plan.metal_level =~ /catastrophic/i
           next if policy.kind == 'coverall'
 
@@ -175,27 +177,29 @@ module Generators::Reports
           end
 
           process_policy(policy)
-        # rescue Exception => e
-        #   puts policy.id
-        #   puts e.to_s.inspect
-        # end
+        rescue Exception => e
+          puts policy.id
+          puts e.to_s.inspect
+        end
       end
       merge_and_validate_xmls(@folder_count)
       create_manifest
     end
 
-    def process_voided_h41
+    def process_voided_h41(filename)
       create_new_irs_folder
 
       @void_policies = {}
-      CSV.foreach("#{Rails.root}/2018_H41_Voided_20180807.csv") do |row|
+      CSV.foreach("#{Rails.root}/#{filename}") do |row|
+        next if row.empty?
+        puts row.inspect
         @void_policies[row[0].strip] = row[1].strip
       end
 
-      @npt_policies = []
-      CSV.foreach("#{Rails.root}/2017_NPT_UQHP_20180126.csv", headers: :true) do |row|
-        @npt_policies << row[0].strip
-      end
+      # @npt_policies = []
+      # CSV.foreach("#{Rails.root}/2017_NPT_UQHP_20180126.csv", headers: :true) do |row|
+      #   @npt_policies << row[0].strip
+      # end
 
       count = 0
       @folder_count = 1
@@ -218,11 +222,11 @@ module Generators::Reports
             
           notice_params[:type] = 'void'
 
-          if @npt_policies.include?(policy.id.to_s)
-            notice_params[:npt] = true
-          else
-            notice_params[:npt] = false
-          end
+          # if @npt_policies.include?(policy.id.to_s)
+          #   notice_params[:npt] = true
+          # else
+          #   notice_params[:npt] = false
+          # end
 
           process_policy(policy)
         rescue Exception => e
@@ -236,8 +240,10 @@ module Generators::Reports
 
     def process_policy_ids(ids)
       create_new_pdf_folder
+      @folder_count = 1
       create_new_irs_folder
-
+      @notice_params[:type] = 'corrected'
+      # @notice_params[:type] = 'void'
       # book = Spreadsheet.open "#{Rails.root}/Responsible_Party_3_10.xls"
       # @responsible_party_data = book.worksheets.first.inject({}) do |data, row|
       #   if row[2].to_s.strip.match(/Responsible Party SSN/i) || (row[2].to_s.strip.blank? && row[3].to_s.strip.blank?)
@@ -267,6 +273,8 @@ module Generators::Reports
         id = Policy.find(id)
         process_policy(id)
       end
+      # merge_and_validate_xmls(@folder_count)
+      # create_manifest
     end
 
     def generate_notice
@@ -353,7 +361,6 @@ module Generators::Reports
     end
 
     def process_policy(policy, h41 = nil)
-
        if valid_policy?(policy, h41)
         @calendar_year = policy.subscriber.coverage_start.year
         notice_params[:calendar_year] = @calendar_year.to_s
@@ -385,7 +392,7 @@ module Generators::Reports
           create_report_names
           render_xml(notice)
 
-          if @count != 0 && @count % 4000 == 0
+          if @count != 0 && @count % 3500 == 0
             merge_and_validate_xmls(@folder_count)
             @folder_count += 1
             create_new_irs_folder
@@ -410,7 +417,7 @@ module Generators::Reports
             append_report_row(notice, true)   
           end
 
-          if @count != 0 && (@count % 1000 == 0)
+          if @count != 0 && (@count % 500 == 0)
             create_new_pdf_folder
           end
         end
@@ -492,7 +499,7 @@ module Generators::Reports
 
     def convert_to_policy_identifiers(row)
       return '' if row.blank?
-      row.split(',').join(', ')
+      row.split(',').map(&:strip).join(',')
     end
 
     def generate_irs_transmission_for_voids(file)

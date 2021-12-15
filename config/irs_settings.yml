@@ -89,7 +89,7 @@ tax_document:
 
 cms_pbp_generation:
   cms_pbp_source_sbm_id: "SBE00ME"
-  hios_prefix_ids: ["33653", "48396"]
+  hios_prefix_ids: ["33653", "48396", "96667"]
   subdirectory_prefix: "MEHBX"
 
 irs_h41_generation:

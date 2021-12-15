@@ -75,7 +75,7 @@ module Generators::Reports
         xml.MonthlyAPTCAmount financial_info.monthly_aptc_amount
         xml.MonthlyCSRAmount financial_info.monthly_csr_amount if financial_info.csr_variant != '01' 
         xml.CSRVariantId financial_info.csr_variant
-        xml.RatingArea site_short_name == 'Maine Cover Me' ? sbmi_policy.rating_area : financial_info.rating_area
+        xml.RatingArea sbmi_policy.rating_area
         if sbmi_policy.effectuation_status == "Y"
           financial_info.prorated_amounts.each do |proration|
             serialize_prorations(xml, proration, financial_info.csr_variant)

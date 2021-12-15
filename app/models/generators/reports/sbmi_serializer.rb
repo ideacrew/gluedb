@@ -35,52 +35,56 @@ module Generators::Reports
 
         count = 0
         Policy.where(:plan_id.in => plan_ids).each do |pol|
-
-        # Policy.where(:id.in => %w(182528)).each do |pol|
-          next if pol.is_shop? || pol.rejected? # || pol.has_responsible_person?
-
-          # * re-enable for post first report in a calendar year
-          # if pol.canceled?
-          #   next if pol.updated_at < Date.new(calendar_year,5,1)
-          # else
-          #   next if pol.has_no_enrollees?
-          # end
-
-          # disbale for post first report in a calendar year
-          # next if pol.canceled? && pol.updated_at < CANCELED_DATE
-
-          # next if pol.canceled?
-          # next if pol.has_no_enrollees?
-          next if pol.policy_start < Date.new(calendar_year, 1, 1)
-          next if pol.policy_start > Date.new(calendar_year, 12, 31)
-          if pol.subscriber.person.blank?
-            puts "subscriber person record missing #{pol.id}"
-            next
-          end
-          next if !pol.belong_to_authority_member?
-          # next if policies_to_skip.include?(pol.id.to_s)
-          next if pol.kind == 'coverall'
-          count +=1 
-          if count % 100 == 0
-            puts "processing #{count}"
-          end
-          
           begin
-            builder = Generators::Reports::SbmiPolicyBuilder.new(pol)
-            builder.process
+            next if pol.is_shop? || pol.rejected? # || pol.has_responsible_person?
+
+            # * re-enable for post first report in a calendar year
+            # if pol.canceled?
+            #   next if pol.updated_at < Date.new(calendar_year,5,1)
+            # else
+            #   next if pol.has_no_enrollees?
+            # end
+
+            # disbale for post first report in a calendar year
+            # next if pol.canceled? && pol.updated_at < CANCELED_DATE
+
+            # next if pol.canceled?
+            # next if pol.has_no_enrollees?
+            next if pol.policy_start < Date.new(calendar_year, 1, 1)
+            next if pol.policy_start > Date.new(calendar_year, 12, 31)
+            if pol.subscriber.person.blank?
+              puts "subscriber person record missing #{pol.id}"
+              next
+            end
+            next if !pol.belong_to_authority_member?
+            # next if policies_to_skip.include?(pol.id.to_s)
+            next if pol.kind == 'coverall'
+            count +=1
+            if count % 100 == 0
+              puts "processing #{count}"
+            end
+
+            begin
+              builder = Generators::Reports::SbmiPolicyBuilder.new(pol)
+              builder.process
+            rescue Exception => e
+              puts "Exception: #{pol.id}"
+              puts e.inspect
+              next
+            end
+
+            sbmi_xml = SbmiXml.new
+            sbmi_xml.sbmi_policy = builder.sbmi_policy
+            sbmi_xml.folder_path = "#{@sbmi_root_folder}/#{@sbmi_folder_name}"
+            sbmi_xml.serialize
+
+            # index += 1
+            # sheet.row(index).concat builder.sbmi_policy.to_csv
           rescue Exception => e
             puts "Exception: #{pol.id}"
             puts e.inspect
             next
           end
-
-          sbmi_xml = SbmiXml.new
-          sbmi_xml.sbmi_policy = builder.sbmi_policy
-          sbmi_xml.folder_path = "#{@sbmi_root_folder}/#{@sbmi_folder_name}"
-          sbmi_xml.serialize
-
-          # index += 1
-          # sheet.row(index).concat builder.sbmi_policy.to_csv
         end
 
         merge_and_validate_xmls(hios_prefix)

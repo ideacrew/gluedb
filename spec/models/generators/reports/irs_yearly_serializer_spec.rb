@@ -9,12 +9,14 @@ describe Generators::Reports::IrsYearlySerializer, :dbclean => :after_each do
   let(:plan) {FactoryGirl.create(:plan, hios_plan_id: "23232323", ehb: 12, carrier: carrier)} 
   let(:carrier) {FactoryGirl.create(:carrier)}  
 
-  let(:params) { {  policy_id: policy.id, type: "new", void_cancelled_policy_ids: [ Moped::BSON::ObjectId.new ] , void_active_policy_ids: [ Moped::BSON::ObjectId.new ], npt: policy.term_for_np } }
+  let(:params) { {  policy_id: policy.id, type: "new", void_cancelled_policy_ids: [ Moped::BSON::ObjectId.new ] , void_active_policy_ids: [ Moped::BSON::ObjectId.new ], npt: policy.term_for_np, calendar_year: 2018 } }
   let(:household) {double(name:"name", ssn:"00000000")}
   let(:options) { { multiple: false, calendar_year: 2018, qhp_type: "assisted", notice_type: 'new'} }
   let(:premium) {double(premium_amount:100, slcsp_premium_amount: 200, aptc_amount:0)}
-  let(:monthly_premiums) { [OpenStruct.new({serial: (1), premium_amount: 0.0, premium_amount_slcsp: 0.0, monthly_aptc: 0.0})] }  
-  let(:h41_folder_name)  { "FEP0020DC.DSH.EOYIN.D#{Time.now.strftime('%Y%m%d')[2..-1]}.T#{Time.now.strftime("%H%M%S") + "000"}.P.IN" }
+  let(:monthly_premiums) { [OpenStruct.new({serial: (1), premium_amount: 0.0, premium_amount_slcsp: 0.0, monthly_aptc: 0.0})] }
+  let(:settings) {YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access}
+  let(:irs_h41_source_sbm_id) {settings[:irs_h41_generation][:irs_h41_source_sbm_id]}
+  let(:h41_folder_name)  { "#{irs_h41_source_sbm_id}.DSH.EOYIN.D#{Time.now.strftime('%Y%m%d')[2..-1]}.T#{Time.now.strftime("%H%M%S") + "000"}.P.IN" }
 
   let(:policy) { FactoryGirl.create(:policy, term_for_np: false, applied_aptc: 0, pre_amt_tot: 123, plan: plan, carrier: carrier) } 
 
@@ -40,7 +42,7 @@ subject { Generators::Reports::IrsYearlySerializer.new(params) }
   describe 'Generating Individual IRS documents as opposed to a yearly batch' do
     
     context '#generate_notice' do
-      it 'generates an individual 1095A file' do 
+      it 'generates an individual 1095A file' do
         expect(File).not_to exist("#{Rails.root}/tmp/irs_notices/") 
         policy.subscriber.update_attributes!(m_id: person.authority_member_id)
         person.update_attributes(authority_member_id: policy.subscriber.m_id)
@@ -51,14 +53,14 @@ subject { Generators::Reports::IrsYearlySerializer.new(params) }
     end 
 
     context '#generate_h41' do
-      it 'generates a individual h41 file' do 
-        expect(File).not_to exist("#{h41_folder_name}") 
+      it 'generates a individual h41 file' do
+        expect(File).not_to exist("#{h41_folder_name}")
         policy.subscriber.update_attributes!(m_id: person.authority_member_id)
         person.update_attributes(authority_member_id: policy.subscriber.m_id)
         subject.generate_h41
         expect(File).to exist("#{h41_folder_name}")
         expect(File).to exist("#{h41_folder_name}.zip")
-        FileUtils.rm_rf(Dir["FEP*"])
+        FileUtils.rm_rf(Dir["#{h41_folder_name}"])
         FileUtils.rm_rf(Dir[("H41_federal_report")])
         FileUtils.rm_rf(Dir["*.zip"])
       end

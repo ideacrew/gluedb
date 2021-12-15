@@ -4,7 +4,7 @@ module Generators::Reports
   describe IrsInputBuilder do
     subject { IrsInputBuilder.new(policy) }
 
-    let(:policy)     { double(id: 24, subscriber: subscriber, enrollees: [subscriber, dependent1, dependent2], policy_start: policy_start, policy_end: policy_end, plan: plan, eg_id: 212131212, applied_aptc: 0, responsible_party_id: nil, coverage_period: (policy_start..policy_end), aptc_credits: aptc_credits) }
+    let(:policy)     { double(id: 24, subscriber: subscriber, enrollees: [subscriber, dependent1, dependent2], policy_start: policy_start, policy_end: policy_end, plan: plan, eg_id: 212131212, applied_aptc: 0, term_for_np: true, responsible_party_id: nil, coverage_period: (policy_start..policy_end), aptc_credits: aptc_credits) }
     let(:plan)       { double(carrier: carrier, hios_plan_id: '123121') }
     let(:carrier)    { double(name: 'Care First')}
     let(:policy_start) { Date.new(2016, 1, 1) }
@@ -33,7 +33,6 @@ module Generators::Reports
     let(:mock_policy)      { double(pre_amt_tot: 0.0, ehb_premium: 100.17, applied_aptc: 55.45) }
     let(:carrier_hash)     { {'221212312' => 'Carefirst'} }
     let(:settings)         { YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access }
-
     before(:each) do
       allow(PolicyDisposition).to receive(:new).with(policy).and_return(mock_disposition)
       allow(policy).to receive(:changes_over_time?).and_return(false)

@@ -110,15 +110,15 @@ module Generators::Reports
 
     def serialize_address(xml, address)
       xml.PersonAddressGrp do |xml|
-      xml.USAddressGrp do |xml|
-        xml.AddressLine1Txt address.street_1
-        xml.AddressLine2Txt address.street_2
-        xml.CityNm address.city.gsub(/[\.\,]/, '')
-        xml.USStateCd address.state
-        xml.USZIPCd address.zip.split('-')[0]
-        # xml.USZIPExtensionCd
+        xml.USAddressGrp do |xml|
+          xml.AddressLine1Txt address.street_1
+          xml.AddressLine2Txt address.street_2
+          xml.CityNm address.city.gsub(/[\.\,]/, '')
+          xml.USStateCd address.state
+          xml.USZIPCd address.zip.split('-')[0]
+          # xml.USZIPExtensionCd
+        end
       end
-    end
     end
 
     def serialize_associated_policy(xml, montly_disposition, policy)
