@@ -106,12 +106,10 @@ module Generators
       start_date = financial_dates[0].strftime("%Y%m%d")
       subscriber_m_id = @policy.subscriber.m_id
       policy_id = @policy.id
-      end_date = financial_dates[1].blank? ? @policy.policy_start.end_of_year
-                   : financial_dates[1]
+      enrollee_coverage_start = enrollee.coverage_start
+      enrollee_coverage_end = enrollee.coverage_end.blank? ? @policy.policy_start.end_of_year : enrollee.coverage_end
 
-      coverage_start = enrollee.coverage_end.present? ? financial_dates[0] : @policy.policy_start
-
-      if (coverage_start..end_date).cover?(enrollee.coverage_start)
+      if (enrollee_coverage_start..enrollee_coverage_end).cover?(financial_dates[0])
         @policy_disposition = PolicyDisposition.new(@policy)
         params = {
           id: "#{subscriber_m_id}-#{policy_id}-#{start_date}",
