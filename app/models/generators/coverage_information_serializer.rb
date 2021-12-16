@@ -4,13 +4,6 @@ module Generators
 
     attr_accessor :policies, :person
 
-=begin
-    def initialize(person, plan)
-      @person = person
-      @policies = person.policies.where(plan_id: plan._id)
-    end
-=end
-
     def initialize(person, filter_to_plans = nil)
       @person = person
       if filter_to_plans
@@ -83,7 +76,7 @@ module Generators
           addresses: transform_addresses(enrollee.person.addresses),
           emails: transform_emails(enrollee.person.emails),
           phones: transform_phones(enrollee.person.phones),
-          segments: construct_segments(enrollee)
+          segments: construct_segments(enrollee).compact
         }
       end
     end
@@ -100,43 +93,42 @@ module Generators
 
     def construct_segments(enrollee)
       segments = []
-      if enrollee.subscriber?
-        financial_dates = policy_history_dates
-        financial_dates.each do |financial_dates|
-          segments << append_financial_information(enrollee, financial_dates)
-        end
-      else
-        segments << append_financial_information(enrollee)
+      financial_dates = policy_history_dates
+
+      financial_dates.each do |financial_dates|
+        segments << append_financial_information(enrollee, financial_dates)
       end
+
       segments
     end
 
     def append_financial_information(enrollee, financial_dates=nil)
-      if financial_dates.present?
-        start_date = financial_dates[0].strftime("%Y%m%d")
-        end_date = financial_dates[1].blank? ? @policy.policy_start.end_of_year.strftime("%Y%m%d")
-                     : financial_dates[1].strftime("%Y%m%d")
+      start_date = financial_dates[0].strftime("%Y%m%d")
+      subscriber_m_id = @policy.subscriber.m_id
+      policy_id = @policy.id
+      end_date = financial_dates[1].blank? ? @policy.policy_start.end_of_year
+                   : financial_dates[1]
+
+      coverage_start = enrollee.coverage_end.present? ? financial_dates[0] : @policy.policy_start
+
+      if (coverage_start..end_date).cover?(enrollee.coverage_start)
         @policy_disposition = PolicyDisposition.new(@policy)
-        {
-          id: "#{@policy.subscriber.m_id}-#{@policy._id}-#{@policy.subscriber.m_id}-#{start_date}-#{end_date}",
+        params = {
+          id: "#{subscriber_m_id}-#{policy_id}-#{start_date}",
           effective_start_date: format_date(financial_dates[0]),
           effective_end_date: format_date(financial_dates[1]),
           individual_premium_amount: enrollee.premium_amount.to_f,
-          total_premium_amount: @policy_disposition.as_of(financial_dates[0]).pre_amt_tot.to_f,
-          total_responsible_amount: @policy_disposition.as_of(financial_dates[0]).tot_res_amt.to_f,
-          aptc_amount: @policy_disposition.as_of(financial_dates[0]).applied_aptc.to_f,
-          csr_variant: csr_variant
         }
-      else
-        start_date = enrollee.coverage_start.strftime("%Y%m%d")
-        end_date = enrollee.coverage_end.blank? ? @policy.policy_start.end_of_year.strftime("%Y%m%d")
-                     : enrollee.coverage_end.strftime("%Y%m%d")
-        {
-          id: "#{@policy.subscriber.m_id}-#{@policy._id}-#{enrollee.m_id}-#{start_date}-#{end_date}",
-          effective_start_date: format_date(enrollee.coverage_start),
-          effective_end_date: format_date(enrollee.coverage_end),
-          individual_premium_amount: enrollee.premium_amount,
-        }
+
+        if enrollee.subscriber?
+          params.merge!({
+                          total_premium_amount: @policy_disposition.as_of(financial_dates[0]).pre_amt_tot.to_f,
+                          total_responsible_amount: @policy_disposition.as_of(financial_dates[0]).tot_res_amt.to_f,
+                          aptc_amount: @policy_disposition.as_of(financial_dates[0]).applied_aptc.to_f,
+                          csr_variant: csr_variant
+                        })
+        end
+        params
       end
     end
 
