@@ -1,5 +1,6 @@
 name: Docs
-on: push
+on:
+  workflow_dispatch:
 
 jobs:
   docs:
@@ -19,12 +20,12 @@ jobs:
         uses: actions/setup-node@v2.1.2
         with:
           # Version Spec of the version to use.  Examples: 10.x, 10.15.1, >=10.15.0, lts
-          node-version: '12'
+          node-version: "12"
       - name: install hugo
         run: sudo snap install hugo --channel=extended
       - uses: actions/setup-java@v1
         with:
-          java-version: '8'
+          java-version: "8"
           java-package: jdk
       - name: Setup Graphviz
         uses: ts-graphviz/setup-graphviz@v1
