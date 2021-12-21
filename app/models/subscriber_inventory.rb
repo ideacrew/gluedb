@@ -24,11 +24,11 @@ class SubscriberInventory
   end
 
   def self.coverage_inventory_for(person, filters = {})
-    plans = select_filtered_plans(filters)
-    Generators::CoverageInformationSerializer.new(person, plans).process
+    plan_ids = select_filtered_plan_ids(filters)
+    Generators::CoverageInformationSerializer.new(person, plan_ids).process
   end
 
-  def self.select_filtered_plans(filters = {})
+  def self.select_filtered_plan_ids(filters = {})
     filter_criteria = Hash.new
     if filters.has_key?(:hios_id)
       hios_regexp = /^#{filters[:hios_id]}/
@@ -38,6 +38,11 @@ class SubscriberInventory
       filter_criteria[:year] = filters[:year]
     end
     return nil if filter_criteria.empty?
-    Plan.where(filter_criteria)
+
+    Rails.cache.fetch("plan-ids-#{filter_criteria[:hios_plan_id]}-#{filter_criteria[:year]}", expires_in: 24.hour) do
+      plans = Plan.where(filter_criteria)
+      plans.pluck(:_id)
+    end
   end
 end
+

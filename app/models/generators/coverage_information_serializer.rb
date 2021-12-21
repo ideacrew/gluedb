@@ -4,13 +4,10 @@ module Generators
 
     attr_accessor :policies, :person
 
-    def initialize(person, filter_to_plans = nil)
+    def initialize(person, plan_ids = nil)
       @person = person
-      if filter_to_plans
-        filter_ids = filter_to_plans.map(&:_id)
-        @policies = person.policies.select do |pol|
-          filter_ids.include?(pol.plan_id)
-        end
+      if plan_ids
+        @policies = person.policies.where({"plan_id" => {"$in" => plan_ids}})
       else
         @policies = person.policies
       end
