@@ -7,8 +7,9 @@ module Generators::Reports
     let(:policy)     { double(id: 24, subscriber: subscriber, enrollees: [subscriber, dependent1, dependent2], policy_start: policy_start, policy_end: policy_end, plan: plan, eg_id: 212131212, applied_aptc: 0, responsible_party_id: nil, coverage_period: (policy_start..policy_end), aptc_credits: aptc_credits) }
     let(:plan)       { double(carrier: carrier, hios_plan_id: '123121') }
     let(:carrier)    { double(name: 'Care First')}
-    let(:policy_start) { Date.new(2016, 1, 1) }
-    let(:policy_end)   { Date.new(2016, 12, 31) } 
+    let(:current_year) {Date.today.year}
+    let(:policy_start) { Date.new(current_year, 1, 1) }
+    let(:policy_end)   { Date.new(current_year, 12, 31) } 
     let(:subscriber) { double(person: person, relationship_status_code: 'Self', coverage_start: policy_start, coverage_end: policy_end, m_id: authority_member.id) }
     let(:dependent1) { double(person: person, relationship_status_code: 'Spouse', coverage_start: policy_start, coverage_end: policy_end) }
     let(:dependent2) { double(person: person, relationship_status_code: 'Child', coverage_start: policy_start, coverage_end: policy_end) }
@@ -27,8 +28,8 @@ module Generators::Reports
       } 
     }
     let!(:aptc_credits) { [aptc_credit1, aptc_credit2] }
-    let!(:aptc_credit1) { AptcCredit.new(start_on: Date.new(2016, 1, 1), end_on: Date.new(2016, 3, 31), pre_amt_tot:"250.0", tot_res_amt:"50.0", aptc:"100.0") }
-    let!(:aptc_credit2) { AptcCredit.new(start_on: Date.new(2016, 4, 1), end_on: Date.new(2016, 12, 31), pre_amt_tot:"250.0", tot_res_amt:"100.0", aptc:"50.0") }
+    let!(:aptc_credit1) { AptcCredit.new(start_on: Date.new(current_year, 1, 1), end_on: Date.new(current_year, 3, 31), pre_amt_tot:"250.0", tot_res_amt:"50.0", aptc:"100.0") }
+    let!(:aptc_credit2) { AptcCredit.new(start_on: Date.new(current_year, 4, 1), end_on: Date.new(current_year, 12, 31), pre_amt_tot:"250.0", tot_res_amt:"100.0", aptc:"50.0") }
     let(:mock_disposition) { double(enrollees: policy.enrollees, start_date: policy_start, end_date: policy_end ) }
     let(:mock_policy)      { double(pre_amt_tot: 0.0, ehb_premium: 100.17, applied_aptc: 55.45) }
     let(:carrier_hash)     { {'221212312' => 'Carefirst'} }
@@ -78,7 +79,7 @@ module Generators::Reports
     end
 
     context "when coverage end date is middle of the year" do 
-      let(:policy_end) { Date.new(2016, 7, 31) }
+      let(:policy_end) { Date.new(current_year, 7, 31) }
 
       it 'should calculate premiums only for the covered months' do
         subject.process
@@ -89,8 +90,8 @@ module Generators::Reports
     end
 
     context "when both start, end dates are in the middle of the year" do 
-      let(:policy_start) { Date.new(2016, 5, 01) }
-      let(:policy_end) { Date.new(2016, 9, 30) }
+      let(:policy_start) { Date.new(current_year, 5, 01) }
+      let(:policy_end) { Date.new(current_year, 9, 30) }
 
       it 'should append premiums only for covered period' do
         subject.process
