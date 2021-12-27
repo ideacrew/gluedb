@@ -1,7 +1,7 @@
 #Usage
 #rails r script/queries/glue_enrollment_report.rb BEGIN-DATE -e production
 #BEGIN-DATE, format = MMDDYYYY
-#E.g. rails r script/queries/glue_enrollment_report.rb "01012017" -e production
+#E.g. rails r script/queries/glue_enrollment_report.rb "11012021" -e production
 
 require 'csv'
 timey = Time.now
@@ -14,7 +14,7 @@ rescue Exception => e
   puts "Error #{e.message}"
   puts "Usage:"
   puts "rails r script/queries/glue_enrollment_report.rb BEGIN-DATE"
-  puts "rails r script/queries/glue_enrollment_report.rb 01012018"
+  puts "example: rails r script/queries/glue_enrollment_report.rb 11012021"
   exit
 end
 
@@ -58,15 +58,15 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
       count += 1
       puts "#{count}/#{total_count} done at #{Time.now}" if count % 10000 == 0
       puts "#{count}/#{total_count} done at #{Time.now}" if count == total_count
-      unless bad_eg_id(pol.eg_id)
-        unless pol.subscriber.nil?
-          #unless pol.subscriber.canceled?
+      if !bad_eg_id(pol.eg_id)
+        if !pol.subscriber.nil?
+          #if !pol.subscriber.canceled?
             subscriber_id = pol.subscriber.m_id
             next if pol.subscriber.person.blank?
             subscriber_member = pol.subscriber.member
             auth_subscriber_id = subscriber_member.person.authority_member_id
 
-            unless auth_subscriber_id.blank?
+            if !auth_subscriber_id.blank?
               if subscriber_id != auth_subscriber_id
                 next
               end
@@ -78,47 +78,91 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
               pol.carrier
             }
             employer = nil
-            unless pol.employer_id.blank?
+            if !pol.employer_id.blank?
             employer = Caches::MongoidCache.lookup(Employer, pol.employer_id) {
               pol.employer
             }
             end
-            unless pol.broker.blank?
+            if !pol.broker.blank?
               broker = pol.broker.full_name
             end
             pol.enrollees.each do |en|
-              #unless en.canceled?
+              #if !en.canceled?
                 per = en.person
                 next if per.blank?
-                data = [subscriber_id, en.m_id, pol._id, pol.eg_id, pol.aasm_state,
-                        per.name_first,
-                        per.name_last,
-                        en.member.ssn,
-                        en.member.dob.strftime("%Y%m%d"),
-                        en.member.gender,
-                        en.rel_code]
+                data = [
+                  subscriber_id, en.m_id, pol._id, pol.eg_id, pol.aasm_state,
+                  per.name_first,
+                  per.name_last,
+                  en.member.ssn,
+                  en.member.dob.strftime("%Y%m%d"),
+                  en.member.gender,
+                  en.rel_code]
 
                 if pol.responsible_party_id.present?
-                  get_responsible_party_details(pol) 
+                  person = Person.where("responsible_parties._id" => pol.responsible_party_id).first
+                  unless person.nil?
+                    auth_mem = person.authority_member
+                    if auth_mem.present?
+                      res_hbx_id = auth_mem.try(:hbx_member_id)
+                      res_ssn = auth_mem.try(:ssn)
+                      res_dob = auth_mem.try(:dob)
+                      res_gender = auth_mem.try(:gender)
+                    else
+                      res_hbx_id = nil
+                      res_ssn = nil
+                      res_dob = nil
+                      res_gender = nil
+                    end
+                    res_first_name = person.try(:name_first)
+                    res_middle_name = person.try(:name_middle)
+                    res_last_name = person.try(:name_last)
+                    res_full_name = person.try(:name_full)
+                    responsible_party_id = pol.responsible_party_id
+                    if person.addresses.count > 0
+                      res_addresses_count = person.addresses.count
+                      res_address = person.addresses.first
+                      res_full_address = res_address.try(:full_address)
+                      res_address_type = res_address.try(:address_type)
+                    else
+                      res_addresses_count = '0'
+                      res_full_address = nil
+                      res_address_type = nil
+                    end
+                    if person.phones.count > 0
+                      res_phone_count = person.phones.count
+                      res_phone = person.phones.first
+                      res_phone_type = res_phone.try(:phone_type)
+                      res_phone_number = res_phone.try(:phone_number)
+                    else
+                      res_phone_count = '0'
+                      res_phone_type = nil
+                      res_phone_number = nil
+                    end
+                    data += [responsible_party_id, res_hbx_id, res_first_name, res_middle_name, res_last_name, res_full_name, res_ssn, res_dob, res_gender, res_address_type, res_full_address, res_addresses_count, res_phone_type, res_phone_number, res_phone_count]
+                  else
+                    data += [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+                  end
                 else
                   data += [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
                 end
 
-                data += [Settings.site.short_name == "DC HealthLink" ? 'R-DC001' : pol.rating_area, 
-                        plan.name, plan.hios_plan_id, plan.metal_level, carrier.id, carrier.name,
-                        en.pre_amt, pol.pre_amt_tot,pol.applied_aptc, pol.tot_emp_res_amt,
-                        en.coverage_start.blank? ? nil : en.coverage_start.strftime("%Y%m%d"),
-                        en.coverage_end.blank? ? nil : en.coverage_end.strftime("%Y%m%d"),
-                        en.ben_stat == "cobra" ? en.ben_stat : nil,
-                        pol.employer_id.blank? ? nil : employer.name,
-                        pol.employer_id.blank? ? nil : employer.dba,
-                        pol.employer_id.blank? ? nil : employer.fein,
-                        pol.employer_id.blank? ? nil : employer.hbx_id,
-                        per.home_address.try(:full_address) || pol.subscriber.person.home_address.try(:full_address),
-                        per.mailing_address.try(:full_address) || pol.subscriber.person.mailing_address.try(:full_address),
-                        per.emails.first.try(:email_address), per.phones.first.try(:phone_number), broker
-                      ]
-                csv << data
+                data += [
+                    Settings.site.short_name == "DC HealthLink" ? 'R-DC001' : pol.rating_area,
+                    plan.name, plan.hios_plan_id, plan.metal_level, carrier.name,
+                    en.pre_amt, pol.pre_amt_tot,pol.applied_aptc, pol.tot_emp_res_amt,
+                    en.coverage_start.blank? ? nil : en.coverage_start.strftime("%Y%m%d"),
+                    en.coverage_end.blank? ? nil : en.coverage_end.strftime("%Y%m%d"),
+                    en.ben_stat == "cobra" ? en.ben_stat : nil,
+                    pol.employer_id.blank? ? nil : employer.name,
+                    pol.employer_id.blank? ? nil : employer.dba,
+                    pol.employer_id.blank? ? nil : employer.fein,
+                    pol.employer_id.blank? ? nil : employer.hbx_id,
+                    per.home_address.try(:full_address) || pol.subscriber.person.home_address.try(:full_address),
+                    per.mailing_address.try(:full_address) || pol.subscriber.person.mailing_address.try(:full_address),
+                    per.emails.first.try(:email_address), per.phones.first.try(:phone_number), broker
+                  ]
+               csv << data
               #end
             end
           #end
@@ -127,49 +171,6 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
     end
   end
 
-  def get_responsible_party_details(pol)
-    person = Person.where("responsible_parties._id" => pol.responsible_party_id).first
-    unless person.nil?
-      auth_mem = person.authority_member
-      if auth_mem.present?
-        res_hbx_id = auth_mem.try(:hbx_member_id)
-        res_ssn = auth_mem.try(:ssn)
-        res_dob = auth_mem.try(:dob)
-        res_gender = auth_mem.try(:gender)
-      else
-        res_hbx_id = nil
-        res_ssn = nil
-        res_dob = nil
-        res_gender = nil
-      end
-      res_first_name = person.try(:name_first)
-      res_middle_name = person.try(:name_middle)
-      res_last_name = person.try(:name_last)
-      res_full_name = person.try(:name_full)
-      responsible_party_id = pol.responsible_party_id
-      if person.addresses.count > 0
-        res_addresses_count = person.addresses.count
-        res_address = person.addresses.first
-        res_full_address = res_address.try(:full_address)
-        res_address_type = res_address.try(:address_type)
-      else
-        res_addresses_count = '0'
-        res_full_address = nil
-        res_address_type = nil
-      end
-      if person.phones.count > 0
-        res_phone_count = person.phones.count
-        res_phone = person.phones.first
-        res_phone_type = res_phone.try(:phone_type)
-        res_phone_number = res_phone.try(:phone_number)
-      else
-        res_phone_count = '0'
-        res_phone_type = nil
-        res_phone_number = nil
-      end
-      data += [responsible_party_id, res_hbx_id, res_first_name, res_middle_name, res_last_name, res_full_name, res_ssn, res_dob, res_gender, res_address_type, res_full_address, res_addresses_count, res_phone_type, res_phone_number, res_phone_count]
-    end
-  end
 end
 
 timey2 = Time.now
