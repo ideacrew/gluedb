@@ -178,7 +178,6 @@ module Generators::Reports
       end
 
       policy_monthly_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calendar_year: calendar_year)
-
       silver_plan = Plan.where({:year => calendar_year, :hios_plan_id => settings[:tax_document][calendar_year][:slcsp]}).first
       policy_slcsp_premium_calculator = Services::PolicyMonthlyPremiumCalculator.new(policy_disposition: @policy_disposition, calendar_year: calendar_year, silver_plan: silver_plan)
 

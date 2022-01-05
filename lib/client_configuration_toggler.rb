@@ -36,6 +36,7 @@ class ClientConfigurationToggler < MongoidMigrationTask
     @old_configured_state_abbreviation = old_configured_state_abbreviation
     @target_client_state_abbreviation = target_client_state_abbreviation
     copy_target_configuration_to_system_folder
+    Settings.reload!
     puts("Client configuration toggle complete and new configuration client is :#{Settings.site.short_name}")
   end
 end
