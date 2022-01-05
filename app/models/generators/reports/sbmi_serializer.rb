@@ -18,11 +18,8 @@ module Generators::Reports
     end
 
     def process
-      # %w(86052 78079 94506).each do |hios_prefix|
-      # %w(86052).each do |hios_prefix|
-
-      %w(86052 78079 94506 81334 92479 95051).each do |hios_prefix|
-# %w(86052).each do |hios_prefix|
+      #%w(86052 78079 94506 81334 92479 95051).each do |hios_prefix|  (DCHBX hios_prefix)
+      %w(33653 48396).each do |hios_prefix| #(MEHBX hios_prefix)
         plan_ids = Plan.where(hios_plan_id: /^#{hios_prefix}/, year: CALENDER_YEAR).pluck(:_id)
         puts "Processing #{hios_prefix}"
 
@@ -127,7 +124,7 @@ module Generators::Reports
     private
 
     def create_sbmi_folder(hios_prefix)
-      @sbmi_folder_name = "DCHBX_SBMI_#{hios_prefix}_#{Time.now.strftime('%H_%M_%d_%m_%Y')}"
+      @sbmi_folder_name = "#{Settings.sbmi_generation.subdomain}_SBMI_#{hios_prefix}_#{Time.now.strftime('%H_%M_%d_%m_%Y')}"
       create_directory "#{@sbmi_root_folder}/#{@sbmi_folder_name}"
     end
 
