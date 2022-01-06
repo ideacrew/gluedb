@@ -17,11 +17,15 @@ module Api
 
       def show
         member_id = params[:id]
+        @logger = Logger.new("#{Rails.root}/log/enrolled_subjects_#{Time.now.to_s.gsub(' ', '')}.log")
+        @logger.info "Requesting coverage info for subscriber #{member_id}"
         person = Person.find_for_member_id(member_id)
         if person.blank?
           render :status => 404, :nothing => true
         else
-          render :status => 200, :json => "test_data"
+          payload = SubscriberInventory.coverage_inventory_for(person, read_show_filter_params)
+          @logger.info "Coverage info for subscriber #{member_id} with payload #{payload}"
+          render :status => 200, :json => payload
         end
       end
 
