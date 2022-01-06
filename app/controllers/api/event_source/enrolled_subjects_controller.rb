@@ -21,7 +21,7 @@ module Api
         if person.blank?
           render :status => 404, :nothing => true
         else
-          render :status => 200, :json => SubscriberInventory.coverage_inventory_for(person, read_show_filter_params)
+          render :status => 200, :json => "test_data"
         end
       end
 
