@@ -5,5 +5,5 @@ stdout_path "/edidb/log/unicorn.log"
 
 #listen "/edidb/tmp/unicorn.ap.sock"
 listen 3000
-worker_processes 2
+worker_processes 10
 timeout 180
