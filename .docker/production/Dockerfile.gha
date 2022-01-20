@@ -65,7 +65,8 @@ ENV HOME=/edidb
 RUN mkdir $HOME \
   && chown -R $USERNAME:$USERNAME $HOME
 
-RUN mkdir -p $HOME/log
+RUN mkdir -p $HOME/log \
+  && chown -R $USERNAME:$USERNAME $HOME/log
 
 # Configure app home directory
 WORKDIR $HOME
