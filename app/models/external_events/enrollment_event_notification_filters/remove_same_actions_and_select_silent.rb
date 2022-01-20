@@ -12,6 +12,7 @@ module ExternalEvents
               event.drop_payload_duplicate!
               acc
             elsif (!event.is_publishable?)
+              # Fix to favor earlier dates with multiple terminations
               filtered_accs = acc.reject do |item|
                 [event.hbx_enrollment_id, event_comparison_action(event.enrollment_action)] == [item.hbx_enrollment_id, event_comparison_action(item.enrollment_action)]
               end
