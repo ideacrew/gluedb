@@ -22,7 +22,7 @@ RUN apt-get update -qq \
       libffi6 \
       libxext6 \
       libxml2 \
-      libxml2-dev \
+      # libxml2-dev \
       libxrender1 \
       libyaml-cpp0.5 \
       openssl \
@@ -71,11 +71,8 @@ RUN mkdir -p $HOME/log \
 # Configure app home directory
 WORKDIR $HOME
 
-ARG EDIDB_DEVISE_SECRET_KEY_DEFAULT=4949641a374994854c0529feb329a81885867f044eb6c23102892e38bb32da437a94ee27eb4086b196f7273868d4b06c682948f5ced62385c548ba2d96898e20
-ENV EDIDB_DEVISE_SECRET_KEY=$EDIDB_DEVISE_SECRET_KEY_DEFAULT
-
-ARG EDIDB_SECRET_KEY_BASE_DEFAULT=c8d2b9b204fbac78081a88a2c29b28cfeb82e6ccd3664b3948b813463b5917b315dbbd3040e8dffcb5b68df427099db0ce03e59e2432dfe5d272923b00755b82
-ENV EDIDB_SECRET_KEY_BASE=$EDIDB_SECRET_KEY_BASE_DEFAULT
+ENV EDIDB_DEVISE_SECRET_KEY=4949641a374994854c0529feb329a81885867f044eb6c23102892e38bb32da437a94ee27eb4086b196f7273868d4b06c682948f5ced62385c548ba2d96898e20
+ENV EDIDB_SECRET_KEY_BASE=c8d2b9b204fbac78081a88a2c29b28cfeb82e6ccd3664b3948b813463b5917b315dbbd3040e8dffcb5b68df427099db0ce03e59e2432dfe5d272923b00755b82
 
 ENV RECEIVER_ID=000000001
 
@@ -109,6 +106,7 @@ RUN apt-get update -qq \
   && apt-get install -yq --no-install-recommends \
     build-essential \
     git \
+    libxml2-dev \
     nodejs \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
@@ -134,16 +132,13 @@ COPY --chown=$USERNAME:$USERNAME . $HOME
 
 COPY --chown=$USERNAME:$USERNAME ./.docker/config/mongoid.yml $HOME/config
 
-# Needed to run client swap script
-ARG EDIDB_DB_HOST_DEFAULT=localhost
-ARG EDIDB_DB_PORT_DEFAULT=27017
-ARG EDIDB_DB_NAME_DEFAULT=edidb_prod
-ARG RABBITMQ_URL_DEFAULT=amqp://localhost:5672
+ARG HOSTNAME=localhost
 
-ENV EDIDB_DB_HOST=$EDIDB_DB_HOST_DEFAULT
-ENV EDIDB_DB_PORT=$EDIDB_DB_PORT_DEFAULT
-ENV EDIDB_DB_NAME=$EDIDB_DB_NAME_DEFAULT
-ENV RABBITMQ_URL=$RABBITMQ_URL_DEFAULT
+# Needed to run client swap script
+ENV EDIDB_DB_HOST=${HOSTNAME}
+ENV EDIDB_DB_PORT=27017
+ENV EDIDB_DB_NAME=edidb_prod
+ENV RABBITMQ_URL=amqp://${HOSTNAME}:5672
 
 COPY --chown=$USERNAME:$USERNAME ./.docker/config/exchange_information.rb $HOME/app/models
 COPY --chown=$USERNAME:$USERNAME ./.docker/config/exchange.yml $HOME/config
@@ -158,6 +153,18 @@ RUN rm -rf $GEM_HOME/bundle/ruby/*/cache
 ################################################################
 
 FROM base as deploy
+
+ARG HOSTNAME=localhost
+
+# Needed to run client swap script
+ENV EDIDB_DB_AUTH=true
+ENV EDIDB_DB_HOST=${HOSTNAME}
+ENV EDIDB_DB_NAME=edidb_prod
+ENV EDIDB_DB_PASSWORD=anything
+ENV EDIDB_DB_PORT=27017
+ENV EDIDB_DB_REPLICA_SET_NAME=anything
+ENV EDIDB_DB_USERNAME=anything
+ENV RABBITMQ_URL=amqp://${HOSTNAME}:5672
 
 # Copy prebuilt gems
 COPY --chown=$USERNAME:$USERNAME --from=prod_gems_and_assets $BUNDLE_PATH $BUNDLE_PATH
