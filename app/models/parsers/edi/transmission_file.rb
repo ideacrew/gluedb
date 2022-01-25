@@ -194,7 +194,7 @@ module Parsers
         rp_loop = responsible_party_loop(etf_loop["L2000s"])
         existing_policy = Policy.where(hbx_enrollment_ids: eg_id).first
         if rp_loop.blank?
-          if existing_policy&.responsible_party.present?
+          if existing_policy.present? && existing_policy.responsible_party.present?
             return existing_policy.responsible_party_id
           end
           return(nil) if rp_loop.blank?
