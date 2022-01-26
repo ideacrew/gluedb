@@ -193,12 +193,7 @@ module Parsers
       def persist_responsible_party_get_id(etf_loop, eg_id)
         rp_loop = responsible_party_loop(etf_loop["L2000s"])
         existing_policy = Policy.where(hbx_enrollment_ids: eg_id).first
-        if rp_loop.blank?
-          if existing_policy.present? && existing_policy.responsible_party.present?
-            return existing_policy.responsible_party_id
-          end
-          return(nil) if rp_loop.blank?
-        end
+        return(existing_policy.try(:responsible_party_id)) if rp_loop.blank?
         Etf::ResponsiblePartyParser.parse_persist_and_return_id(rp_loop)
       end
 

@@ -1,6 +1,7 @@
 require 'spec_helper'
+require 'rails_helper'
 
-describe Parsers::Edi::TransmissionFile do
+describe Parsers::Edi::TransmissionFile, :dbclean => :after_each do
   let(:pb) { double(:refresh => nil) }
   let(:transmission_file) { Parsers::Edi::TransmissionFile.new(' ', ' ', ' ', nil, pb) }
   describe '#persist_broker_get_id' do
@@ -73,6 +74,30 @@ describe Parsers::Edi::TransmissionFile do
       let(:person_loops) { [ { 'L2100G' => data } ] }
       it 'returns the loop data' do
         expect(transmission_file.responsible_party_loop(person_loops)).to eq data
+      end
+    end
+  end
+
+  describe '#persist_responsible_party_get_id' do
+    let(:id) { 1 }
+    let(:person) { Person.new(name_first: 'Joe', name_last: 'Dirt') }
+    let(:responsible_party) { ResponsibleParty.new(_id: id, entity_identifier: "parent") }
+    let(:eg_id) { "100" }
+    let(:existing_policy) {  FactoryGirl.create(:policy, enrollment_group_id: eg_id)}
+
+    before do
+      person.responsible_parties << responsible_party
+      person.save!
+      existing_policy.responsible_party_id = responsible_party._id
+      existing_policy.save
+      existing_policy.reload
+    end
+
+    context 'when L2100F has no responsible party ' do
+      let(:person_loops) { { 'L2000s' => [] }   }
+
+      it 'returns existing policy responsible_party id' do
+        expect(transmission_file.persist_responsible_party_get_id(person_loops, eg_id)).to eq existing_policy.responsible_party_id
       end
     end
   end
