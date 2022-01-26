@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "me_carrier_boarding"
+      - "me_responsible_party"
   pull_request:
     branches:
       - "me_carrier_boarding"

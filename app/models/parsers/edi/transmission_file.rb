@@ -129,7 +129,7 @@ module Parsers
             edi_transmission.save!
           end
         else
-          responsible_party_id = persist_responsible_party_get_id(etf_loop)
+          responsible_party_id = persist_responsible_party_get_id(etf_loop, policy_loop.eg_id)
           broker_id = persist_broker_get_id(etf_loop)
 
           if(plan)
@@ -190,9 +190,10 @@ module Parsers
         )
       end
 
-      def persist_responsible_party_get_id(etf_loop)
+      def persist_responsible_party_get_id(etf_loop, eg_id)
         rp_loop = responsible_party_loop(etf_loop["L2000s"])
-        return(nil) if rp_loop.blank?
+        existing_policy = Policy.where(hbx_enrollment_ids: eg_id).first
+        return(existing_policy.try(:responsible_party_id)) if rp_loop.blank?
         Etf::ResponsiblePartyParser.parse_persist_and_return_id(rp_loop)
       end
 
