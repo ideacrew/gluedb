@@ -34,13 +34,6 @@ RUN apt-get update -qq \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && truncate -s 0 /var/log/*log
 
-RUN apt-get update -qq \
-    && apt-get -yq dist-upgrade \
-    && apt-get install -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && truncate -s 0 /var/log/*log
-
 # Configure bundler and PATH, install bundler version
 ENV GEM_HOME=/usr/local/bundle
 ENV BUNDLE_PATH=$GEM_HOME
@@ -64,9 +57,6 @@ RUN groupadd --gid 1001 $USERNAME \
 ENV HOME=/edidb
 RUN mkdir $HOME \
   && chown -R $USERNAME:$USERNAME $HOME
-
-RUN mkdir -p $HOME/log \
-  && chown -R $USERNAME:$USERNAME $HOME/log
 
 # Configure app home directory
 WORKDIR $HOME
