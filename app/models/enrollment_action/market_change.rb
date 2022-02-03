@@ -2,6 +2,7 @@ module EnrollmentAction
   class MarketChange < Base
     extend PlanComparisonHelper
     include NotificationExemptionHelper
+    include TerminationDateHelper
 
     def self.qualifies?(chunk)
       return false unless chunk.length > 1
@@ -23,7 +24,7 @@ module EnrollmentAction
       return false unless ep.persist
       policy_to_term = termination.existing_policy
       existing_npt = policy_to_term.term_for_np
-      result = policy_to_term.terminate_as_of(termination.subscriber_end)
+      result = policy_to_term.terminate_as_of(select_termination_date)
       unless termination_event_exempt_from_notification?(policy_to_term, termination.subscriber_end, true, existing_npt)
         Observers::PolicyUpdated.notify(policy_to_term)
       end

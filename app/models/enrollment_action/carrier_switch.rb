@@ -3,6 +3,7 @@ module EnrollmentAction
     extend PlanComparisonHelper
     include NotificationExemptionHelper
     include RenewalComparisonHelper
+    include TerminationDateHelper
 
     def self.qualifies?(chunk)
       return false unless chunk.length > 1
@@ -23,7 +24,7 @@ module EnrollmentAction
       return false unless ep.persist
       policy_to_term = termination.existing_policy
       existing_npt = policy_to_term.term_for_np
-      result = policy_to_term.terminate_as_of(termination.subscriber_end)
+      result = policy_to_term.terminate_as_of(select_termination_date)
       if termination.existing_policy.carrier.termination_cancels_renewal
         termination.renewal_policies_to_cancel.each do |pol|
           pol.cancel_via_hbx!

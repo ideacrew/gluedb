@@ -25,7 +25,7 @@ module EnrollmentAction
       ep = ExternalEvents::ExternalPolicy.new(action.policy_cv, action.existing_plan, action.is_cobra?)
       return false unless ep.persist
       policy_to_term = termination.existing_policy
-      policy_to_term.terminate_as_of(termination.subscriber_end)
+      policy_to_term.terminate_as_of(select_termination_date)
     end
 
     def publish
