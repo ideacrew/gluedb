@@ -69,6 +69,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set, bei
     allow(ExternalEvents::ExternalPolicy).to receive(:new).with(new_policy_cv, plan, false, market_from_payload: subject.action).and_return(policy_updater)
     allow(policy_updater).to receive(:persist).and_return(true)
     allow(subject.action).to receive(:existing_policy).and_return(false)
+    allow(subject).to receive(:select_termination_date).and_return(subscriber_end)
     allow(subject.action).to receive(:kind).and_return(action_event)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end

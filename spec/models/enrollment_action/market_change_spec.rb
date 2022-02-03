@@ -87,6 +87,7 @@ describe EnrollmentAction::MarketChange, "given a qualified enrollment set, bein
     allow(subject.action).to receive(:existing_policy).and_return(false)
     allow(subject.action).to receive(:kind).and_return(action_event)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+    allow(subject).to receive(:select_termination_date).and_return(subscriber_end)
   end
 
   it "notifies of the termination" do
