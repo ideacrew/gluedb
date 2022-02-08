@@ -48,6 +48,12 @@ module Listeners
         EnrollmentEvents::Batch.where(aasm_state: 'open').each do |batch|
           if batch.may_process?
             batch.process!
+            batch.reload
+            while !batch.ready_to_transmit?
+              sleep 0.01
+              batch.process!
+              batch.reload
+            end
             ::Amqp::EventBroadcaster.with_broadcaster do |b|
               b.broadcast(
                   { :headers => { batch_id: batch.id.to_s },

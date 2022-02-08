@@ -179,3 +179,109 @@ describe EnrollmentAction::TerminatePolicyWithEarlierDate, "given a valid enroll
     subject.publish
   end
 end
+
+describe EnrollmentAction::TerminatePolicyWithEarlierDate, "given a valid enrollment, with carrier assigned IDs" do
+  let(:amqp_connection) { double }
+  let(:termination_event_xml) { double }
+  let(:event_xml) { double }
+
+  let(:reinstate_action_helper) { double }
+  let(:carrier) { instance_double(Carrier, requires_reinstate_for_earlier_termination: true) }
+  let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
+  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago, :c_id => "ABCDE", :cp_id => "1234") }
+  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, carrier: carrier) }
+
+  let(:termination_event) { instance_double(
+      ::ExternalEvents::EnrollmentEventNotification,
+      event_xml: termination_event_xml,
+      existing_policy: policy,
+      all_member_ids: [enrollee.m_id],
+      event_responder: event_responder,
+      hbx_enrollment_id: 1,
+      employer_hbx_id: 1
+  ) }
+
+  let(:reinstate_action_helper_result_xml) { double }
+  let(:termination_action_helper_result_xml) { double }
+
+  let(:reinstate_action_helper) { instance_double(
+      EnrollmentAction::ActionPublishHelper,
+      to_xml: reinstate_action_helper_result_xml
+  ) }
+
+  let(:termination_action_helper) { instance_double(
+      EnrollmentAction::ActionPublishHelper,
+      to_xml: termination_action_helper_result_xml
+  ) }
+
+  subject do
+    the_action = EnrollmentAction::TerminatePolicyWithEarlierDate.new(termination_event, nil)
+    the_action.existing_policy = policy
+    the_action
+  end
+
+  before :each do
+    allow(EnrollmentAction::ActionPublishHelper).to receive(:new).with(termination_event_xml).and_return(reinstate_action_helper, termination_action_helper)
+    allow(reinstate_action_helper).to receive(:set_policy_id).with(policy.id)
+    allow(reinstate_action_helper).to receive(:set_member_starts).with({1 => enrollee.coverage_start})
+    allow(reinstate_action_helper).to receive(:keep_member_ends).with([])
+    allow(reinstate_action_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#reinstate_enrollment")
+
+    allow(termination_action_helper).to receive(:set_policy_id).with(policy.id)
+    allow(termination_action_helper).to receive(:set_member_starts).with({1 => enrollee.coverage_start})
+    allow(termination_action_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
+
+    allow(subject).to receive(:publish_edi).with(amqp_connection, reinstate_action_helper_result_xml, termination_event.existing_policy.eg_id, termination_event.employer_hbx_id).and_return([true, {}])
+    allow(subject).to receive(:publish_edi).with(amqp_connection, termination_action_helper_result_xml, termination_event.existing_policy.eg_id, termination_event.employer_hbx_id).and_return([true, {}])
+
+    allow(reinstate_action_helper).to receive(:set_carrier_assigned_ids).with(enrollee)
+    allow(termination_action_helper).to receive(:set_carrier_assigned_ids).with(enrollee)
+  end
+
+  it "sets event for reinstate action helper" do
+    expect(reinstate_action_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#reinstate_enrollment")
+    subject.publish
+  end
+
+  it "sets event for termination action helper" do
+    expect(termination_action_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
+    subject.publish
+  end
+
+  it "sets policy id for reinstate action helper" do
+    expect(reinstate_action_helper).to receive(:set_policy_id).with(1).and_return(true)
+    subject.publish
+  end
+
+  it "sets policy id for termination action helper" do
+    expect(termination_action_helper).to receive(:set_policy_id).with(1).and_return(true)
+    subject.publish
+  end
+
+  it "sets member start dates for reinstate action helper" do
+    expect(reinstate_action_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago })
+    subject.publish
+  end
+
+  it "sets member start dates for termination action helper" do
+    expect(termination_action_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago })
+    subject.publish
+  end
+
+  it "clears all member end dates before publishing for reinstate action helper " do
+    expect(reinstate_action_helper).to receive(:keep_member_ends).with([])
+    subject.publish
+  end
+
+  it "publishes termination & reinstatment resulting xml to edi" do
+    expect(subject).to receive(:publish_edi).exactly(2).times
+    subject.publish
+  end
+
+  it "assigns the carrier assigned ids for publication" do
+    expect(reinstate_action_helper).to receive(:set_carrier_assigned_ids).with(enrollee)
+    expect(termination_action_helper).to receive(:set_carrier_assigned_ids).with(enrollee)
+    subject.publish
+  end
+end
+

@@ -52,7 +52,7 @@ module EnrollmentAction
       existing_policy.enrollees.each do |en|
         member_date_map[en.m_id] = en.coverage_start
         if en.c_id.present? || en.cp_id.present?
-          termination_aciton_helper.set_carrier_assigned_ids(en)
+          termiantion_action_helper.set_carrier_assigned_ids(en)
         end
       end
       publish_edi(amqp_connection, termiantion_action_helper.to_xml, termination.hbx_enrollment_id, termination.employer_hbx_id)
