@@ -55,7 +55,8 @@ describe EnrollmentAction::DependentDrop, "given a qualified enrollment set, bei
     :policy_cv => new_policy_cv,
     :existing_plan => plan,
     :all_member_ids => [1,2],
-    :hbx_enrollment_id => 1
+    :hbx_enrollment_id => 1,
+    :subscriber_start => Date.new(2022)
     ) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -76,6 +77,7 @@ describe EnrollmentAction::DependentDrop, "given a qualified enrollment set, bei
     allow(ExternalEvents::ExternalPolicyMemberDrop).to receive(:new).with(termination_event.existing_policy, termination_event.policy_cv, [3]).and_return(policy_updater)
     allow(policy_updater).to receive(:use_totals_from).with(new_policy_cv)
     allow(policy_updater).to receive(:persist).and_return(true)
+    allow(policy_updater).to receive(:subscriber_start).with(Date.new(2022)).and_return(true)
     allow(subject).to receive(:same_carrier_renewal_candidates).with(dependent_drop_event).and_return([active_policy])
     allow(dependent_drop_event).to receive(:dep_add_or_drop_to_renewal_policy?).with(active_policy, policy).and_return(false)
   end

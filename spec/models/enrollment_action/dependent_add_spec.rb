@@ -45,7 +45,8 @@ describe EnrollmentAction::DependentAdd, "given a qualified enrollment set, bein
     :policy_cv => new_policy_cv,
     :existing_plan => plan,
     :all_member_ids => [1,2,3],
-    :hbx_enrollment_id => 3
+    :hbx_enrollment_id => 3,
+    :subscriber_start => Date.new(2022)
     ) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -69,6 +70,7 @@ describe EnrollmentAction::DependentAdd, "given a qualified enrollment set, bein
     allow(policy).to receive(:save!).and_return(true)
     allow(ExternalEvents::ExternalPolicyMemberAdd).to receive(:new).with(policy, new_policy_cv, [3]).and_return(policy_updater)
     allow(policy_updater).to receive(:persist).and_return(true)
+    allow(policy_updater).to receive(:subscriber_start).with(Date.new(2022)).and_return(true)
     allow(subject).to receive(:same_carrier_renewal_candidates).with(dependent_add_event).and_return([active_policy])
     allow(dependent_add_event).to receive(:dep_add_or_drop_to_renewal_policy?).with(active_policy, policy).and_return(false)
   end

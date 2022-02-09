@@ -113,21 +113,44 @@ describe ExternalEvents::ExternalPolicyMemberDrop, "given:
     it "gets the total responsible amount from the other policy_cv" do
       expect(subject.extract_tot_res_amt).to eq(other_tot_res_amt_bigdecimal_value)
     end
+
+    context "update aptc" do
+      let(:policy) { FactoryGirl.create(:policy, applied_aptc:"200", pre_amt_tot:"300",tot_res_amt:"100") }
+      let!(:credit) {policy.aptc_credits.create!(start_on:"1/1/2022", end_on:"12/31/2022", pre_amt_tot:"300", tot_res_amt:"100", aptc:"200")}
+
+      it "updates aptc credits & policy with latest values" do
+        policy.enrollees.update_all(coverage_start: Date.new(2022), coverage_end: nil)
+        subject  = ExternalEvents::ExternalPolicyMemberDrop.new(policy, policy_cv, dropped_member_ids)
+        subject.subscriber_start(Date.new(2022))
+        expect(policy.applied_aptc.to_f).to eq(200.0)
+        subject.persist
+        expect(policy.reload.applied_aptc.to_f).to eq(123.45)
+      end
+    end
   end
 
   describe "asked to persist a termination on an IVL policy" do
 
     before :each do
       allow(Policy).to receive(:find).with(existing_policy_id).and_return(existing_policy)
+      allow(existing_policy).to receive(:multi_aptc?).and_return(nil)
       allow(existing_policy).to receive(:update_attributes!).with(
         :pre_amt_tot => premium_total_bigdecimal_value,
         :tot_res_amt => tot_res_amt_bigdecimal_value,
         :applied_aptc => aptc_bigdecimal_value
       ).and_return(true)
+      allow(existing_policy).to receive(:set_aptc_effective_on).with(
+                                    Date.new(2022),
+                                    aptc_bigdecimal_value.to_f,
+                                    premium_total_bigdecimal_value.to_f,
+                                    tot_res_amt_bigdecimal_value.to_f
+                                ).and_return(true)
+      allow(existing_policy).to receive(:save!).and_return(true)
     end
 
     it "notifies" do
       expect(Observers::PolicyUpdated).to receive(:notify).with(existing_policy)
+      subject.subscriber_start(Date.new(2022))
       subject.persist
     end
   end
@@ -138,15 +161,24 @@ describe ExternalEvents::ExternalPolicyMemberDrop, "given:
 
     before :each do
       allow(Policy).to receive(:find).with(existing_policy_id).and_return(existing_policy)
+      allow(existing_policy).to receive(:multi_aptc?).and_return(nil)
       allow(existing_policy).to receive(:update_attributes!).with(
         :pre_amt_tot => premium_total_bigdecimal_value,
         :tot_res_amt => tot_res_amt_bigdecimal_value,
         :applied_aptc => aptc_bigdecimal_value
       ).and_return(true)
+      allow(existing_policy).to receive(:set_aptc_effective_on).with(
+                                    Date.new(2022),
+                                    aptc_bigdecimal_value.to_f,
+                                    premium_total_bigdecimal_value.to_f,
+                                    tot_res_amt_bigdecimal_value.to_f
+                                ).and_return(true)
+      allow(existing_policy).to receive(:save!).and_return(true)
     end
 
     it "doesn't notify" do
       expect(Observers::PolicyUpdated).not_to receive(:notify).with(existing_policy)
+      subject.subscriber_start(Date.new(2022))
       subject.persist
     end
   end
