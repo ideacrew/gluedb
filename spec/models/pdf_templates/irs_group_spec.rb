@@ -27,7 +27,7 @@ describe PdfTemplates::IrsGroup do
   before(:each) do 
     allow(subject).to receive(:households).and_return(households)
     allow(subject).to receive(:policies).and_return(policies)
-    allow(subject).to receive(:calender_year).and_return(year)
+    allow(subject).to receive(:calendar_year).and_return(year)
     allow(household).to receive(:irs_households).and_return(tax_households)
     allow(PolicyDisposition).to receive(:new).with(policy1).and_return(mock_disposition1)
     allow(PolicyDisposition).to receive(:new).with(policy2).and_return(mock_disposition2)

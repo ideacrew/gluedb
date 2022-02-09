@@ -29,7 +29,7 @@ module Generators::Reports
     end
 
     def fetch_ns
-      (notice_params[:calender_year].to_s == "2018") ? NS_OLD : NS
+      (notice_params[:calendar_year].to_s == "2018") ? NS_OLD : NS
     end
 
     def serialize
@@ -50,7 +50,7 @@ module Generators::Reports
     def serialize_headers(xml)
       # xml['air5.0'].RecordSequenceNum @sequence_num
       xml['air5.0'].RecordSequenceNum @notice.policy_id.to_i
-      xml['air5.0'].TaxYr notice_params[:calender_year]
+      xml['air5.0'].TaxYr notice_params[:calendar_year]
       xml['air5.0'].CorrectedInd (corrected_record_sequence_num.present? ? 1 : 0)
       if corrected_record_sequence_num.present?
         ft = Policy.find(corrected_record_sequence_num.to_s).federal_transmissions.where(report_type: /original/i).first

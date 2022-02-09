@@ -15,7 +15,7 @@ module Generators::Reports
     let(:enrollments) { [] }
 
     before(:each) do
-      subject.calender_year = '2014'
+      subject.calendar_year = '2014'
       allow(household).to receive(:enrollments_for_year).and_return(enrollments)
     end
 

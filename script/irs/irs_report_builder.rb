@@ -33,7 +33,7 @@ module Irs
         irs_errors.each do |irs_error|
           policy_id = irs_error[2]
           policy = Policy.find(policy_id)
-          @notice = Generators::Reports::IrsInputBuilder.new(policy, multi_version_aptc?(policy)).notice
+          @notice = Generators::Reports::IrsInputBuilder.new(policy, multi_version_aptc?(policy), {report_type: 'h41_1095A'}).notice
           build_1095a_row(policy)
           csv << [irs_error[0], irs_error[1]] + @data
         end
@@ -54,7 +54,8 @@ module Irs
             if @count % 50 == 0
               puts "---#{@count}"
             end
-            @notice = Generators::Reports::IrsInputBuilder.new(policy, multi_version_aptc?(policy)).notice
+            # It helps to generate h41_1095A report. If needed h36 report then report_type value h41_1095A needs to be replaced with h36
+            @notice = Generators::Reports::IrsInputBuilder.new(policy, multi_version_aptc?(policy), {report_type: 'h41_1095A'}).notice
             build_1095a_row(policy)
             csv << @data
           rescue Exception => e
@@ -91,8 +92,8 @@ module Irs
           if @count % 50 == 0 
             puts "---#{@count}"
           end
-
-          @notice = Generators::Reports::IrsInputBuilder.new(policy, multi_version_aptc?(policy)).notice
+          # It helps to generate h41_1095A report. If needed h36 report then report_type value h41_1095A needs to be replaced with h36
+          @notice = Generators::Reports::IrsInputBuilder.new(policy, multi_version_aptc?(policy), {report_type: 'h41_1095A'}).notice
           build_1095a_row(policy)
           @sheet.row(index).concat @data
         rescue Exception => e
@@ -111,7 +112,8 @@ module Irs
         begin
           active_enrollees = policy.enrollees.reject{|en| en.canceled?}
           next if active_enrollees.empty?
-          @notice = Generators::Reports::IrsInputBuilder.new(policy).notice
+          # It helps to generate h41_1095A report. If needed h36 report then report_type value h41_1095A needs to be replaced with h36
+          @notice = Generators::Reports::IrsInputBuilder.new(policy, {report_type: 'h41_1095A'}).notice
           build_1095a_row
           @sheet.row(index).concat @data
         rescue Exception => e

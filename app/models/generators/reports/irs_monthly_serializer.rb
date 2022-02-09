@@ -1,11 +1,12 @@
 require 'spreadsheet'
 require 'csv'
-module Generators::Reports  
+module Generators::Reports
   class IrsMonthlySerializer
+  # To generate irs yearly policies need to send a run time calendar_year params i.e. Generators::Reports::IrsMonthlySerializer.new({calendar_year: 2021}) instead of sending hard coded year
 
-    CALENDER_YEAR = 2019
+    attr_accessor :calendar_year
 
-    def initialize
+    def initialize(options = {})
       @logger = Logger.new("#{Rails.root}/log/h36_exceptions.log")
 
       @carriers = Carrier.all.inject({}){|hash, carrier| hash[carrier.id] = carrier.name; hash}
@@ -15,6 +16,7 @@ module Generators::Reports
       # load_npt_policies
       @npt_policies = []
       @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
+      @calendar_year = options[:calendar_year]
 
       @h36_root_folder = "#{Rails.root}/irs/h36_#{Time.now.strftime('%m_%d_%Y_%H_%M')}"
       create_directory @h36_root_folder
@@ -72,9 +74,9 @@ module Generators::Reports
 
           next if family.households.count > 1 || family.active_household.nil? 
           
-          active_enrollments = family.active_household.enrollments_for_year(CALENDER_YEAR)
+          active_enrollments = family.active_household.enrollments_for_year()
           active_enrollments.reject!{|e| e.policy.subscriber.coverage_start >= Date.today.beginning_of_month }
-          active_enrollments.reject!{|e| policies_to_skip.include?(e.policy.id.to_s) }
+          # active_enrollments.reject!{|e| policies_to_skip.include?(e.policy.id.to_s) }
           active_enrollments.reject!{|e| e.policy.kind == "coverall" }
           active_enrollments.reject! do |en|
             if en.policy.enrollees.any?{|en| en.person.authority_member.blank?}
@@ -170,7 +172,7 @@ module Generators::Reports
           #   end
           # end
 
-          group_xml = IrsMonthlyXml.new(irs_group, family.e_case_id)
+          group_xml = IrsMonthlyXml.new(irs_group, family.e_case_id, {calendar_year: calendar_year})
           group_xml.folder_path = "#{@h36_root_folder}/#{@h36_folder_name}"
           group_xml.serialize
 
@@ -226,7 +228,7 @@ module Generators::Reports
       builder = Generators::Reports::IrsGroupBuilder.new(family)
       builder.carrier_hash = @carriers
       builder.npt_policies = @npt_policies
-      builder.calender_year = CALENDER_YEAR
+      builder.calendar_year = calendar_year
       builder.settings = @settings
       builder.process
       builder.npt_policies = []
@@ -266,7 +268,7 @@ module Generators::Reports
     private
 
     def policies_to_skip
-      ["208128","208671","212304","214429","214807","208674","246907","263444","263496","296902","300021"]
+      # no list of policies to skip
     end
 
     def create_new_irs_folder(folder_count)

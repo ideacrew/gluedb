@@ -30,7 +30,7 @@ module Generators::Reports
     }
 
     def fetch_ns
-      (notice_params[:calender_year].to_i <= 2018) ? NS_OLD : NS
+      (notice_params[:calendar_year].to_i <= 2018) ? NS_OLD : NS
     end
 
     def initialize(dir, sequential_number, options = {})
