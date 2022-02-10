@@ -29,6 +29,8 @@ module PeopleHelper
     status = policy.aasm_state.capitalize
     if (policy.term_for_np == true) && (policy.aasm_state == "terminated")
       status << " (NPT)"
+    elsif (policy.term_for_np == true) && (policy.aasm_state == "canceled")
+      status << " (NP)"
     end
     status
     # raw(<span class="label label-warning">status</span>) if ["Canceled", "Terminated"].include?(status)

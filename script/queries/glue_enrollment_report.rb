@@ -45,7 +45,7 @@ timestamp = Time.now.strftime('%Y%m%d%H%M')
 Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
 
   CSV.open("glue_enrollment_report_#{timestamp}.csv", 'w') do |csv|
-    csv << ["Subscriber ID", "Member ID" , "Policy ID", "Enrollment Group ID", "Status",
+    csv << ["Subscriber ID", "Member ID" , "Policy ID", "Enrollment Group ID", "Status", "NPT Flag",
             "First Name", "Last Name","SSN", "DOB", "Gender", "Relationship", "Responsible Party ID",
             "RP hbx_id", "RP First Name", "RP Middle Name", "RP Last Name", "RP Full Name", "RP SSN", "RP DOB",
             "RP Gender", "RP Address Type", "RP Full Address", "RP Address Count", "RP Phone Type",
@@ -92,6 +92,7 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                 next if per.blank?
                 data = [
                   subscriber_id, en.m_id, pol._id, pol.eg_id, pol.aasm_state,
+                  pol.term_for_np,
                   per.name_first,
                   per.name_last,
                   en.member.ssn,
