@@ -50,5 +50,8 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
     expect(result[0][:enrollees][0][:segments].count).to eq 2
     expect(result[0][:enrollees][1][:segments].count).to eq 1
     expect(result[0][:enrollees][0][:addresses]).to be_present
+    expect(result[0][:enrollees][0][:segments][0][:total_premium_amount]).to eq 666.66
+    expect(result[0][:enrollees][0][:segments][1][:total_premium_amount]).to eq 1333.32
+    expect(result[0][:enrollees][0][:segments][0][:aptc_amount]).to eq 3.33
   end
 end
