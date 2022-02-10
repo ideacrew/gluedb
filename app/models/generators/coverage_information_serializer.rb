@@ -107,7 +107,6 @@ module Generators
       enrollee_coverage_end = enrollee.coverage_end.blank? ? @policy.policy_start.end_of_year : enrollee.coverage_end
 
       if (enrollee_coverage_start..enrollee_coverage_end).cover?(financial_dates[0])
-        @policy_disposition = PolicyDisposition.new(@policy)
         params = {
           id: "#{subscriber_m_id}-#{policy_id}-#{start_date}",
           effective_start_date: format_date(financial_dates[0]),
@@ -116,15 +115,45 @@ module Generators
         }
 
         if enrollee.subscriber?
+          aptc_credit = @policy.aptc_record_on(financial_dates[0])
+          total_premium_amount = if aptc_credit.present?
+                                   aptc_credit.pre_amt_tot.to_f
+                                 else
+                                   calculate_total_premium(financial_dates[0])
+                                 end
+          aptc_amount =  if aptc_credit.present?
+                           aptc_credit.aptc.to_f
+                         else
+                           @policy.applied_aptc.to_f
+                         end
+
+          total_responsible_amount =  if aptc_credit.present?
+                                        aptc_credit.tot_res_amt.to_f
+                                      else
+                                        (total_premium_amount - aptc_amount)
+                                      end
+
           params.merge!({
-                          total_premium_amount: @policy_disposition.as_of(financial_dates[0]).pre_amt_tot.to_f,
-                          total_responsible_amount: @policy_disposition.as_of(financial_dates[0]).tot_res_amt.to_f,
-                          aptc_amount: @policy_disposition.as_of(financial_dates[0]).applied_aptc.to_f,
+                          total_premium_amount: total_premium_amount,
+                          total_responsible_amount: total_responsible_amount,
+                          aptc_amount: aptc_amount,
                           csr_variant: csr_variant
                         })
         end
         params
       end
+    end
+
+    def calculate_total_premium(date)
+      premium_amount = 0.00
+      @policy.enrollees.each do |enrollee|
+        enrollee_coverage_start = enrollee.coverage_start
+        enrollee_coverage_end = enrollee.coverage_end.blank? ? @policy.policy_start.end_of_year : enrollee.coverage_end
+        if (enrollee_coverage_start..enrollee_coverage_end).cover?(date)
+          premium_amount += enrollee.premium_amount.to_f
+        end
+      end
+      premium_amount
     end
 
     def transform_addresses(addresses)
