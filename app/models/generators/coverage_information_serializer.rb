@@ -121,17 +121,18 @@ module Generators
                                  else
                                    calculate_total_premium(financial_dates[0])
                                  end
-          aptc_amount =  if aptc_credit.present?
-                           aptc_credit.aptc.to_f
-                         else
-                           @policy.applied_aptc.to_f
-                         end
+          aptc_amount = if aptc_credit.present?
+                          aptc_credit.aptc.to_f
+                        else
+                          ehb_amount = as_dollars(total_premium_amount * @policy.plan.ehb)
+                          @policy.applied_aptc.to_f > ehb_amount ? ehb_amount : @policy.applied_aptc.to_f
+                        end
 
-          total_responsible_amount =  if aptc_credit.present?
-                                        aptc_credit.tot_res_amt.to_f
-                                      else
-                                        (total_premium_amount - aptc_amount)
-                                      end
+          total_responsible_amount = if aptc_credit.present?
+                                       aptc_credit.tot_res_amt.to_f
+                                     else
+                                       as_dollars((total_premium_amount - aptc_amount))
+                                     end
 
           params.merge!({
                           total_premium_amount: total_premium_amount,
@@ -150,10 +151,10 @@ module Generators
         enrollee_coverage_start = enrollee.coverage_start
         enrollee_coverage_end = enrollee.coverage_end.blank? ? @policy.policy_start.end_of_year : enrollee.coverage_end
         if (enrollee_coverage_start..enrollee_coverage_end).cover?(date)
-          premium_amount += enrollee.premium_amount.to_f
+          premium_amount += as_dollars(enrollee.premium_amount)
         end
       end
-      premium_amount
+      as_dollars(premium_amount)
     end
 
     def transform_addresses(addresses)
