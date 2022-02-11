@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "me_carrier_boarding"
+      - "ticket_181218888"
   pull_request:
     branches:
       - "me_carrier_boarding"
