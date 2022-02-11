@@ -57,6 +57,7 @@ describe EnrollmentAction::Termination, "given a valid shop enrollment" do
     allow(policy).to receive(:term_for_np).and_return(false)
     allow(termination_event.existing_policy).to receive(:terminate_as_of).and_return(true)
     allow(termination_event).to receive(:subscriber_end).and_return(false)
+    allow(termination_event).to receive(:is_cancel?).and_return(false)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
 
@@ -90,6 +91,7 @@ describe EnrollmentAction::Termination, "given a valid IVL enrollment, ending 12
   before :each do
     allow(policy).to receive(:term_for_np).and_return(false)
     allow(policy).to receive(:terminate_as_of).and_return(true)
+    allow(termination_event).to receive(:is_cancel?).and_return(false)
     allow(termination_event).to receive(:subscriber_end).and_return(Date.new(Date.today.year, 12, 31))
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
@@ -124,6 +126,7 @@ describe EnrollmentAction::Termination, "given a valid IVL enrollment, ending 12
   before :each do
     allow(policy).to receive(:term_for_np).and_return(true, false)
     allow(policy).to receive(:terminate_as_of).and_return(true)
+    allow(termination_event).to receive(:is_cancel?).and_return(false)
     allow(termination_event).to receive(:subscriber_end).and_return(Date.new(Date.today.year, 12, 31))
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
@@ -146,7 +149,7 @@ describe EnrollmentAction::Termination, "given a valid enrollment" do
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
-  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil, coverage_end: :one_month_ago) }
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
   let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, aasm_state: "submitted", employer_id: '', carrier: carrier, reload: true, canceled?: false) }
   let(:termination_event) { instance_double(
@@ -169,6 +172,7 @@ describe EnrollmentAction::Termination, "given a valid enrollment" do
     allow(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
     allow(action_publish_helper).to receive(:set_policy_id).with(policy.id)
     allow(action_publish_helper).to receive(:set_member_starts).with({1 => enrollee.coverage_start})
+    allow(action_publish_helper).to receive(:set_member_end_date).with({ 1 => enrollee.coverage_end })
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, termination_event.hbx_enrollment_id, termination_event.employer_hbx_id)
   end
 
