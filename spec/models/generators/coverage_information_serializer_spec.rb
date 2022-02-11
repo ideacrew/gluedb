@@ -2,7 +2,7 @@ require 'rails_helper'
 
 describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
 
-  let(:plan)           { FactoryGirl.create(:plan) }
+  let(:plan)           { FactoryGirl.create(:plan, ehb: "0.997144") }
   let(:calender_year)  { Date.today.year }
   let(:coverage_start) { Date.new(calender_year, 1, 1) }
   let(:coverage_end)   { Date.new(calender_year, 12, 31) }
