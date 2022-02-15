@@ -145,6 +145,40 @@ describe EnrollmentAction::Termination, "given a valid IVL enrollment, ending 12
   end
 end
 
+describe EnrollmentAction::Termination, "given an valid IVL enrollment, cancel event with subscriber start date in past" do
+  let(:member) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
+  let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
+  let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
+  let(:carrier) { Carrier.create }
+  let(:policy) { FactoryGirl.create(:policy, hbx_enrollment_ids: [1], carrier: carrier) }
+  let(:start_date) { Date.new(Date.today.year) }
+  let(:term_date) { start_date + 1.month}
+  let(:termination_event) { instance_double(
+      ::ExternalEvents::EnrollmentEventNotification,
+      policy_cv: terminated_policy_cv,
+      existing_policy: policy,
+      subscriber_start: term_date,
+      subscriber_end: term_date,
+      all_member_ids: [1,2]
+  ) }
+
+  before :each do
+    policy.enrollees.update_all(coverage_start: start_date, coverage_end: nil)
+    allow(policy).to receive(:term_for_np).and_return(true, false)
+    allow(termination_event).to receive(:is_cancel?).and_return(true)
+    allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+  end
+
+  subject do
+    EnrollmentAction::Termination.new(termination_event, nil)
+  end
+
+  it "should terminate policy with correct date" do
+    expect(subject.persist).to be_truthy
+    expect(policy.reload.policy_end).to eq (term_date - 1.day)
+  end
+end
+
 describe EnrollmentAction::Termination, "given a valid enrollment" do
   let(:amqp_connection) { double }
   let(:event_xml) { double }
@@ -192,6 +226,11 @@ describe EnrollmentAction::Termination, "given a valid enrollment" do
 
   it "sets member start" do
     expect(action_publish_helper).to receive(:set_member_starts).with({1 => enrollee.coverage_start})
+    subject.publish
+  end
+
+  it "sets member end" do
+    expect(action_publish_helper).to receive(:set_member_end_date).with({1 => enrollee.coverage_end})
     subject.publish
   end
 
