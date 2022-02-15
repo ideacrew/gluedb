@@ -325,7 +325,7 @@ class Policy
     s_rex = Regexp.new(Regexp.escape(clean_str), true)
     {
       "$or" => [
-        {"eg_id" => s_rex},
+        {"hbx_enrollment_ids" => s_rex},
         {"id" => s_rex.source},
         {"enrollees.m_id" => s_rex}
       ]
