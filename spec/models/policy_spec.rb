@@ -380,8 +380,8 @@ describe Policy, :dbclean => :after_each do
       expect(search_hash).to include("$or")
     end
 
-    it "should be matching on enrollment group id" do
-      expect(params_hash_array.any? { |hash| hash['eg_id'] == /1234/i }).to be_true
+    it "should be matching on hbx enrollment ids" do
+      expect(params_hash_array.any? { |hash| hash['hbx_enrollment_ids'] == /1234/i }).to be_true
     end
 
     it "should be matching on policy id" do
