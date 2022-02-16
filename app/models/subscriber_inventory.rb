@@ -37,7 +37,7 @@ class SubscriberInventory
     if filters.has_key?(:year)
       filter_criteria[:year] = filters[:year]
     end
-    return nil if filter_criteria.empty?
+    return [] if filter_criteria.empty?
 
     Rails.cache.fetch("plan-ids-#{filter_criteria[:hios_plan_id]}-#{filter_criteria[:year]}", expires_in: 24.hour) do
       plans = Plan.where(filter_criteria)
