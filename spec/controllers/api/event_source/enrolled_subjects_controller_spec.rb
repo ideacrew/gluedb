@@ -19,20 +19,20 @@ describe Api::EventSource::EnrolledSubjectsController do
     end
 
     describe "given no parameters" do
-      it "returns 422" do
+      it "returns 200" do
         get :index, {user_token: user_token}
-        expect(response).to have_http_status(422)
+        expect(response).to have_http_status(200)
       end
     end
 
     describe "given a valid hios_id and year, but no results" do
       let(:the_hios_id) { "A VALID HIOS ID" }
       let(:the_year) { "2015" }
+      let(:filters) { {hios_id: "A VALID HIOS ID", year: 2015} }
 
       before :each do
         allow(SubscriberInventory).to receive(:subscriber_ids_for).with(
-          the_hios_id,
-          the_year.to_i
+          filters
         ).and_return([])
       end
 
@@ -51,11 +51,11 @@ describe Api::EventSource::EnrolledSubjectsController do
       let(:the_hios_id) { "A VALID HIOS ID" }
       let(:the_year) { "2015" }
       let(:matching_subscriber_id) { "A SUBSCRIBER ID" }
+      let(:filters) { {hios_id: the_hios_id, year: the_year.to_i} }
 
       before :each do
         allow(SubscriberInventory).to receive(:subscriber_ids_for).with(
-          the_hios_id,
-          the_year.to_i
+          filters
         ).and_return([matching_subscriber_id])
       end
 

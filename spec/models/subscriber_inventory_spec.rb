@@ -10,8 +10,10 @@ describe SubscriberInventory do
       )
     end
 
+    let(:filters) { { hios_id: plan.hios_plan_id, year: 2015 }}
+
     it "has no results for #subscriber_ids_for" do
-      expect(SubscriberInventory.subscriber_ids_for(plan.hios_plan_id, 2015).to_a).to eq []
+      expect(SubscriberInventory.subscriber_ids_for(filters).to_a).to eq []
     end
   end
 
@@ -33,10 +35,11 @@ describe SubscriberInventory do
         :eg_id => "some eg id"
       })
     end
+    let(:filters) { { hios_id: plan.hios_plan_id[0..2], year: plan.year }}
 
     it "returns the subscriber" do
       policy
-      expect(SubscriberInventory.subscriber_ids_for(plan.hios_plan_id[0..2], plan.year).to_a).to eq ["subscriber_id"]
+      expect(SubscriberInventory.subscriber_ids_for(filters).to_a).to eq ["subscriber_id"]
     end
   end
 

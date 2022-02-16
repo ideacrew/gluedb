@@ -1,40 +1,31 @@
 module Api
   module EventSource
     class EnrolledSubjectsController < ApplicationController
-      # skip_before_filter :authenticate_user_from_token!
-      # skip_before_filter :authenticate_me!
-      # skip_before_filter :verify_authenticity_token
 
       def index
-        year_param = params[:year]
-        hios_param = params[:hios_id]
-        if year_param.blank? || hios_param.blank?
-          render :status => 422, :nothing => true
-        else
-          render :status => 200, :json => SubscriberInventory.subscriber_ids_for(hios_param, year_param.to_i)
-        end
+        render :status => 200, :json => SubscriberInventory.subscriber_ids_for(read_filter_params)
       end
 
       def show
-        member_id = params[:id]
+        member_id = params[:enrolled_subject].present? ?  params[:enrolled_subject][:id] : params[:id]
         person = Person.find_for_member_id(member_id)
         if person.blank?
-          render :status => 404, :nothing => true
+          render :status => 404, :json => {}
         else
-          render :status => 200, :json => SubscriberInventory.coverage_inventory_for(person, read_show_filter_params)
+          render :status => 200, :json => SubscriberInventory.coverage_inventory_for(person, read_filter_params)
         end
       end
 
-      def read_show_filter_params
+      def read_filter_params
         filter_parameters = Hash.new
-        year_param = params[:year]
         hios_param = params[:hios_id]
-        if !year_param.blank?
-          filter_parameters[:year] = year_param.to_i
-        end
-        if !hios_param.blank?
-          filter_parameters[:hios_id] = hios_param
-        end
+        year_param = params[:year]
+        start_time = params[:start_time]
+        end_time = params[:end_time]
+        filter_parameters.merge!(hios_id: hios_param) if hios_param.present?
+        filter_parameters.merge!(year: year_param.to_i) if year_param.present?
+        filter_parameters.merge!(start_time: start_time) if start_time.present?
+        filter_parameters.merge!(end_time: end_time) if end_time.present?
         filter_parameters
       end
     end
