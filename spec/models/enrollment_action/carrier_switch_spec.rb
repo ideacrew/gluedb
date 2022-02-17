@@ -69,6 +69,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set, bei
     allow(ExternalEvents::ExternalPolicy).to receive(:new).with(new_policy_cv, plan, false, market_from_payload: subject.action).and_return(policy_updater)
     allow(policy_updater).to receive(:persist).and_return(true)
     allow(subject.action).to receive(:existing_policy).and_return(false)
+    allow(subject).to receive(:select_termination_date).and_return(subscriber_end)
     allow(subject.action).to receive(:kind).and_return(action_event)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
@@ -83,13 +84,73 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set, bei
   end
 end
 
+describe EnrollmentAction::CarrierSwitch, "given an valid IVL enrollment, cancel event with subscriber start date in past" do
+  let(:member_primary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
+  let(:member_secondary) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 2) }
+  let(:member_new) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 3) }
+  let(:enrollee_primary) { instance_double(::Openhbx::Cv2::Enrollee, :member => member_primary) }
+  let(:enrollee_secondary) { instance_double(::Openhbx::Cv2::Enrollee, :member => member_secondary) }
+  let(:enrollee_new) { instance_double(::Openhbx::Cv2::Enrollee, :member => member_new) }
+  let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary])}
+  let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [enrollee_primary, enrollee_secondary, enrollee_new]) }
+  let(:plan) { instance_double(Plan, :id => 1) }
+  let(:carrier) { Carrier.create }
+  let(:policy) { FactoryGirl.create(:policy, hbx_enrollment_ids: [1], carrier: carrier) }
+  let(:start_date) { Date.new(Date.today.year) }
+  let(:term_date) { start_date + 1.month}
+  let(:primary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
+  let(:secondary_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
+  let(:new_db_record) { instance_double(ExternalEvents::ExternalMember, :persist => true) }
+
+  let(:action_event) { instance_double(
+      ::ExternalEvents::EnrollmentEventNotification,
+      :policy_cv => new_policy_cv,
+      :existing_plan => plan,
+      :all_member_ids => [1,2,3],
+      :hbx_enrollment_id => 3,
+      :subscriber_start => term_date,
+      :is_cobra? => false
+  ) }
+  let(:termination_event) { instance_double(
+      ::ExternalEvents::EnrollmentEventNotification,
+      :policy_cv => terminated_policy_cv,
+      :existing_policy => policy,
+      subscriber_start: term_date,
+      subscriber_end: term_date,
+      :all_member_ids => [1,2]
+  ) }
+  let(:policy_updater) { instance_double(ExternalEvents::ExternalPolicy) }
+
+  subject do
+    EnrollmentAction::CarrierSwitch.new(termination_event, action_event)
+  end
+
+  before :each do
+    policy.enrollees.update_all(coverage_start: start_date, coverage_end: nil)
+    allow(ExternalEvents::ExternalMember).to receive(:new).with(member_primary).and_return(primary_db_record)
+    allow(ExternalEvents::ExternalMember).to receive(:new).with(member_secondary).and_return(secondary_db_record)
+    allow(ExternalEvents::ExternalMember).to receive(:new).with(member_new).and_return(new_db_record)
+    allow(ExternalEvents::ExternalPolicy).to receive(:new).with(new_policy_cv, plan, false, market_from_payload: subject.action).and_return(policy_updater)
+    allow(policy_updater).to receive(:persist).and_return(true)
+    allow(subject.action).to receive(:existing_policy).and_return(false)
+    allow(subject.action).to receive(:kind).and_return(action_event)
+    allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+  end
+
+  it "should terminate policy with correct date" do
+    expect(subject.persist).to be_truthy
+    expect(policy.reload.policy_start).to eq start_date
+    expect(policy.reload.policy_end).to eq term_date - 1.day
+  end
+end
+
 describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for terminate, and a new enrollment, being published" do
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:termination_event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
-  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
-  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil, coverage_end: :one_month_ago) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil, coverage_end: :one_month_ago) }
 
   let(:plan) { instance_double(Plan, :id => 1) }
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
@@ -141,6 +202,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
     allow(termination_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
     allow(termination_publish_helper).to receive(:set_policy_id).with(1)
     allow(termination_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
+    allow(termination_publish_helper).to receive(:set_member_end_date).with({ 1 => :one_month_ago, 2 => :one_month_ago })
     allow(termination_publish_helper).to receive(:set_carrier_assigned_ids).with(enrollee_primary)
     allow(termination_publish_helper).to receive(:set_carrier_assigned_ids).with(enrollee_new)
     allow(subject).to receive(:publish_edi).with(amqp_connection, termination_helper_result_xml, termination_event.existing_policy.eg_id, termination_event.employer_hbx_id).and_return([true, {}])
@@ -165,6 +227,11 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
 
   it "sets member start dates" do
     expect(termination_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
+    subject.publish
+  end
+
+  it "sets member end dates" do
+    expect(termination_publish_helper).to receive(:set_member_end_date).with({ 1 => :one_month_ago, 2 => :one_month_ago })
     subject.publish
   end
 

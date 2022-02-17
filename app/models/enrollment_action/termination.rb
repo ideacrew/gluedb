@@ -18,7 +18,11 @@ module EnrollmentAction
           return false if policy_to_term.canceled?
         end
         existing_npt = policy_to_term.term_for_np
-        result = policy_to_term.terminate_as_of(termination.subscriber_end)
+        result =  if termination.is_cancel? && termination.subscriber_start != policy_to_term.policy_start
+                    policy_to_term.terminate_as_of(termination.subscriber_end - 1.day)
+                  else
+                    policy_to_term.terminate_as_of(termination.subscriber_end)
+                  end
         if termination.existing_policy.carrier.termination_cancels_renewal
           termination.renewal_policies_to_cancel.each do |pol|
             pol.cancel_via_hbx!
@@ -35,9 +39,11 @@ module EnrollmentAction
     def publish
       existing_policy = termination.existing_policy
       member_date_map = {}
+      member_end_date_map = {}
       action_helper = ActionPublishHelper.new(termination.event_xml)
       existing_policy.enrollees.each do |en|
         member_date_map[en.m_id] = en.coverage_start
+        member_end_date_map[en.m_id] = en.coverage_end
         if en.c_id.present? || en.cp_id.present?
           action_helper.set_carrier_assigned_ids(en)
         end
@@ -45,6 +51,7 @@ module EnrollmentAction
       action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
       action_helper.set_policy_id(existing_policy.eg_id)
       action_helper.set_member_starts(member_date_map)
+      action_helper.set_member_end_date(member_end_date_map)
       amqp_connection = termination.event_responder.connection
       publish_edi(amqp_connection, action_helper.to_xml, termination.hbx_enrollment_id, termination.employer_hbx_id)
     end
