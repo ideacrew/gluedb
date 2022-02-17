@@ -4,6 +4,7 @@ module PdfTemplates
 
     attribute :record_control_number, String # Glue policy id
     attribute :qhp_id, String # HIOS id without csr variant
+    attribute :rating_area, String #Policy Rating Area
     attribute :exchange_policy_id, String # Enrollment group id
     attribute :exchange_subscriber_id, String # Subscriber Hbx Member id
     attribute :issuer_policy_id, String  # Optional
@@ -19,6 +20,7 @@ module PdfTemplates
       [
         record_control_number,
         qhp_id,
+        rating_area,
         exchange_policy_id,
         exchange_subscriber_id,
         coverage_start,

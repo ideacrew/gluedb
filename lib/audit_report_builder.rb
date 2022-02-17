@@ -82,8 +82,8 @@ class AuditReportBuilder
             npt_policy = true
             puts "Found npt policy #{policy.id}"
           end
-
-          irs_input = Generators::Reports::IrsInputBuilder.new(policy, { notice_type: "new", npt_policy: npt_policy })
+          # It helps to generate h36 report. If needed h36 report then report_type value h36 needs to be replaced with h41_1095A
+          irs_input = Generators::Reports::IrsInputBuilder.new(policy, { notice_type: "new", npt_policy: npt_policy, report_type: 'h36' })
           irs_input.carrier_hash = @carriers
           irs_input.settings = @settings
           irs_input.process

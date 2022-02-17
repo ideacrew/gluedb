@@ -4,9 +4,9 @@ module Generators::Reports
   describe SbmiPolicyBuilder, :dbclean => :after_each do
 
     let(:plan)           { FactoryGirl.create(:plan) }
-    let(:calender_year)  { 2018 }
-    let(:coverage_start) { Date.new(calender_year, 1, 1) }
-    let(:coverage_end)   { Date.new(calender_year, 6, 30) }
+    let(:calendar_year)  { 2018 }
+    let(:coverage_start) { Date.new(calendar_year, 1, 1) }
+    let(:coverage_end)   { Date.new(calendar_year, 6, 30) }
 
     let(:primary) {
       person = FactoryGirl.create :person, dob: Date.new(1970, 5, 1), name_first: "John", name_last: "Roberts"

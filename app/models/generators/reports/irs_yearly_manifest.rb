@@ -80,7 +80,7 @@ module Generators::Reports
     def serialize_service_data(xml)
       xml['ns4'].ServiceSpecificData do |xml|
         xml.ReportPeriod do |xml|
-          xml['ns5'].Year notice_params[:calender_year]
+          xml['ns5'].Year notice_params[:calendar_year]
         end
         xml['ns4'].OriginalBatchID most_recent_original_transmission.batch_id.to_s
       end

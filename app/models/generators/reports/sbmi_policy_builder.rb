@@ -22,7 +22,8 @@ module Generators::Reports
     def append_policy_information
       sbmi_policy.record_control_number = policy.id
       sbmi_policy.qhp_id = policy.plan.hios_plan_id.split('-').first
-      sbmi_policy.exchange_policy_id = policy.eg_id 
+      sbmi_policy.rating_area = policy.rating_area
+      sbmi_policy.exchange_policy_id = policy.eg_id
       sbmi_policy.exchange_subscriber_id = policy.subscriber.m_id
       sbmi_policy.coverage_start = format_date(policy.policy_start)
       sbmi_policy.coverage_end = format_date(policy.policy_end)

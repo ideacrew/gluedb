@@ -48,7 +48,7 @@ class ExcelReportBuilder
             next if !policy.belong_to_authority_member?
             next if policy.subscriber.coverage_end.present? && (policy.subscriber.coverage_end < policy.subscriber.coverage_start)
 
-            irs_input = Generators::Reports::IrsInputBuilder.new(policy)
+            irs_input = Generators::Reports::IrsInputBuilder.new(policy, {report_type: 'h36'})
 
             irs_input.carrier_hash = @carriers
             irs_input.process
@@ -238,8 +238,8 @@ class ExcelReportBuilder
 
           # next unless kaiser_plans.include?(policy.plan_id)
           # next unless (policy.subscriber.coverage_end.present? && (policy.subscriber.coverage_end.end_of_month != policy.subscriber.coverage_end))
-
-          input_builder = Generators::Reports::IrsInputBuilder.new(policy, { notice_type: "new", npt_policy: @npt_policies.include?(policy.id.to_s) })
+          # It helps to generate h36 report. If needed h36 report then report_type value h36 needs to be replaced with h41_1095A
+          input_builder = Generators::Reports::IrsInputBuilder.new(policy, { notice_type: "new", npt_policy: @npt_policies.include?(policy.id.to_s), report_type: 'h36' })
           input_builder.carrier_hash = @carriers
           input_builder.settings = @settings
           input_builder.process

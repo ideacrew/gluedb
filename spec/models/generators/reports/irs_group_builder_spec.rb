@@ -6,7 +6,7 @@ module Generators::Reports
     subject { IrsGroupBuilder.new(family) }
 
     let(:months) { 3 }
-    let(:calender_month) { 1 }
+    let(:calendar_month) { 1 }
     let(:family) { double(households: households) }
     let(:households) { [household1, household2] }
     let(:household1) { double(tax_households: [double, double]) }
@@ -29,13 +29,13 @@ module Generators::Reports
     # end
 
     # context 'tax household coverage' do 
-    #   it 'should build coverage for the calender month' do 
+    #   it 'should build coverage for the calendar month' do
     #     allow(subject).to receive(:build_tax_member).and_return(mock_tax_member)
     #     allow(tax_household).to receive(:coverage_as_of).and_return( [])
 
-    #     coverage = subject.build_household_coverage(tax_household, calender_month)
+    #     coverage = subject.build_household_coverage(tax_household, calendar_month)
     #     expect(coverage).to be_kind_of(PdfTemplates::TaxHouseholdCoverage)
-    #     expect(coverage.calender_month).to eq(calender_month)
+    #     expect(coverage.calendar_month).to eq(calendar_month)
     #   end
     # end
 
