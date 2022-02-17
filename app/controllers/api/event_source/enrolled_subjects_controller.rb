@@ -10,7 +10,7 @@ module Api
         member_id = params[:enrolled_subject].present? ?  params[:enrolled_subject][:id] : params[:id]
         person = Person.find_for_member_id(member_id)
         if person.blank?
-          render :status => 404, :json => {}
+          render :status => 404, :nothing => true
         else
           render :status => 200, :json => SubscriberInventory.coverage_inventory_for(person, read_filter_params)
         end
