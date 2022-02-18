@@ -24,6 +24,10 @@ module ExternalEvents
       @total_source = other_policy_cv
     end
 
+    def subscriber_start(subscriber_start_date)
+      @subscriber_start_date = subscriber_start_date
+    end
+
     def extract_pre_amt_tot
       @pre_amt_tot_val ||= begin
                              p_enrollment = Maybe.new(@total_source).policy_enrollment.value
@@ -94,6 +98,12 @@ module ExternalEvents
       end
     end
 
+    def is_shop?
+      p_enrollment = Maybe.new(@policy_node).policy_enrollment.value
+      return false if p_enrollment.blank?
+      p_enrollment.shop_market
+    end
+
     def extract_rel_from_me(rel)
       simple_relationship = Maybe.new(rel).relationship_uri.strip.split("#").last.downcase.value
       case simple_relationship
@@ -142,7 +152,7 @@ module ExternalEvents
     def term_enrollee(policy, enrollee_node)
       member_id = extract_member_id(enrollee_node)
       enrollee = policy.enrollees.detect { |en| en.m_id == member_id }
-      if enrollee 
+      if enrollee
         if @dropped_member_ids.include?(member_id)
           enrollee.coverage_end = extract_enrollee_end(enrollee_node)
           enrollee.coverage_status = "inactive"
@@ -163,6 +173,15 @@ module ExternalEvents
 
     def persist
       pol = policy_to_update
+      unless is_shop?
+        if pol.multi_aptc? || extract_other_financials[:applied_aptc].present?
+          tot_res_amt = extract_tot_res_amt.to_f
+          pre_amt_tot = extract_pre_amt_tot.to_f
+          aptc_amt = extract_other_financials[:applied_aptc].present? ? extract_other_financials[:applied_aptc].to_f : "0.0"
+          pol.set_aptc_effective_on(@subscriber_start_date, aptc_amt, pre_amt_tot, tot_res_amt)
+          pol.save!
+        end
+      end
       pol.update_attributes!({
         :pre_amt_tot => extract_pre_amt_tot,
         :tot_res_amt => extract_tot_res_amt

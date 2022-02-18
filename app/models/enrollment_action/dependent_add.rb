@@ -45,6 +45,7 @@ module EnrollmentAction
             policy_to_change,
             action.policy_cv,
             added_dependents)
+        pol_updater.subscriber_start(action.subscriber_start)
         pol_updater.persist
         true
       end

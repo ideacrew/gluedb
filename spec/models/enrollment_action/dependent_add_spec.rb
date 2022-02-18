@@ -45,7 +45,8 @@ describe EnrollmentAction::DependentAdd, "given a qualified enrollment set, bein
     :policy_cv => new_policy_cv,
     :existing_plan => plan,
     :all_member_ids => [1,2,3],
-    :hbx_enrollment_id => 3
+    :hbx_enrollment_id => 3,
+    :subscriber_start => Date.new(2022)
     ) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -69,6 +70,7 @@ describe EnrollmentAction::DependentAdd, "given a qualified enrollment set, bein
     allow(policy).to receive(:save!).and_return(true)
     allow(ExternalEvents::ExternalPolicyMemberAdd).to receive(:new).with(policy, new_policy_cv, [3]).and_return(policy_updater)
     allow(policy_updater).to receive(:persist).and_return(true)
+    allow(policy_updater).to receive(:subscriber_start).with(Date.new(2022)).and_return(true)
     allow(subject).to receive(:same_carrier_renewal_candidates).with(dependent_add_event).and_return([active_policy])
     allow(dependent_add_event).to receive(:dep_add_or_drop_to_renewal_policy?).with(active_policy, policy).and_return(false)
   end
@@ -409,6 +411,249 @@ describe "given renewal event, dependent adding to IVL renewal policy", :dbclean
       expect(Policy.where(hbx_enrollment_ids: dependent_add_event.hbx_enrollment_id).count).to eq 1
 
       expect_any_instance_of(EnrollmentAction::ActionPublishHelper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#auto_renew")
+      subject.publish
+    end
+  end
+end
+
+describe "given dependent add policy cv with aptc change, should create aptc credits and update premium", :dbclean => :after_each do
+  let(:amqp_connection) { double }
+  let(:event_xml) { double }
+  let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
+  let(:eg_id) { '1' }
+  let(:carrier_id) { '2' }
+  let(:kind) { 'individual' }
+
+  let(:new_applied_aptc_amount) { 200.0 }
+  let(:new_premium_total_amount) { 300.0 }
+  let(:new_total_responsible_amount) { 100.0 }
+
+  let(:old_applied_aptc_amount) { 50.0 }
+  let(:old_premium_total_amount) { 100.0 }
+  let(:old_total_responsible_amount) { 50.0 }
+  
+  let(:carrier) { Carrier.create }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
+  let!(:primary) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let!(:dep) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:prim_coverage_start) { Date.today.beginning_of_year }
+  let(:dep_coverage_start) { Date.today.beginning_of_year + 1.month }
+  let(:active_enrollee1) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: Date.today.beginning_of_year, coverage_end: '', :c_id => nil, :cp_id => nil)}
+  let(:active_enrollee2) { Enrollee.new(m_id: dep.authority_member.hbx_member_id, rel_code: 'child', coverage_start: Date.today.beginning_of_month, coverage_end: '', :c_id => nil, :cp_id => nil)}
+  let!(:active_policy) {
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, hbx_enrollment_ids: ["123"], carrier_id: carrier_id, plan: active_plan, carrier: carrier, coverage_start: Date.today.beginning_of_month, coverage_end: nil, kind: kind)
+    policy.update_attributes(enrollees: [active_enrollee1],
+                             pre_amt_tot: old_premium_total_amount,
+                             tot_res_amt: old_total_responsible_amount,
+                             applied_aptc: old_applied_aptc_amount,
+                             hbx_enrollment_ids: ["123"])
+    policy.save
+    policy
+  }
+
+  let(:dependent_add_xml) { <<-EVENTXML
+   <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+   <header>
+     <hbx_id>29035</hbx_id>
+     <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+   </header>
+   <event>
+     <body>
+       <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+         <affected_members>
+           <affected_member>
+             <member>
+               <id><id>1</id></id>
+             </member>
+             <benefit>
+               <premium_amount>465.13</premium_amount>
+               <begin_date>20190101</begin_date>
+             </benefit>
+           </affected_member>
+         </affected_members>
+         <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+           <policy>
+             <id>
+               <id>1234</id>
+             </id>
+           <enrollees>
+             <enrollee>
+               <member>
+                 <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+               </member>
+               <is_subscriber>true</is_subscriber>
+               <benefit>
+                 <premium_amount>111.11</premium_amount>
+                 <begin_date>#{dep_coverage_start.strftime("%Y%m%d")}</begin_date>
+               </benefit>
+             </enrollee>
+             <enrollee>
+               <member>
+                 <id><id>#{dep.authority_member.hbx_member_id}</id></id>
+               </member>
+               <is_subscriber>false</is_subscriber>
+               <benefit>
+                 <premium_amount>111.11</premium_amount>
+                 <begin_date>#{dep_coverage_start.strftime("%Y%m%d")}</begin_date>
+               </benefit>
+             </enrollee>
+
+           </enrollees>
+           <enrollment>
+            <plan>
+               <id>
+                  <id>#{active_plan.hios_plan_id}</id>
+               </id>
+               <name>BluePreferred PPO Standard Platinum $0</name>
+               <active_year>#{active_plan.year}</active_year>
+               <is_dental_only>false</is_dental_only>
+               <carrier>
+                 <id>
+                   <id>#{carrier.hbx_carrier_id}</id>
+                 </id>
+                 <name>CareFirst</name>
+               </carrier>
+               <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+               <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+               <ehb_percent>99.64</ehb_percent>
+             </plan>
+           <individual_market>
+             <assistance_effective_date>#{dep_coverage_start.strftime("%Y%m%d")}</assistance_effective_date>
+             <applied_aptc_amount>#{new_applied_aptc_amount}</applied_aptc_amount>
+           </individual_market>
+           <premium_total_amount>#{new_premium_total_amount}</premium_total_amount>
+           <total_responsible_amount>#{new_total_responsible_amount}</total_responsible_amount>
+           </enrollment>
+           </policy>
+         </enrollment>
+         </enrollment_event_body>
+     </body>
+   </event>
+ </enrollment_event>
+  EVENTXML
+  }
+  let(:termination_xml) { <<-EVENTXML
+   <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+   <header>
+     <hbx_id>29035</hbx_id>
+     <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+   </header>
+   <event>
+     <body>
+       <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+         <affected_members>
+           <affected_member>
+             <member>
+               <id><id>1</id></id>
+             </member>
+             <benefit>
+               <premium_amount>465.13</premium_amount>
+               <begin_date>20190101</begin_date>
+             </benefit>
+           </affected_member>
+         </affected_members>
+         <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+           <policy>
+             <id>
+               <id>123</id>
+             </id>
+           <enrollees>
+             <enrollee>
+               <member>
+                 <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+               </member>
+               <is_subscriber>true</is_subscriber>
+               <benefit>
+                 <premium_amount>111.11</premium_amount>
+                 <begin_date>#{Date.today.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+                 <end_date>#{Date.today.beginning_of_year.strftime("%Y%m%d")}</end_date>
+               </benefit>
+             </enrollee>
+
+           </enrollees>
+           <enrollment>
+            <plan>
+               <id>
+                  <id>#{active_plan.hios_plan_id}</id>
+               </id>
+               <name>BluePreferred PPO Standard Platinum $0</name>
+               <active_year>#{active_plan.year}</active_year>
+               <is_dental_only>false</is_dental_only>
+               <carrier>
+                 <id>
+                   <id>#{carrier.hbx_carrier_id}</id>
+                 </id>
+                 <name>CareFirst</name>
+               </carrier>
+               <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+               <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+               <ehb_percent>99.64</ehb_percent>
+             </plan>
+           <individual_market>
+             <assistance_effective_date>#{Date.today.beginning_of_year.strftime("%Y%m%d")}</assistance_effective_date>
+             <applied_aptc_amount>#{old_applied_aptc_amount}</applied_aptc_amount>
+           </individual_market>
+           <premium_total_amount>#{old_premium_total_amount}</premium_total_amount>
+           <total_responsible_amount>#{old_total_responsible_amount}</total_responsible_amount>
+           </enrollment>
+           </policy>
+         </enrollment>
+         </enrollment_event_body>
+     </body>
+   </event>
+ </enrollment_event>
+  EVENTXML
+  }
+  let(:m_tag) { double('m_tag') }
+  let(:t_stamp) { double('t_stamp') }
+  let(:headers) { double('headers') }
+  let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
+  let :termination_event do
+    ::ExternalEvents::EnrollmentEventNotification.new event_responder, m_tag, t_stamp, termination_xml, headers
+  end
+  let :dependent_add_event do
+    ::ExternalEvents::EnrollmentEventNotification.new event_responder, m_tag, t_stamp, dependent_add_xml, headers
+  end
+  subject do
+    EnrollmentAction::DependentAdd.new(termination_event, dependent_add_event)
+  end
+
+  let(:connection) { double }
+  let(:event_broadcaster) do
+    instance_double(Amqp::EventBroadcaster)
+  end
+
+  context "#qualifies #persist #publish" do
+    before do
+      allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(event_broadcaster)
+      allow(event_broadcaster).to receive(:broadcast)
+    end
+
+    it "creates aptc credits and updates premium" do
+      expect(EnrollmentAction::DependentAdd.qualifies?([termination_event, dependent_add_event])).to be_truthy
+      expect(active_policy.tot_res_amt.to_f).to eq old_total_responsible_amount
+      expect(active_policy.pre_amt_tot.to_f).to eq old_premium_total_amount
+      expect(active_policy.applied_aptc.to_f).to eq old_applied_aptc_amount
+
+      expect(subject.persist).to be_truthy
+      active_policy.reload
+      expect(Policy.where(hbx_enrollment_ids: dependent_add_event.hbx_enrollment_id).count).to eq 1
+
+      # APTC and premiums updated
+      expect(active_policy.aptc_credits.count).to eq 2
+      expect(active_policy.tot_res_amt.to_f).to eq new_total_responsible_amount
+      expect(active_policy.pre_amt_tot.to_f).to eq new_premium_total_amount
+      expect(active_policy.applied_aptc.to_f).to eq new_applied_aptc_amount
+
+      expect_any_instance_of(EnrollmentAction::ActionPublishHelper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#change_member_add")
       subject.publish
     end
   end
