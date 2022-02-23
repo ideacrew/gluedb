@@ -7,7 +7,9 @@ module Generators
     def initialize(person, plan_ids = nil)
       @person = person
       if plan_ids
-        @policies = person.policies.where({"plan_id" => {"$in" => plan_ids}})
+        @policies = Policy.where({:enrollees => {"$elemMatch" => {:rel_code => "self",
+                                                                  :m_id => person.authority_member_id}},
+                                  :plan_id => {"$in" => plan_ids}})
       else
         @policies = person.policies
       end

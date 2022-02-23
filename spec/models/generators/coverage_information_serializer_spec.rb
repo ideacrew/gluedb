@@ -25,7 +25,7 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
     person
   }
 
-  let!(:policy) {
+  let!(:policy_1) {
     policy = FactoryGirl.create :policy, plan_id: plan.id, coverage_start: coverage_start, coverage_end: coverage_end
     policy.enrollees[0].m_id = primary.authority_member.hbx_member_id
     policy.enrollees[0].coverage_end = nil
@@ -37,18 +37,37 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
     policy
   }
 
-  subject { Generators::CoverageInformationSerializer.new(primary) }
+  let!(:policy_2) {
+    policy = FactoryGirl.create :policy, plan_id: plan.id, coverage_start: coverage_start, coverage_end: coverage_end
+    policy.enrollees[0].m_id = child.authority_member.hbx_member_id
+    policy.enrollees[0].coverage_end = nil
+    policy.enrollees[1].coverage_start = Date.new(calender_year, 6, 1)
+    policy.enrollees[1].coverage_end = nil;
+    policy.save
+    policy
+  }
 
-  it 'should build coverage information hash' do
+
+  it 'should build coverage information hash for primary as a subscriber pilicies' do
+    subject  = Generators::CoverageInformationSerializer.new(primary, [plan.id])
     result = subject.process
 
+    expect(result[0][:policy_id]).to eq policy_1._id.to_s
     expect(result[0][:coverage_start]).to eq coverage_start.strftime('%Y-%m-%d')
     expect(result[0][:coverage_end]).to eq coverage_end.strftime('%Y-%m-%d')
     expect(result[0][:coverage_kind]).to eq 'individual'
-    expect(result[0][:last_maintenance_time]).to eq policy.updated_at.strftime("%H%M%S%L")
+    expect(result[0][:last_maintenance_time]).to eq policy_1.updated_at.strftime("%H%M%S%L")
     expect(result[0][:enrollees].count).to eq 2
     expect(result[0][:enrollees][0][:segments].count).to eq 2
     expect(result[0][:enrollees][1][:segments].count).to eq 1
     expect(result[0][:enrollees][0][:addresses]).to be_present
+  end
+
+  it 'should build coverage information hash for only child as a subscriber policies' do
+    subject  = Generators::CoverageInformationSerializer.new(child, [plan.id])
+    result = subject.process
+
+    expect(result.count).to eq 1
+    expect(result[0][:policy_id]).to eq policy_2._id.to_s
   end
 end
