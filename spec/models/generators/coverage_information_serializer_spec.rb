@@ -41,8 +41,6 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
     policy = FactoryGirl.create :policy, plan_id: plan.id, coverage_start: coverage_start, coverage_end: coverage_end
     policy.enrollees[0].m_id = child.authority_member.hbx_member_id
     policy.enrollees[0].coverage_end = nil
-    policy.enrollees[1].coverage_start = Date.new(calender_year, 6, 1)
-    policy.enrollees[1].coverage_end = nil;
     policy.save
     policy
   }
@@ -64,13 +62,5 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
     expect(result[0][:enrollees][0][:segments][0][:total_premium_amount]).to eq 666.66
     expect(result[0][:enrollees][0][:segments][1][:total_premium_amount]).to eq 1333.32
     expect(result[0][:enrollees][0][:segments][0][:aptc_amount]).to eq 3.33
-  end
-
-  it 'should build coverage information hash for only child as a subscriber policies' do
-    subject  = Generators::CoverageInformationSerializer.new(child, [plan.id])
-    result = subject.process
-
-    expect(result.count).to eq 1
-    expect(result[0][:policy_id]).to eq policy_2._id.to_s
   end
 end
