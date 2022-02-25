@@ -7,8 +7,9 @@ module Generators
     def initialize(person, plan_ids = nil)
       @person = person
       if plan_ids
-        @policies = Policy.where({:enrollees => {"$elemMatch" => {:rel_code => "self",
-                                                                  :m_id => person.authority_member_id}},
+        @policies = Policy.where({:enrollees => {"$elemMatch" =>
+                                                   {:rel_code => "self",
+                                                    :m_id => person.try(:authority_member).try(:hbx_member_id)}},
                                   :plan_id => {"$in" => plan_ids}})
       else
         @policies = person.policies
@@ -133,7 +134,7 @@ module Generators
           total_responsible_amount = if aptc_credit.present?
                                        aptc_credit.tot_res_amt.to_f
                                      else
-                                       as_dollars((total_premium_amount - aptc_amount)).to_f
+                                       as_dollars(total_premium_amount - aptc_amount).to_f
                                      end
 
           params.merge!({
