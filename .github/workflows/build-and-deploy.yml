@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "me_carrier_boarding"
+      - "glue_reporting_changes"
   pull_request:
     branches:
       - "me_carrier_boarding"
