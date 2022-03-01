@@ -34,7 +34,7 @@ describe RemovePolicyEndDate, dbclean: :after_each do
       subject.remove_end_dates(policy)
       subject.change_aasm_state(policy)
       expect(policy.aasm_state).to eq ENV['aasm_state']
-      expect(policy.term_for_np).to eq falseg
+      expect(policy.term_for_np).to eq false
     end
   end
 end
