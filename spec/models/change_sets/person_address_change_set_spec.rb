@@ -4,8 +4,7 @@ describe ChangeSets::PersonAddressChangeSet do
   let(:address_update_result) { true }
 
   describe "with an address to wipe" do
-    let(:initial_address) { instance_double("::Address", :address_type => "home") }
-    let(:person) { instance_double("::Person", :save => address_update_result, addresses: [initial_address]) }
+    let(:person) { instance_double("::Person", :save => address_update_result) }
     let(:person_resource) { instance_double("::RemoteResources::IndividualResource", :addresses => [], :hbx_member_id => hbx_member_id) }
     let(:policies_to_notify) { [policy_to_notify] }
     let(:policy_to_notify) { instance_double("Policy", :eg_id => policy_hbx_id, :active_member_ids => hbx_member_ids, :is_shop? => true) }
@@ -52,8 +51,7 @@ describe ChangeSets::PersonAddressChangeSet do
   end
 
   describe "with an updated address" do
-    let(:initial_address) { instance_double("::Address", :address_type => "home") }
-    let(:person) { instance_double("::Person", :save => address_update_result, addresses: [initial_address]) }
+    let(:person) { instance_double("::Person", :save => address_update_result) }
     let(:person_resource) { instance_double("::RemoteResources::IndividualResource", :addresses => [updated_address_resource], :hbx_member_id => hbx_member_id) }
     let(:updated_address_resource) { double(:to_hash => {:address_type => address_kind}, :address_type => address_kind) }
     let(:policies_to_notify) { [policy_to_notify] }
@@ -81,14 +79,13 @@ describe ChangeSets::PersonAddressChangeSet do
       ).and_return(identity_change_transmitter)
       allow(Address).to receive(:new).with({:address_type => address_kind}).and_return(new_address)
       allow(person).to receive(:set_address).with(new_address)
-      allow(initial_address).to receive(:same_location?).with(new_address).and_return(false)
     end
 
     describe "updating a home address" do
       let(:address_kind) { "home" }
-      let(:identity_change_transmitter) { instance_double(::ChangeSets::IdentityChangeTransmitter, :publish => nil) }
-      let(:affected_member) { instance_double(::BusinessProcesses::AffectedMember) }
-      let(:cv_change_reason) { "urn:openhbx:terms:v1:enrollment#change_member_address" }
+    let(:identity_change_transmitter) { instance_double(::ChangeSets::IdentityChangeTransmitter, :publish => nil) }
+    let(:affected_member) { instance_double(::BusinessProcesses::AffectedMember) }
+    let(:cv_change_reason) { "urn:openhbx:terms:v1:enrollment#change_member_address" }
 
       describe "with an invalid new address" do
         let(:address_update_result) { false }
@@ -229,125 +226,3 @@ describe ChangeSets::PersonAddressChangeSet do
   end
 end
 
-describe ChangeSets::PersonAddressChangeSet, "given:
-- a person with no mailing address, but a home address
-- a new mailing address that matches the home address
-" do
-  let(:home_address) do
-    Address.new(
-     address_type: "home"
-    )
-  end
-  let(:address_kind) { "mailing" }
-  let(:hbx_member_id) { "some random member id wahtever" }
-  let(:policies_to_notify) { [policy_to_notify] }
-  let(:policy_to_notify) { double }
-  let(:person) do
-    Person.new(
-      addresses: [home_address]
-    )
-  end
-  let(:person_resource) { instance_double("::RemoteResources::IndividualResource", :addresses => [updated_address_resource], :hbx_member_id => hbx_member_id) }
-  let(:updated_address_resource) { double(:to_hash => {:address_type => address_kind}, :address_type => address_kind) }
-
-  subject { ChangeSets::PersonAddressChangeSet.new("mailing") }
-
-  before :each do
-    allow(person).to receive(:save).and_return(true)
-  end
-
-  it "should update the person" do
-    expect(subject.perform_update(person, person_resource, policies_to_notify)).to eq true
-  end
-
-  it "should not send out policy notifications" do
-    expect(::ChangeSets::IdentityChangeTransmitter).not_to receive(:new)
-    subject.perform_update(person, person_resource, policies_to_notify)
-  end
-end
-
-describe ChangeSets::PersonAddressChangeSet, "given:
-- a person with a home and mailing address that are the same
-- a request to delete the mailing address
-" do
-  let(:mailing_address) do
-    Address.new(
-      address_type: "mailing"
-    )
-  end
-
-  let(:home_address) do
-    Address.new(
-      address_type: "home"
-    )
-  end
-  let(:address_kind) { "mailing" }
-  let(:hbx_member_id) { "some random member id wahtever" }
-  let(:policies_to_notify) { [policy_to_notify] }
-  let(:policy_to_notify) { double }
-  let(:person) do
-    Person.new(
-      addresses: [home_address, mailing_address]
-    )
-  end
-  let(:person_resource) { instance_double("::RemoteResources::IndividualResource", :addresses => [], :hbx_member_id => hbx_member_id) }
-
-  subject { ChangeSets::PersonAddressChangeSet.new("mailing") }
-
-  before :each do
-    allow(person).to receive(:save).and_return(true)
-  end
-
-  it "should update the person" do
-    expect(subject.perform_update(person, person_resource, policies_to_notify)).to eq true
-  end
-
-  it "should not send out policy notifications" do
-    expect(::ChangeSets::IdentityChangeTransmitter).not_to receive(:new)
-    subject.perform_update(person, person_resource, policies_to_notify)
-  end
-end
-
-describe ChangeSets::PersonAddressChangeSet, "given:
-- a person with a home and mailing address that are NOT the same
-- a request to change only the county FIPS code on the mailing address
-" do
-  let(:mailing_address) do
-    Address.new(
-      address_type: "mailing",
-      location_county_code: "001234"
-    )
-  end
-
-  let(:home_address) do
-    Address.new(
-      address_type: "home"
-    )
-  end
-  let(:address_kind) { "mailing" }
-  let(:hbx_member_id) { "some random member id wahtever" }
-  let(:policies_to_notify) { [policy_to_notify] }
-  let(:policy_to_notify) { double }
-  let(:person) do
-    Person.new(
-      addresses: [home_address, mailing_address]
-    )
-  end
-  let(:person_resource) { instance_double("::RemoteResources::IndividualResource", :addresses => [updated_address_resource], :hbx_member_id => hbx_member_id) }
-  let(:updated_address_resource) { double(:to_hash => {:address_type => address_kind}, :address_type => address_kind) }
-
-  subject { ChangeSets::PersonAddressChangeSet.new("mailing") }
-
-  before :each do
-    allow(person).to receive(:save).and_return(true)
-  end
-
-  it "should update the person" do
-    expect(subject.perform_update(person, person_resource, policies_to_notify)).to eq true
-  end
-
-  it "should not send out policy notifications" do
-    expect(::ChangeSets::IdentityChangeTransmitter).not_to receive(:new)
-    subject.perform_update(person, person_resource, policies_to_notify)
-  end
-end
