@@ -104,9 +104,14 @@ module Generators::Reports
 
     def append_financial_information(financial_dates)
       aptc_credit = @policy.aptc_record_on(financial_dates[0])
-      total_premium = aptc_credit.present? ? aptc_credit.pre_amt_tot.to_f.round(2) : calculate_total_premium(financial_dates[0])
-      applied_aptc = aptc_credit.present? ? aptc_credit.aptc.to_f.round(2) : @policy.applied_aptc.to_f.round(2)
-      responsible_amount = aptc_credit.present? ? aptc_credit.tot_res_amt.to_f.round(2) : (total_premium - applied_aptc)
+      total_premium = aptc_credit.present? ? aptc_credit.pre_amt_tot.to_f : calculate_total_premium(financial_dates[0]).to_f
+      applied_aptc =  if aptc_credit.present?
+                        aptc_credit.aptc.to_f
+                      else
+                        ehb_amount = as_dollars(total_premium * @policy.plan.ehb)
+                        @policy.applied_aptc.to_f > ehb_amount.to_f ? ehb_amount : @policy.applied_aptc.to_f
+                      end
+      responsible_amount = aptc_credit.present? ? aptc_credit.tot_res_amt.to_f : as_dollars(total_premium - applied_aptc).to_f
 
       financial_info = PdfTemplates::FinancialInformation.new({
         financial_effective_start_date: format_date(financial_dates[0]),
@@ -153,10 +158,10 @@ module Generators::Reports
         enrollee_coverage_start = enrollee.coverage_start
         enrollee_coverage_end = enrollee.coverage_end.blank? ? @policy.policy_start.end_of_year : enrollee.coverage_end
         if (enrollee_coverage_start..enrollee_coverage_end).cover?(date)
-          premium_amount += enrollee.premium_amount.to_f.round(2)
+          premium_amount += as_dollars(enrollee.premium_amount)
         end
       end
-      premium_amount
+      as_dollars(premium_amount)
     end
 
     def mid_month_start_prorated_amount(mid_month_start_date, total_premium, applied_aptc)
