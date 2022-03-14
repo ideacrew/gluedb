@@ -16,7 +16,6 @@ module EnrollmentAction
     # TODO: Terminate members
     def persist
       policy_to_change = termination.existing_policy
-      binding.pry
       @dep_drop_from_renewal = policy_to_change.carrier.renewal_dependent_drop_transmitted_as_renewal && action.dep_add_or_drop_to_renewal_policy?(renewal_candidate, policy_to_change)
       if @dep_drop_from_renewal
         return false if check_already_exists

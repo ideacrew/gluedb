@@ -47,7 +47,7 @@ describe EnrollmentAction::DependentDrop, "given a qualified enrollment set, bei
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [member_primary, member_secondary, member_drop])}
   let(:new_policy_cv) { instance_double(Openhbx::Cv2::Policy, :enrollees => [member_primary, member_secondary]) }
   let(:plan) { instance_double(Plan, :id => 1) }
-  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2,3], carrier: carrier) }
+  let(:policy) { instance_double(Policy, :hbx_enrollment_ids => [1,2,3], carrier: carrier, policy_start: Date.new(2022)) }
   let(:active_policy) { instance_double(Policy) }
 
   let(:dependent_drop_event) { instance_double(
@@ -56,12 +56,14 @@ describe EnrollmentAction::DependentDrop, "given a qualified enrollment set, bei
     :existing_plan => plan,
     :all_member_ids => [1,2],
     :hbx_enrollment_id => 1,
-    :subscriber_start => Date.new(2022)
+    :subscriber_start => Date.new(2022),
+    :subscriber_end => Date.new(2022)
     ) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     :policy_cv => terminated_policy_cv,
     :existing_policy => policy,
+    :subscriber_end => Date.new(2022),
     :all_member_ids => [1,2,3]
     ) }
 
@@ -78,6 +80,7 @@ describe EnrollmentAction::DependentDrop, "given a qualified enrollment set, bei
     allow(policy_updater).to receive(:use_totals_from).with(new_policy_cv)
     allow(policy_updater).to receive(:persist).and_return(true)
     allow(policy_updater).to receive(:subscriber_start).with(Date.new(2022)).and_return(true)
+    allow(policy_updater).to receive(:member_drop_date).with(Date.new(2022)).and_return(true)
     allow(subject).to receive(:same_carrier_renewal_candidates).with(dependent_drop_event).and_return([active_policy])
     allow(dependent_drop_event).to receive(:dep_add_or_drop_to_renewal_policy?).with(active_policy, policy).and_return(false)
   end
@@ -98,11 +101,11 @@ describe EnrollmentAction::DependentDrop, "given a qualified enrollment set, bei
   let(:termination_event_xml) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
-  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
-  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:enrollee_primary) { double(:m_id => 1, :coverage_start => :one_month_ago, coverage_end: :one_month_ago, :c_id => nil, :cp_id => nil) }
+  let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :coverage_end => :one_month_ago, :c_id => nil, :cp_id => nil) }
   let(:carrier) { instance_double(Carrier, :renewal_dependent_drop_transmitted_as_renewal => true) }
   let(:plan) { instance_double(Plan, :id => 1, ) }
-  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, carrier: carrier) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, carrier: carrier, policy_start: Date.new(2022)) }
   let(:active_policy) { instance_double(Policy) }
 
   let(:dependent_drop_event) { instance_double(
@@ -134,6 +137,7 @@ describe EnrollmentAction::DependentDrop, "given a qualified enrollment set, bei
     allow(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#change_member_terminate")
     allow(action_publish_helper).to receive(:set_policy_id).with(1).and_return(true)
     allow(action_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
+    allow(action_publish_helper).to receive(:set_member_end_date).with({ 1 => :one_month_ago, 2 => :one_month_ago })
     allow(action_publish_helper).to receive(:filter_affected_members).with([3]).and_return(true)
     allow(action_publish_helper).to receive(:replace_premium_totals).with(event_xml)
     allow(action_publish_helper).to receive(:keep_member_ends).with([3])
@@ -154,6 +158,11 @@ describe EnrollmentAction::DependentDrop, "given a qualified enrollment set, bei
 
   it "sets member start dates" do
     expect(action_publish_helper).to receive(:set_member_starts).with({ 1 => :one_month_ago, 2 => :one_month_ago })
+    subject.publish
+  end
+
+  it "sets member end dates" do
+    expect(action_publish_helper).to receive(:set_member_end_date).with({ 1 => :one_month_ago, 2 => :one_month_ago })
     subject.publish
   end
 
@@ -411,7 +420,6 @@ describe "given renewal event, dependent drop from IVL renewal policy", :dbclean
 
   context "#qualifies #persist #publish" do
     before do
-      binding.pry
       allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(event_broadcaster)
       allow(event_broadcaster).to receive(:broadcast)
     end
@@ -430,7 +438,7 @@ describe "given renewal event, dependent drop from IVL renewal policy", :dbclean
   end
 end
 
-describe "given dependent add policy cv with aptc change, should create aptc credits and update premium", :dbclean => :after_each do
+describe "given prospective dependent drop", :dbclean => :after_each do
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
@@ -657,24 +665,21 @@ describe "given dependent add policy cv with aptc change, should create aptc cre
 
   context "#qualifies #persist #publish" do
     before do
-      binding.pry
-      active_policy
-      binding.pry
       allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(event_broadcaster)
       allow(event_broadcaster).to receive(:broadcast)
     end
 
     it "should terminate dependent with correct end date" do
-      binding.pry
       expect(EnrollmentAction::DependentDrop.qualifies?([termination_event, event_after_dependent_drop])).to be_truthy
+
+      expect(Policy.all.last.enrollees.where(m_id: active_enrollee2.m_id).last.coverage_end).to eq nil
 
       expect(subject.persist).to be_truthy
       active_policy.reload
       expect(Policy.where(hbx_enrollment_ids: event_after_dependent_drop.hbx_enrollment_id).count).to eq 1
 
-      binding.irb
-      # APTC and premiums updated
-
+      # Should terminate enrollee with correct end date
+      expect(Policy.all.last.enrollees.where(m_id: active_enrollee2.m_id).last.coverage_end).to eq dep_coverage_drop_date - 1.day
 
       expect_any_instance_of(EnrollmentAction::ActionPublishHelper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#change_member_terminate")
       subject.publish
