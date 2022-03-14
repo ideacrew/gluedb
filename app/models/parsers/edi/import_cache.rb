@@ -16,6 +16,7 @@ module Parsers
       end
 
       def lookup_plan(h_id, year)
+        return nil unless @plan_cache.has_key?(year)
         @plan_cache[year][h_id]
       end
 
