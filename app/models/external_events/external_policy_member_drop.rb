@@ -28,6 +28,10 @@ module ExternalEvents
       @subscriber_start_date = subscriber_start_date
     end
 
+    def member_drop_date(member_end_date)
+      @member_end_date = member_end_date
+    end
+
     def extract_pre_amt_tot
       @pre_amt_tot_val ||= begin
                              p_enrollment = Maybe.new(@total_source).policy_enrollment.value
@@ -154,7 +158,7 @@ module ExternalEvents
       enrollee = policy.enrollees.detect { |en| en.m_id == member_id }
       if enrollee
         if @dropped_member_ids.include?(member_id)
-          enrollee.coverage_end = extract_enrollee_end(enrollee_node)
+          enrollee.coverage_end = @member_end_date
           enrollee.coverage_status = "inactive"
           enrollee.employment_status_code = "terminated"
         end
