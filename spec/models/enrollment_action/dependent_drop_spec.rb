@@ -105,7 +105,7 @@ describe EnrollmentAction::DependentDrop, "given a qualified enrollment set, bei
   let(:enrollee_new) { double(:m_id => 2, :coverage_start => :one_month_ago, :coverage_end => :one_month_ago, :c_id => nil, :cp_id => nil) }
   let(:carrier) { instance_double(Carrier, :renewal_dependent_drop_transmitted_as_renewal => true) }
   let(:plan) { instance_double(Plan, :id => 1, ) }
-  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, carrier: carrier, policy_start: Date.new(2022)) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, carrier: carrier, policy_start: Date.new(2022), reload: true) }
   let(:active_policy) { instance_double(Policy) }
 
   let(:dependent_drop_event) { instance_double(

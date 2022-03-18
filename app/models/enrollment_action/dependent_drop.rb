@@ -54,6 +54,7 @@ module EnrollmentAction
     def publish
       amqp_connection = termination.event_responder.connection
       existing_policy = termination.existing_policy
+      existing_policy.reload
       if @dep_drop_from_renewal
         action_helper = ActionPublishHelper.new(action.event_xml)
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#auto_renew")
