@@ -175,6 +175,16 @@ module ExternalEvents
                          end
     end
 
+    def build_aptc_credits(pol)
+      unless is_shop?
+        tot_res_amt = extract_tot_res_amt.to_f
+        pre_amt_tot = extract_pre_amt_tot.to_f
+        aptc_amt = extract_other_financials[:applied_aptc].present? ? extract_other_financials[:applied_aptc].to_f : "0.0"
+        pol.set_aptc_effective_on(@subscriber_start_date, aptc_amt, pre_amt_tot, tot_res_amt)
+        pol.save!
+      end
+    end
+
     def persist
       pol = policy_to_update
       unless is_shop?
@@ -195,6 +205,9 @@ module ExternalEvents
       @policy_node.enrollees.each do |en|
         term_enrollee(pol, en)
       end
+
+      build_aptc_credits(pol)
+
       unless all_terminations_exempt?(pol, @policy_node)
         Observers::PolicyUpdated.notify(pol)
       end

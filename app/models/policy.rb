@@ -629,16 +629,27 @@ class Policy
       end
     else
       aptc_record = self.aptc_record_on(aptc_date)
+      return unless aptc_record
       if aptc_record.start_on == aptc_date
+        # update matching aptc credits
         aptc_record.update_attributes(
           pre_amt_tot: pre_total_amount,
           aptc: aptc_amount,
-          tot_res_amt: remaining_owed_by_consumer
+          tot_res_amt: remaining_owed_by_consumer,
+          end_on: coverage_period_end
         )
+        # end any future aptc credits
+        self.aptc_credits.select { |credit| credit.start_on > aptc_date && credit.end_on != credit.start_on }.each do |end_aptc|
+          aptc_record.update_attributes(
+            end_on: end_aptc.start_on
+          )
+        end
       else
+        # end current aptc credits
         aptc_record.update_attributes(
           end_on: (aptc_date - 1.day)
         )
+        # create next aptc credits
         self.aptc_credits << AptcCredit.new(
           start_on: aptc_date,
           end_on: coverage_period_end,
@@ -646,6 +657,12 @@ class Policy
           aptc: aptc_amount,
           tot_res_amt: remaining_owed_by_consumer
         )
+        # end any future aptc credits
+        self.aptc_credits.select { |credit| credit.start_on > aptc_date && credit.end_on != credit.start_on}.each do |end_aptc|
+          aptc_record.update_attributes(
+            end_on: end_aptc.start_on
+          )
+        end
       end
     end
     self.pre_amt_tot = pre_total_amount
@@ -824,7 +841,8 @@ class Policy
   end
 
   def latest_aptc_record
-    aptc_credits.sort_by { |aptc_rec| aptc_rec.start_on }.last
+    latest_aptc_credit = aptc_credits.select { |aptc| aptc.start_on != aptc.end_on }.sort_by { |aptc_rec| aptc_rec.start_on }.last
+    latest_aptc_credit.present? ? latest_aptc_credit : aptc_credits.sort_by { |aptc_rec| aptc_rec.start_on }.last
   end
 
   def aptc_record_on(date)
