@@ -13,8 +13,8 @@ describe ExternalEvents::ExternalPolicy, "given:
   let(:plan_cv) { instance_double(Openhbx::Cv2::PlanLink, :alias_ids => alias_ids) }
   let!(:policy_enrollment) { instance_double(Openhbx::Cv2::PolicyEnrollment, :rating_area => rating_area, :plan => plan_cv, :shop_market => shop_market) }
   let(:policy_cv) { instance_double(Openhbx::Cv2::Policy, :policy_enrollment => policy_enrollment, :enrollees =>[enrollees1, enrollees2]) }
-  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => []) }
-  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship]) }
+  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => [], tobacco_use_value: nil) }
+  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship], tobacco_use_value: nil) }
   let(:relationship) do
     instance_double(Openhbx::Cv2::PersonRelationship,
       subject_individual: dependent_xml_id,
@@ -184,11 +184,11 @@ describe ExternalEvents::ExternalPolicy, "with a parsed market value param in th
   let(:responsible_party_node) { instance_double(::Openhbx::Cv2::ResponsibleParty) }
   let!(:policy_enrollment) { instance_double(Openhbx::Cv2::PolicyEnrollment) }
   let(:enrollees1) { instance_double(Openhbx::Cv2::Enrollee, subscriber?: true, member: member1)}
-  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => []) }
+  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => [], tobacco_use_value: nil) }
   let(:subscriber_xml_id) { "urn:whaTEVER#subscriber_id" }
   let(:dependent_xml_id) { "urn:whaTEVER#dependent_id" }
   let(:enrollees2) { instance_double(Openhbx::Cv2::Enrollee, subscriber?: false, member: member2)}
-  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship]) }
+  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship], tobacco_use_value: nil) }
   let(:relationship) do
     instance_double(Openhbx::Cv2::PersonRelationship,
       subject_individual: dependent_xml_id,
@@ -260,6 +260,118 @@ describe ExternalEvents::ExternalPolicy, "with a parsed market value param in th
     end
 end
 
+context "Given a new IVL policy CV with tobacco usage", :dbclean => :after_each do
+  let(:eg_id) { '1' }
+  let(:carrier_id) { '1' }
+  let(:carrier) { Carrier.create }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
+  let!(:primary) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:coverage_start) { Date.today.beginning_of_year }
+  let(:applied_aptc_amount) { 200.0 }
+  let(:premium_total_amount) { 300.0 }
+  let(:total_responsible_amount) { 100.0 }
+
+  let(:source_event_xml) { <<-EVENTXML
+   <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+   <header>
+     <hbx_id>29035</hbx_id>
+     <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+   </header>
+   <event>
+     <body>
+       <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+         <affected_members>
+           <affected_member>
+             <member>
+               <id><id>1</id></id>
+             </member>
+             <benefit>
+               <premium_amount>465.13</premium_amount>
+               <begin_date>#{coverage_start.strftime("%Y%m%d")}</begin_date>
+             </benefit>
+           </affected_member>
+         </affected_members>
+         <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+           <policy>
+             <id>
+               <id>#{eg_id}</id>
+             </id>
+           <enrollees>
+             <enrollee>
+               <member>
+                 <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+                  <person_health>
+                    <is_tobacco_user>true</is_tobacco_user>
+                  </person_health>
+               </member>
+               <is_subscriber>true</is_subscriber>
+               <benefit>
+                 <premium_amount>111.11</premium_amount>
+                 <begin_date>#{coverage_start.strftime("%Y%m%d")}</begin_date>
+               </benefit>
+             </enrollee>
+           </enrollees>
+           <enrollment>
+           <plan>
+             <id>
+               <id>#{active_plan.hios_plan_id}</id>
+             </id>
+             <name>BluePreferred PPO Standard Platinum $0</name>
+             <active_year>#{active_plan.year}</active_year>
+             <is_dental_only>false</is_dental_only>
+             <carrier>
+               <id>
+                 <id>#{carrier.hbx_carrier_id}</id>
+               </id>
+               <name>CareFirst</name>
+             </carrier>
+             <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+             <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+             <ehb_percent>99.64</ehb_percent>
+           </plan>
+           <individual_market>
+             <assistance_effective_date>#{coverage_start.strftime("%Y%m%d")}</assistance_effective_date>
+             <applied_aptc_amount>#{applied_aptc_amount}</applied_aptc_amount>
+           </individual_market>
+           <premium_total_amount>#{premium_total_amount}</premium_total_amount>
+           <total_responsible_amount>#{total_responsible_amount}</total_responsible_amount>
+           </enrollment>
+           </policy>
+         </enrollment>
+         </enrollment_event_body>
+     </body>
+   </event>
+ </enrollment_event>
+  EVENTXML
+  }
+  let(:m_tag) { double('m_tag') }
+  let(:t_stamp) { double('t_stamp') }
+  let(:headers) { double('headers') }
+  let(:responder) { instance_double('::ExternalEvents::EventResponder') }
+  let :action do
+    ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, source_event_xml, headers
+  end
+
+  subject { ExternalEvents::ExternalPolicy.new(action.policy_cv, action.existing_plan) }
+
+  it "persist tobacco status on enrollee" do
+    expect(Policy.where(:hbx_enrollment_ids => eg_id).count).to eq 0
+    subject.persist
+
+    # new policy
+    policy = Policy.where(:hbx_enrollment_ids => eg_id)
+    expect(policy.count).to eq 1
+    expect(policy.first.enrollees.count).to eq 1
+
+    # tobacco use value on enrollees
+    expect(policy.first.enrollees.first.tobacco_use).to eq "Y"
+  end
+end
+
 describe ExternalEvents::ExternalPolicy, "with reinstated policy cv", dbclean: :after_each  do
   let(:policy_cv) { instance_double(Openhbx::Cv2::Policy, :policy_enrollment => policy_enrollment, :previous_policy_id => '1', :enrollees =>[enrollees1, enrollees2]) }
   let!(:plan) {FactoryGirl.create(:plan, carrier_id:'01') }
@@ -267,11 +379,11 @@ describe ExternalEvents::ExternalPolicy, "with reinstated policy cv", dbclean: :
 
   let!(:policy_enrollment) { instance_double(Openhbx::Cv2::PolicyEnrollment) }
   let(:enrollees1) { instance_double(Openhbx::Cv2::Enrollee, subscriber?: true, member: member1)}
-  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => []) }
+  let(:member1) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => subscriber_xml_id, :person_relationships => [], tobacco_use_value: nil) }
   let(:subscriber_xml_id) { "urn:whaTEVER#subscriber_id" }
   let(:dependent_xml_id) { "urn:whaTEVER#dependent_id" }
   let(:enrollees2) { instance_double(Openhbx::Cv2::Enrollee, subscriber?: false, member: member2)}
-  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship]) }
+  let(:member2) { instance_double(Openhbx::Cv2::EnrolleeMember, :id => dependent_xml_id, :person_relationships => [relationship], tobacco_use_value: nil) }
   let(:relationship) do
     instance_double(Openhbx::Cv2::PersonRelationship,
                     subject_individual: dependent_xml_id,
