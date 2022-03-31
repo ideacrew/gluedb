@@ -240,7 +240,7 @@ describe EnrollmentAction::Termination, "given a valid enrollment" do
   end
 end
 
-describe "Given IVL Policy CV with dependent drop", :dbclean => :after_each do
+describe "Given IVL Policy CV with term", :dbclean => :after_each do
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
