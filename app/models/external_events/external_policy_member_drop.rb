@@ -28,6 +28,10 @@ module ExternalEvents
       @subscriber_start_date = subscriber_start_date
     end
 
+    def member_drop_date(member_end_date)
+      @member_end_date = member_end_date
+    end
+
     def extract_pre_amt_tot
       @pre_amt_tot_val ||= begin
                              p_enrollment = Maybe.new(@total_source).policy_enrollment.value
@@ -154,7 +158,7 @@ module ExternalEvents
       enrollee = policy.enrollees.detect { |en| en.m_id == member_id }
       if enrollee
         if @dropped_member_ids.include?(member_id)
-          enrollee.coverage_end = extract_enrollee_end(enrollee_node)
+          enrollee.coverage_end = @member_end_date
           enrollee.coverage_status = "inactive"
           enrollee.employment_status_code = "terminated"
         end
@@ -169,6 +173,16 @@ module ExternalEvents
                            sub_node = extract_subscriber(@policy_node)
                            extract_member_id(sub_node)
                          end
+    end
+
+    def build_aptc_credits(pol)
+      unless is_shop?
+        tot_res_amt = extract_tot_res_amt.to_f
+        pre_amt_tot = extract_pre_amt_tot.to_f
+        aptc_amt = extract_other_financials[:applied_aptc].present? ? extract_other_financials[:applied_aptc].to_f : "0.0"
+        pol.set_aptc_effective_on(@subscriber_start_date, aptc_amt, pre_amt_tot, tot_res_amt)
+        pol.save!
+      end
     end
 
     def persist
@@ -191,6 +205,9 @@ module ExternalEvents
       @policy_node.enrollees.each do |en|
         term_enrollee(pol, en)
       end
+
+      build_aptc_credits(pol)
+
       unless all_terminations_exempt?(pol, @policy_node)
         Observers::PolicyUpdated.notify(pol)
       end

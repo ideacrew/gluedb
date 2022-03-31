@@ -3,6 +3,7 @@ module EnrollmentAction
     extend PlanComparisonHelper
     extend DependentComparisonHelper
     include RenewalComparisonHelper
+    include TerminationDateHelper
 
     attr_accessor :dep_drop_from_renewal
 
@@ -36,6 +37,7 @@ module EnrollmentAction
         pol_updater = ExternalEvents::ExternalPolicyMemberDrop.new(policy_to_change, termination.policy_cv, dropped_dependents)
         pol_updater.use_totals_from(action.policy_cv)
         pol_updater.subscriber_start(action.subscriber_start)
+        pol_updater.member_drop_date(select_termination_date)
         pol_updater.persist
         true
       end
@@ -52,6 +54,7 @@ module EnrollmentAction
     def publish
       amqp_connection = termination.event_responder.connection
       existing_policy = termination.existing_policy
+      existing_policy.reload
       if @dep_drop_from_renewal
         action_helper = ActionPublishHelper.new(action.event_xml)
         action_helper.set_event_action("urn:openhbx:terms:v1:enrollment#auto_renew")
@@ -68,8 +71,10 @@ module EnrollmentAction
       else
         termination_helper = ActionPublishHelper.new(termination.event_xml)
         member_date_map = {}
+        member_end_date_map = {}
         existing_policy.enrollees.each do |en|
           member_date_map[en.m_id] = en.coverage_start
+          member_end_date_map[en.m_id] = en.coverage_end
           if en.c_id.present? || en.cp_id.present? 
             termination_helper.set_carrier_assigned_ids(en)
           end
@@ -77,6 +82,7 @@ module EnrollmentAction
         termination_helper.set_event_action("urn:openhbx:terms:v1:enrollment#change_member_terminate")
         termination_helper.set_policy_id(existing_policy.eg_id)
         termination_helper.set_member_starts(member_date_map)
+        termination_helper.set_member_end_date(member_end_date_map)
         termination_helper.filter_affected_members(dropped_dependents)
         termination_helper.replace_premium_totals(action.event_xml)
         termination_helper.keep_member_ends(dropped_dependents)

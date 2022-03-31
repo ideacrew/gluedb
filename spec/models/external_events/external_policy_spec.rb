@@ -145,6 +145,7 @@ describe ExternalEvents::ExternalPolicy, "given:
         allow(subject).to receive(:extract_enrollee_premium).with(enrollees2).and_return("100")
         allow(policy_cv).to receive(:responsible_party).and_return(responsible_party_node)
         allow(policy_cv).to receive(:previous_policy_id).and_return('')
+        allow(subject).to receive(:is_shop?).and_return(true)
         subject.instance_variable_set(:@plan,plan)
         allow(Policy).to receive(:create!).with({
           plan: plan,
@@ -230,6 +231,7 @@ describe ExternalEvents::ExternalPolicy, "with a parsed market value param in th
       allow(subject).to receive(:extract_enrollee_premium).with(enrollees2).and_return("100")
       allow(policy_cv).to receive(:responsible_party).and_return(responsible_party_node)
       allow(policy_cv).to receive(:previous_policy_id).and_return('')
+      allow(subject).to receive(:is_shop?).and_return(true)
       subject.instance_variable_set(:@plan,plan)
       allow(Policy).to receive(:create!).with({
         plan: plan,
@@ -423,6 +425,7 @@ describe ExternalEvents::ExternalPolicy, "with reinstated policy cv", dbclean: :
     allow(subject).to receive(:extract_enrollee_start).with(enrollees2).and_return(Date.today)
     allow(subject).to receive(:extract_enrollee_premium).with(enrollees2).and_return("100")
     allow(policy_cv).to receive(:responsible_party).and_return('')
+    allow(subject).to receive(:is_shop?).and_return(true)
     subject.instance_variable_set(:@plan,plan)
     allow(Policy).to receive(:create!).with({
       plan: plan,
@@ -459,5 +462,341 @@ describe ExternalEvents::ExternalPolicy, "with reinstated policy cv", dbclean: :
     subject.persist
     previous_policy.reload
     expect(previous_policy.term_for_np).to eq(false)
+  end
+end
+
+context "Given a new IVL policy CV with APTC", :dbclean => :after_each do
+  let(:eg_id) { '1' }
+  let(:carrier_id) { '1' }
+  let(:carrier) { Carrier.create }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
+  let!(:primary) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:coverage_start) { Date.today.beginning_of_year }
+  let(:applied_aptc_amount) { 200.0 }
+  let(:premium_total_amount) { 300.0 }
+  let(:total_responsible_amount) { 100.0 }
+
+  let(:source_event_xml) { <<-EVENTXML
+   <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+   <header>
+     <hbx_id>29035</hbx_id>
+     <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+   </header>
+   <event>
+     <body>
+       <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+         <affected_members>
+           <affected_member>
+             <member>
+               <id><id>1</id></id>
+             </member>
+             <benefit>
+               <premium_amount>465.13</premium_amount>
+               <begin_date>#{coverage_start.strftime("%Y%m%d")}</begin_date>
+             </benefit>
+           </affected_member>
+         </affected_members>
+         <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+           <policy>
+             <id>
+               <id>#{eg_id}</id>
+             </id>
+           <enrollees>
+             <enrollee>
+               <member>
+                 <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+               </member>
+               <is_subscriber>true</is_subscriber>
+               <benefit>
+                 <premium_amount>111.11</premium_amount>
+                 <begin_date>#{coverage_start.strftime("%Y%m%d")}</begin_date>
+               </benefit>
+             </enrollee>
+           </enrollees>
+           <enrollment>
+           <plan>
+             <id>
+               <id>#{active_plan.hios_plan_id}</id>
+             </id>
+             <name>BluePreferred PPO Standard Platinum $0</name>
+             <active_year>#{active_plan.year}</active_year>
+             <is_dental_only>false</is_dental_only>
+             <carrier>
+               <id>
+                 <id>#{carrier.hbx_carrier_id}</id>
+               </id>
+               <name>CareFirst</name>
+             </carrier>
+             <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+             <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+             <ehb_percent>99.64</ehb_percent>
+           </plan>
+           <individual_market>
+             <assistance_effective_date>#{coverage_start.strftime("%Y%m%d")}</assistance_effective_date>
+             <applied_aptc_amount>#{applied_aptc_amount}</applied_aptc_amount>
+           </individual_market>
+           <premium_total_amount>#{premium_total_amount}</premium_total_amount>
+           <total_responsible_amount>#{total_responsible_amount}</total_responsible_amount>
+           </enrollment>
+           </policy>
+         </enrollment>
+         </enrollment_event_body>
+     </body>
+   </event>
+ </enrollment_event>
+  EVENTXML
+  }
+  let(:m_tag) { double('m_tag') }
+  let(:t_stamp) { double('t_stamp') }
+  let(:headers) { double('headers') }
+  let(:responder) { instance_double('::ExternalEvents::EventResponder') }
+  let :action do
+    ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, source_event_xml, headers
+  end
+
+  subject { ExternalEvents::ExternalPolicy.new(action.policy_cv, action.existing_plan) }
+
+  it "creates new policy on # persist and creates APTC Credits table with APTC" do
+    expect(Policy.where(:hbx_enrollment_ids => eg_id).count).to eq 0
+    subject.persist
+
+    # new policy
+    policy = Policy.where(:hbx_enrollment_ids => eg_id)
+    expect(policy.count).to eq 1
+
+    # creates aptc credits
+    expect(policy.first.aptc_credits.count).to eq 1
+    aptc_credit = policy.first.aptc_credits.first
+    expect(aptc_credit.start_on).to eq coverage_start
+    expect(aptc_credit.end_on).to eq coverage_start.end_of_year
+    expect(aptc_credit.aptc).to eq applied_aptc_amount
+    expect(aptc_credit.pre_amt_tot).to eq premium_total_amount
+    expect(aptc_credit.tot_res_amt).to eq total_responsible_amount
+  end
+end
+
+context "Given a new IVL policy CV WITHOUT APTC", :dbclean => :after_each do
+  let(:eg_id) { '1' }
+  let(:carrier_id) { '1' }
+  let(:carrier) { Carrier.create }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
+  let!(:primary) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:coverage_start) { Date.today.beginning_of_year }
+  let(:applied_aptc_amount) { 200.0 }
+  let(:premium_total_amount) { 300.0 }
+  let(:total_responsible_amount) { 100.0 }
+
+  let(:source_event_xml) { <<-EVENTXML
+   <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+   <header>
+     <hbx_id>29035</hbx_id>
+     <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+   </header>
+   <event>
+     <body>
+       <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+         <affected_members>
+           <affected_member>
+             <member>
+               <id><id>1</id></id>
+             </member>
+             <benefit>
+               <premium_amount>465.13</premium_amount>
+               <begin_date>#{coverage_start.strftime("%Y%m%d")}</begin_date>
+             </benefit>
+           </affected_member>
+         </affected_members>
+         <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+           <policy>
+             <id>
+               <id>#{eg_id}</id>
+             </id>
+           <enrollees>
+             <enrollee>
+               <member>
+                 <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+               </member>
+               <is_subscriber>true</is_subscriber>
+               <benefit>
+                 <premium_amount>111.11</premium_amount>
+                 <begin_date>#{coverage_start.strftime("%Y%m%d")}</begin_date>
+               </benefit>
+             </enrollee>
+           </enrollees>
+           <enrollment>
+           <plan>
+             <id>
+               <id>#{active_plan.hios_plan_id}</id>
+             </id>
+             <name>BluePreferred PPO Standard Platinum $0</name>
+             <active_year>#{active_plan.year}</active_year>
+             <is_dental_only>false</is_dental_only>
+             <carrier>
+               <id>
+                 <id>#{carrier.hbx_carrier_id}</id>
+               </id>
+               <name>CareFirst</name>
+             </carrier>
+             <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+             <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+             <ehb_percent>99.64</ehb_percent>
+           </plan>
+           <premium_total_amount>#{premium_total_amount}</premium_total_amount>
+           <total_responsible_amount>#{total_responsible_amount}</total_responsible_amount>
+           </enrollment>
+           </policy>
+         </enrollment>
+         </enrollment_event_body>
+     </body>
+   </event>
+ </enrollment_event>
+  EVENTXML
+  }
+  let(:m_tag) { double('m_tag') }
+  let(:t_stamp) { double('t_stamp') }
+  let(:headers) { double('headers') }
+  let(:responder) { instance_double('::ExternalEvents::EventResponder') }
+  let :action do
+    ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, source_event_xml, headers
+  end
+
+  subject { ExternalEvents::ExternalPolicy.new(action.policy_cv, action.existing_plan) }
+
+  it "creates new policy on #persist and creates APTC Credits table without APTC" do
+    expect(Policy.where(:hbx_enrollment_ids => eg_id).count).to eq 0
+    subject.persist
+
+    # new policy
+    policy = Policy.where(:hbx_enrollment_ids => eg_id)
+    expect(policy.count).to eq 1
+
+    # creates aptc credits
+    expect(policy.first.aptc_credits.count).to eq 1
+    aptc_credit = policy.first.aptc_credits.first
+    expect(aptc_credit.start_on).to eq coverage_start
+    expect(aptc_credit.end_on).to eq coverage_start.end_of_year
+    expect(aptc_credit.aptc.to_f).to eq 0.0
+    expect(aptc_credit.pre_amt_tot).to eq premium_total_amount
+    expect(aptc_credit.tot_res_amt).to eq total_responsible_amount
+  end
+end
+
+context "Given a new SHOP policy CV", :dbclean => :after_each do
+  let(:eg_id) { '1' }
+  let(:carrier_id) { '1' }
+  let(:carrier) { Carrier.create }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
+  let!(:primary) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:coverage_start) { Date.today.beginning_of_year }
+  let(:applied_aptc_amount) { 200.0 }
+  let(:premium_total_amount) { 300.0 }
+  let(:total_responsible_amount) { 100.0 }
+
+  let(:source_event_xml) { <<-EVENTXML
+   <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+   <header>
+     <hbx_id>29035</hbx_id>
+     <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+   </header>
+   <event>
+     <body>
+       <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+         <affected_members>
+           <affected_member>
+             <member>
+               <id><id>1</id></id>
+             </member>
+             <benefit>
+               <premium_amount>465.13</premium_amount>
+               <begin_date>#{coverage_start.strftime("%Y%m%d")}</begin_date>
+             </benefit>
+           </affected_member>
+         </affected_members>
+         <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+           <policy>
+             <id>
+               <id>#{eg_id}</id>
+             </id>
+           <enrollees>
+             <enrollee>
+               <member>
+                 <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+               </member>
+               <is_subscriber>true</is_subscriber>
+               <benefit>
+                 <premium_amount>111.11</premium_amount>
+                 <begin_date>#{coverage_start.strftime("%Y%m%d")}</begin_date>
+               </benefit>
+             </enrollee>
+           </enrollees>
+           <enrollment>
+           <plan>
+             <id>
+               <id>#{active_plan.hios_plan_id}</id>
+             </id>
+             <name>BluePreferred PPO Standard Platinum $0</name>
+             <active_year>#{active_plan.year}</active_year>
+             <is_dental_only>false</is_dental_only>
+             <carrier>
+               <id>
+                 <id>#{carrier.hbx_carrier_id}</id>
+               </id>
+               <name>CareFirst</name>
+             </carrier>
+             <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+             <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+             <ehb_percent>99.64</ehb_percent>
+           </plan>
+            <shop_market>
+              <employer_link>
+                <id><id>urn:openhbx:terms:v1:employer:id##{employer_id}</id></id>
+              </employer_link>
+            </shop_market>
+           <premium_total_amount>#{premium_total_amount}</premium_total_amount>
+           <total_responsible_amount>#{total_responsible_amount}</total_responsible_amount>
+           </enrollment>
+           </policy>
+         </enrollment>
+         </enrollment_event_body>
+     </body>
+   </event>
+ </enrollment_event>
+  EVENTXML
+  }
+  let(:m_tag) { double('m_tag') }
+  let(:t_stamp) { double('t_stamp') }
+  let(:headers) { double('headers') }
+  let(:employer) { FactoryGirl.create(:employer)}
+  let(:employer_id) { employer.hbx_id }
+  let(:responder) { instance_double('::ExternalEvents::EventResponder') }
+  let :action do
+    ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, source_event_xml, headers
+  end
+
+  subject { ExternalEvents::ExternalPolicy.new(action.policy_cv, action.existing_plan) }
+
+  it "creates new policy on #persist WITHOUT APTC Credits table" do
+    expect(Policy.where(:hbx_enrollment_ids => eg_id).count).to eq 0
+    subject.persist
+
+    # new policy
+    policy = Policy.where(:hbx_enrollment_ids => eg_id)
+    expect(policy.count).to eq 1
+    expect(policy.first.is_shop?).to eq true
+
+    # creates aptc credits
+    expect(policy.first.aptc_credits.count).to eq 0
   end
 end
