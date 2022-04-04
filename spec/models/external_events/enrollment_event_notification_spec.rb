@@ -1944,3 +1944,92 @@ describe "#is_retro_renewal_policy?", :dbclean => :after_each do
     end
   end
 end
+
+describe ::ExternalEvents::EnrollmentEventNotification, "#tobacco_usage_hash" do
+  let(:m_tag) { double('m_tag') }
+  let(:t_stamp) { double('t_stamp') }
+  let(:headers) { double('headers') }
+
+  let(:source_event_xml) { <<-EVENTXML
+    <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+    <header>
+      <hbx_id>29035</hbx_id>
+      <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+    </header>
+    <event>
+      <body>
+        <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+          <affected_members>
+            <affected_member>
+              <member>
+                <id><id>1</id></id>
+              </member>
+              <benefit>
+                <premium_amount>465.13</premium_amount>
+                <begin_date>20190101</begin_date>
+              </benefit>
+            </affected_member>
+          </affected_members>
+          <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+            <policy>
+              <id>
+                <id>123</id>
+              </id>
+            <enrollees>
+              <enrollee>
+                <member>
+                  <id><id>1</id></id>
+                </member>
+                <is_subscriber>true</is_subscriber>
+                <benefit>
+                  <premium_amount>111.11</premium_amount>
+                  <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+                </benefit>
+              </enrollee>
+              <enrollee>
+                <member>
+                  <id><id>2</id></id>
+                  <person_health>
+                    <is_tobacco_user>false</is_tobacco_user>
+                  </person_health>
+                </member>
+                <is_subscriber>true</is_subscriber>
+                <benefit>
+                  <premium_amount>111.11</premium_amount>
+                  <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+                </benefit>
+              </enrollee>
+            </enrollees>
+            <enrollment>
+            <individual_market>
+              <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
+              <applied_aptc_amount>100.00</applied_aptc_amount>
+            </individual_market>
+            <premium_total_amount>56.78</premium_total_amount>
+            <total_responsible_amount>123.45</total_responsible_amount>
+            </enrollment>
+            </policy>
+          </enrollment>
+          </enrollment_event_body>
+      </body>
+    </event>
+  </enrollment_event>
+   EVENTXML
+   }
+
+  let(:responder) { instance_double('::ExternalEvents::EventResponder') }
+  let :subject do
+    ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, source_event_xml, headers
+  end
+
+  let(:expected_tobacco_usage_hash) do
+    {
+      "1" => nil,
+      "2" => 'N'
+    }
+  end
+
+  it "returns the tobacco_use_hash" do
+    expect(subject.tobacco_usage_hash).to eq expected_tobacco_usage_hash
+  end
+end

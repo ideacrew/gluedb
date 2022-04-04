@@ -167,7 +167,8 @@ module ExternalEvents
         :ben_stat => @cobra ? "cobra" : "active",
         :emp_stat => "active",
         :coverage_start => extract_enrollee_start(enrollee_node),
-        :pre_amt => extract_enrollee_premium(enrollee_node)
+        :pre_amt => extract_enrollee_premium(enrollee_node),
+        :tobacco_use => extract_tobacco_use(enrollee_node)
       })
       policy.save!
     end
@@ -187,7 +188,8 @@ module ExternalEvents
         :ben_stat => @cobra ? "cobra" : "active",
         :emp_stat => "active",
         :coverage_start => extract_enrollee_start(sub_node),
-        :pre_amt => extract_enrollee_premium(sub_node)
+        :pre_amt => extract_enrollee_premium(sub_node),
+        :tobacco_use => extract_tobacco_use(sub_node)
       })
       policy.save!
     end

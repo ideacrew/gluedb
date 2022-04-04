@@ -4,6 +4,7 @@
       <th>Member Name(s)</th>
       <th>Relationship</th>
       <th>Carrier's Member ID</th>
+      <th>Tobacco Status</th>
       <th>Coverage Begin - End</th>
       <th align="right">Premium</th>
     </tr>
@@ -14,6 +15,7 @@
         <td><%= link_to prepend_glyph_to_name(e.person.full_name), person_path(e.person) %></td>
 	      <td><%= relationship_code_to_human(e.rel_code) %></td>
 	      <td><%= e.carrier_member_id %></td>
+	      <td><%= e.tobacco_use %></td>
 	      <td><%= "#{format_date(e.coverage_start)}" %> - <%= "#{format_date(e.coverage_end)}" %></td>
 	      <td align="right"><%= number_to_currency(e.premium_amount) %></td>
 	    </tr>

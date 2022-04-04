@@ -113,7 +113,8 @@ module ExternalEvents
           :ben_stat => policy.is_cobra? ?  "cobra" : "active",
           :emp_stat => "active",
           :coverage_start => extract_enrollee_start(enrollee_node),
-          :pre_amt => extract_enrollee_premium(enrollee_node)
+          :pre_amt => extract_enrollee_premium(enrollee_node),
+          :tobacco_use => extract_tobacco_use(enrollee_node)
         })
       else
         enrollee = policy.enrollees.detect { |en| en.m_id == member_id }

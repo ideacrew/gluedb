@@ -544,6 +544,16 @@ module ExternalEvents
       pol.canceled? && pol.subscriber.coverage_start == subscriber_start
     end
 
+    def tobacco_usage_hash
+      tobacco_usage_hash = Hash.new
+      policy_cv.enrollees.each do |en|
+        member_id = Maybe.new(en.member).id.strip.split("#").last.value
+        tu_value = Maybe.new(en.member).tobacco_use_value.value
+        tobacco_usage_hash[member_id] = tu_value
+      end
+      tobacco_usage_hash
+    end
+
     private
 
     def initialize_clone(other)
