@@ -21,20 +21,20 @@
 	    </tr>
     <% end %>
   	<tr>
-  		<td colspan="4" align="right">Premium Subtotal</td>
+  		<td colspan="5" align="right">Premium Subtotal</td>
   		<td align="right"><%= number_to_currency(policy.pre_amt_tot) %></td>
   	</tr>
   	<tr>
 			<% if policy_market(policy) == "Individual" %>
-    		<td colspan="4" align="right">Less APTC</td>
+    		<td colspan="5" align="right">Less APTC</td>
     		<td align="right">(<%= number_to_currency(policy.applied_aptc) unless policy.applied_aptc.blank? %>)</td>
 			<% else %>
-    		<td colspan="4" align="right">Less Employer Contribution</td>
+    		<td colspan="5" align="right">Less Employer Contribution</td>
     		<td align="right">(<%= number_to_currency(policy.tot_emp_res_amt) %>)</td>
     	<% end %>
   	</tr>
   	<tr>
-  		<td colspan="4" align="right"><strong>Total Responsible Amount</strong></td>
+  		<td colspan="5" align="right"><strong>Total Responsible Amount</strong></td>
   		<td align="right"><strong><%= number_to_currency(policy.tot_res_amt) %></strong></td>
   	</tr>
   </tbody>
