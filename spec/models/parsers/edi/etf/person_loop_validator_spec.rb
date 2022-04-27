@@ -46,7 +46,8 @@ describe Parsers::Edi::PersonLoopValidator, "given a termination on an existing 
      )
   end
   let(:member_id) { "the member id" }
-  let(:enrollee) { instance_double(Enrollee, :coverage_start => coverage_start) }
+  let(:enrollee) { instance_double(Enrollee, :coverage_start => coverage_start, :coverage_end => enrollee_coverage_end) }
+  let(:enrollee_coverage_end) { nil }
   let(:coverage_start) { Date.new(2016,1,1) }
   let(:expiration_date) { Date.new(2016,12,31) }
   let(:coverage_year) { (coverage_start..expiration_date) }
@@ -91,8 +92,29 @@ describe Parsers::Edi::PersonLoopValidator, "given a termination on an existing 
       allow(policy).to receive(:coverage_year).and_return(coverage_year)
     end
 
-    it "notifies the listener of the invalid_termination_date" do
+    it "accepts the termination date" do
       expect(validator.validate(person_loop, listener, policy)).to be_truthy
+    end
+  end
+
+  context "with a termination date that is greater than the existing policy termination date" do
+    let(:enrollee_coverage_end) { Date.new(2016,6,30) }
+    let(:coverage_end) { "20160701" }
+
+    before :each do
+      allow(policy).to receive(:is_shop?).and_return(false)
+      allow(policy).to receive(:coverage_year).and_return(coverage_year)
+    end
+
+    it "notifies the listener of the invalid_termination_date" do
+      expect(listener).to receive(:termination_extends_coverage).with(
+        {
+          :coverage_end=>coverage_end,
+          :enrollee_end=>"20160630",
+          :member_id=>member_id
+        }
+      )
+      expect(validator.validate(person_loop, listener, policy)).not_to be_truthy
     end
   end
 end
@@ -130,12 +152,13 @@ describe Parsers::Edi::PersonLoopValidator, "given an inbound reinstatement" do
   let(:coverage_end) { "20161231" }
   let(:expiration_date) { Date.new(2016,12,31) }
   let(:coverage_year) { (coverage_start..expiration_date) }
-  let(:policy_loop) { instance_double(Parsers::Edi::Etf::PolicyLoop, action: :stop, coverage_end: coverage_end) }
+  let(:policy_loop) { instance_double(Parsers::Edi::Etf::PolicyLoop, action: :add, coverage_end: coverage_end) }
 
   let(:validator) { Parsers::Edi::PersonLoopValidator.new }
 
   before :each do
     allow(policy).to receive(:enrollee_for_member_id).with(member_id).and_return(enrollee)
+
   end
 
   it "is not valid because of being a reinstate" do
