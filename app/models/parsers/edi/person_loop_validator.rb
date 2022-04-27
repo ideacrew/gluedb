@@ -1,6 +1,31 @@
 module Parsers
   module Edi
     class PersonLoopValidator
+      def validate_ins_combinations(person_loop, listener)
+        valid = true
+        change_code = person_loop.change_code
+        case change_code
+        when "021"
+          valid = (person_loop.change_reason == "28")
+        when "030"
+          valid = (person_loop.change_reason == "XN")
+        when "024"
+          valid = true
+        when "025"
+          valid = (person_loop.change_reason == "41")
+        else
+          valid = false
+        end
+        unless valid
+          listener.invalid_ins_combination({
+            :member_id => person_loop.member_id,
+            :change_code => person_loop.change_code,
+            :change_reason => person_loop.change_reason
+          })
+        end
+        valid
+      end
+
       def validate(person_loop, listener, policy)
         valid = true
         carrier_member_id = person_loop.carrier_member_id
@@ -8,6 +33,8 @@ module Parsers
           listener.inbound_reinstate_blocked
           valid = false
         end
+        return false unless valid
+        return false unless validate_ins_combinations(person_loop, listener)
         if policy
           enrollee = policy.enrollee_for_member_id(person_loop.member_id)
           if enrollee.blank?
@@ -61,6 +88,16 @@ module Parsers
                        :member_id => person_loop.member_id
                      })
                      valid = false
+                   end
+                   if enrollee.coverage_end
+                     if enrollee.coverage_end < coverage_end_date
+                       listener.termination_extends_coverage({
+                         :coverage_end => policy_loop.coverage_end,
+                         :enrollee_end => enrollee.coverage_end.strftime("%Y%m%d"),
+                         :member_id => person_loop.member_id
+                       })
+                       valid = false
+                     end
                    end
                  end
                end
