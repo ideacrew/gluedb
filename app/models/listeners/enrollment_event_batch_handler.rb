@@ -30,7 +30,6 @@ module Listeners
                                            :event_time => event_time.to_i.to_s
                                        })
       end
-      channel.ack(delivery_info.delivery_tag, false)
     end
     def create_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
       EnrollmentEvents::Batch.create_batch_transaction_and_yield(parsed_event, body, m_headers, event_time) do |transaction|
@@ -49,6 +48,12 @@ module Listeners
         EnrollmentEvents::Batch.where(aasm_state: 'open').each do |batch|
           if batch.may_process?
             batch.process!
+            batch.reload
+            while !batch.ready_to_transmit?
+              sleep 0.01
+              batch.process!
+              batch.reload
+            end
             ::Amqp::EventBroadcaster.with_broadcaster do |b|
               b.broadcast(
                   { :headers => { batch_id: batch.id.to_s },
