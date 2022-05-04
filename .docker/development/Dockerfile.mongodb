@@ -1,0 +1,28 @@
+FROM --platform=linux/amd64 ubuntu:bionic
+
+CMD ["/bin/bash"]
+
+RUN groupadd -r mongodb && useradd -r -g mongodb mongodb
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates wget numactl gpg dirmngr gpg-agent && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir ~/.gnupg
+
+RUN echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf
+
+ENV MONGO_VERSION=2.6.12
+
+RUN set -x && wget -O mongo.tgz "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-$MONGO_VERSION.tgz" && tar -xvf mongo.tgz -C /usr/local --strip-components=1 && rm mongo.tgz
+
+RUN mkdir -p /data/db /data/configdb && chown -R mongodb:mongodb /data/db /data/configdb
+
+COPY .docker/development/db_setup.sh .
+COPY .docker/development/create_users.js .
+
+RUN chown mongodb:mongodb /db_setup.sh && chown mongodb:mongodb /create_users.js && chmod u+x /db_setup.sh
+
+EXPOSE 27017/tcp
+
+USER mongodb
+
+RUN ./db_setup.sh
