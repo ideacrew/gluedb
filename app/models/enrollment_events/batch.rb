@@ -82,5 +82,9 @@ module EnrollmentEvents
                                      event_time: event_time
                                  })
     end
+
+    def ready_to_transmit?
+      ("pending_transmission" == self.aasm_state.to_s)
+    end
   end
 end
