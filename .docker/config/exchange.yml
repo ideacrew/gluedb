@@ -1,0 +1,10 @@
+receiver_id: "<%= ENV['RECEIVER_ID'] || '000000001' %>"
+environment: "<%= ENV['ENV_NAME'] || 'dev'  %>"
+hbx_id: "<%= ENV['HBX_ID'] || 'hx0'  %>"
+invalid_argument_queue: "<%= ENV['HBX_ID'] || 'hx0' %>.errors.invalid_arguements"
+processing_failure_queue: "<%= ENV['HBX_ID'] || 'hx0' %>.errors.processing_failures"
+event_exchange: "<%= ENV['HBX_ID'] || 'hx0' %>.<%= ENV['ENV_NAME'] || 'dev' %>.e.topic.events"
+event_publish_exchange: "<%= ENV['HBX_ID'] || 'hx0' %>.<%= ENV['ENV_NAME'] || 'dev' %>.e.fanout.events"
+request_exchange: "<%= ENV['HBX_ID'] || 'hx0'%>.<%= ENV['ENV_NAME'] || 'dev' %>.e.direct.requests"
+amqp_uri: "amqp://<%= ENV['RABBMITMQ_USER'] || 'guest' %>.<%= ENV['RABBITMQ_PASSWORD'] || 'guest' %>@<%= ENV['ACAPI_BROKER_HOST'] || 'localhost' %>:<%= ENV['ACAPI_BROKER_PORT'] || '5672' %>"
+file_storage_uri: localhost
