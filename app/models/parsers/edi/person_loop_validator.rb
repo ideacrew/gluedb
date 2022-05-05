@@ -6,13 +6,27 @@ module Parsers
         change_code = person_loop.change_code
         case change_code
         when "021"
-          valid = (person_loop.change_reason == "28")
+          allowed_values = ["28", "41"]
+          valid = allowed_values.include?(person_loop.change_reason)
         when "030"
           valid = (person_loop.change_reason == "XN")
         when "024"
           valid = true
         when "025"
-          valid = (person_loop.change_reason == "41")
+          allowed_values = ["EC", "41"]
+          valid = allowed_values.include?(person_loop.change_reason)
+        when "001"
+          allowed_values = [
+            "01",
+            "02",
+            "05",
+            "29",
+            "31",
+            "32",
+            "33",
+            "EC"
+          ]
+          valid = allowed_values.include?(person_loop.change_reason)
         else
           valid = false
         end
