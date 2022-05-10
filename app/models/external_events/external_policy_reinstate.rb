@@ -72,6 +72,7 @@ module ExternalEvents
         enrollee.ben_stat = "active"
         enrollee.emp_stat = "active"
         enrollee.coverage_end = nil
+        enrollee.termed_by_carrier = false
         enrollee.save!
       end
       @existing_policy.save!
