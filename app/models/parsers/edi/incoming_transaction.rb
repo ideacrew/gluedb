@@ -51,6 +51,7 @@ module Parsers
 
             if(!@etf.is_shop? && policy_loop.action == :stop )
               enrollee.coverage_status = 'inactive'
+              enrollee.termed_by_carrier = true
               enrollee.coverage_end = policy_loop.coverage_end
               if enrollee.subscriber?
                 is_non_payment = person_loop.non_payment_change?
@@ -76,6 +77,7 @@ module Parsers
           end
         end
         save_val = @policy.save
+        _term_enrollee_on_subscriber_term if save_val && (is_policy_term || is_policy_cancel)
         unless exempt_from_notification?(@policy, is_policy_cancel, is_policy_term, old_npt_flag == is_non_payment)
           Observers::PolicyUpdated.notify(@policy)
         end
@@ -119,6 +121,34 @@ module Parsers
           end
         end
         save_val
+      end
+
+      def _term_enrollee_on_subscriber_term
+        # term members thats missing in the incoming edi term
+        # re-term invalid end date members
+        return unless @policy.policy_end.present?
+        dependents = @policy.enrollees.where(:rel_code.ne => 'self')
+        dependents.each do |enrollee|
+          if enrollee.coverage_end.present? # member with end dates
+            if enrollee.coverage_end > @policy.policy_end && enrollee.coverage_end != enrollee.coverage_start
+              if enrollee.coverage_start > @policy.policy_end
+                enrollee.coverage_end = enrollee.coverage_start
+              else
+                enrollee.coverage_end = @policy.policy_end
+              end
+              enrollee.coverage_status = 'inactive'
+              enrollee.termed_by_carrier = true
+            end
+          else # member without end dates
+            if enrollee.coverage_start > @policy.policy_end
+              enrollee.coverage_end = enrollee.coverage_start
+            else
+              enrollee.coverage_end = @policy.policy_end
+            end
+            enrollee.coverage_status = 'inactive'
+            enrollee.termed_by_carrier = true
+          end
+        end
       end
 
       def exempt_from_notification?(policy, is_cancel, is_term, npt_changed)
