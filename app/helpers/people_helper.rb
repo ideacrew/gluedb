@@ -28,7 +28,7 @@ module PeopleHelper
   def policy_status(policy)
     status = policy.aasm_state.capitalize
     if policy.term_for_np || policy.subscriber.termed_by_carrier
-      append_to_status = policy.term_for_np ? " (NPT)" : " (CT)"
+      append_to_status = policy.term_for_np ? " (NPT)" : " (CIT)"
       if policy.aasm_state == "terminated"
         status << append_to_status
       elsif policy.aasm_state == "canceled"
