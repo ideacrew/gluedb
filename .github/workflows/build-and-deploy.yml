@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "me_carrier_boarding"
+      - "181378527-reduce_mailing_address_thrashing"
   pull_request:
     branches:
       - "me_carrier_boarding"
