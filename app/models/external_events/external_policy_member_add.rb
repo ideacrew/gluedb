@@ -113,7 +113,8 @@ module ExternalEvents
           :ben_stat => policy.is_cobra? ?  "cobra" : "active",
           :emp_stat => "active",
           :coverage_start => extract_enrollee_start(enrollee_node),
-          :pre_amt => extract_enrollee_premium(enrollee_node)
+          :pre_amt => extract_enrollee_premium(enrollee_node),
+          :tobacco_use => extract_tobacco_use(enrollee_node)
         })
       else
         enrollee = policy.enrollees.detect { |en| en.m_id == member_id }
@@ -138,17 +139,18 @@ module ExternalEvents
       p_enrollment.shop_market
     end
 
+    def build_aptc_credits(pol)
+      unless is_shop?
+        tot_res_amt = extract_tot_res_amt.to_f
+        pre_amt_tot = extract_pre_amt_tot.to_f
+        aptc_amt = extract_other_financials[:applied_aptc].present? ? extract_other_financials[:applied_aptc].to_f : "0.0"
+        pol.set_aptc_effective_on(@subscriber_start_date, aptc_amt, pre_amt_tot, tot_res_amt)
+        pol.save!
+      end
+    end
+
     def persist
       pol = policy_to_update
-      unless is_shop?
-        if pol.multi_aptc? || extract_other_financials[:applied_aptc].present?
-          tot_res_amt = extract_tot_res_amt.to_f
-          pre_amt_tot = extract_pre_amt_tot.to_f
-          aptc_amt = extract_other_financials[:applied_aptc].present? ? extract_other_financials[:applied_aptc].to_f : "0.0"
-          pol.set_aptc_effective_on(@subscriber_start_date, aptc_amt, pre_amt_tot, tot_res_amt)
-          pol.save!
-        end
-      end
       pol.update_attributes!({
         :pre_amt_tot => extract_pre_amt_tot,
         :tot_res_amt => extract_tot_res_amt
@@ -157,6 +159,7 @@ module ExternalEvents
       @policy_node.enrollees.each do |en|
         build_enrollee(pol, en)
       end
+      build_aptc_credits(pol)
       Observers::PolicyUpdated.notify(pol)
       true
     end

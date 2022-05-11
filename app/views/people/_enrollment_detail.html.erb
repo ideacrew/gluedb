@@ -4,6 +4,7 @@
       <th>Member Name(s)</th>
       <th>Relationship</th>
       <th>Carrier's Member ID</th>
+      <th>Tobacco Status</th>
       <th>Coverage Begin - End</th>
       <th align="right">Premium</th>
     </tr>
@@ -14,25 +15,26 @@
         <td><%= link_to prepend_glyph_to_name(e.person.full_name), person_path(e.person) %></td>
 	      <td><%= relationship_code_to_human(e.rel_code) %></td>
 	      <td><%= e.carrier_member_id %></td>
+	      <td><%= e.tobacco_use %></td>
 	      <td><%= "#{format_date(e.coverage_start)}" %> - <%= "#{format_date(e.coverage_end)}" %></td>
 	      <td align="right"><%= number_to_currency(e.premium_amount) %></td>
 	    </tr>
     <% end %>
   	<tr>
-  		<td colspan="4" align="right">Premium Subtotal</td>
+  		<td colspan="5" align="right">Premium Subtotal</td>
   		<td align="right"><%= number_to_currency(policy.pre_amt_tot) %></td>
   	</tr>
   	<tr>
 			<% if policy_market(policy) == "Individual" %>
-    		<td colspan="4" align="right">Less APTC</td>
+    		<td colspan="5" align="right">Less APTC</td>
     		<td align="right">(<%= number_to_currency(policy.applied_aptc) unless policy.applied_aptc.blank? %>)</td>
 			<% else %>
-    		<td colspan="4" align="right">Less Employer Contribution</td>
+    		<td colspan="5" align="right">Less Employer Contribution</td>
     		<td align="right">(<%= number_to_currency(policy.tot_emp_res_amt) %>)</td>
     	<% end %>
   	</tr>
   	<tr>
-  		<td colspan="4" align="right"><strong>Total Responsible Amount</strong></td>
+  		<td colspan="5" align="right"><strong>Total Responsible Amount</strong></td>
   		<td align="right"><strong><%= number_to_currency(policy.tot_res_amt) %></strong></td>
   	</tr>
   </tbody>
