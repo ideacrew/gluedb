@@ -46,7 +46,8 @@ describe Parsers::Edi::PersonLoopValidator, "given a termination on an existing 
       :policy_loops => [policy_loop],
       :reinstate? => false,
       :change_code => "024",
-      :change_reason => nil
+      :change_reason => nil,
+      :subscriber? => true
      )
   end
 

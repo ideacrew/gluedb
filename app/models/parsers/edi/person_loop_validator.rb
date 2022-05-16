@@ -104,13 +104,15 @@ module Parsers
                      valid = false
                    end
                    if enrollee.coverage_end
-                     if enrollee.coverage_end < coverage_end_date
-                       listener.termination_extends_coverage({
-                         :coverage_end => policy_loop.coverage_end,
-                         :enrollee_end => enrollee.coverage_end.strftime("%Y%m%d"),
-                         :member_id => person_loop.member_id
-                       })
-                       valid = false
+                     if person_loop.subscriber?
+                       if enrollee.coverage_end < coverage_end_date
+                         listener.termination_extends_coverage({
+                           :coverage_end => policy_loop.coverage_end,
+                           :enrollee_end => enrollee.coverage_end.strftime("%Y%m%d"),
+                           :member_id => person_loop.member_id
+                         })
+                         valid = false
+                       end
                      end
                    end
                  end
