@@ -2,10 +2,9 @@ module EnrollmentAction
   # See if the entire enrollment action set can be made to match a single
   # scenario.
   #
-  # This is very rare and occurs currently only in the following cases:
-  # cases like that will be handled in future project
+  # This is very rare and occurs in the following cases like:
   # * "buy last year and cancel my renewal"
-  # * "add a dependent last year and cancel my renewal"
+  # * "add a dependent last year and cancel my renewal" - these will be handled in future project.
   class FullActionSetMatch
     def self.call(enrollments)
       check_match(enrollments)

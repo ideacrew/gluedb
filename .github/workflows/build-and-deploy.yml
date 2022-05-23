@@ -5,11 +5,9 @@ on:
   push:
     branches:
       - "me_carrier_boarding"
-      - "handle_retro_events"
   pull_request:
     branches:
       - "me_carrier_boarding"
-      - "handle_retro_events"
 
 concurrency:
   group: docker-${{ github.ref }}

@@ -26,7 +26,7 @@ module EnrollmentAction
 
     def self.check_for_full_action(chunk)
       selected_action = [
-        # placeholder for specific scenario that handles entire enrollment action set.
+        # placeholder for specific cases that handles entire enrollment action we have cases in future projects.
       ].detect { |kls| kls.qualifies?(chunk) }
       selected_action
     end

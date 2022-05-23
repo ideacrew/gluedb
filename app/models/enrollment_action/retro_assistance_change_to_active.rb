@@ -26,6 +26,7 @@ module EnrollmentAction
         action
       )
       policy_updater.persist
+      true
     end
 
     def publish

@@ -42,6 +42,7 @@ module EnrollmentAction
           added_dependents)
       pol_updater.subscriber_start(action.subscriber_start)
       pol_updater.persist
+      true
     end
 
     def publish

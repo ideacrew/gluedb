@@ -305,9 +305,10 @@ module ExternalEvents
       return false unless (enrollment_action == "urn:openhbx:terms:v1:enrollment#terminate_enrollment")
       return false unless subscriber_start.present?
       return false unless subscriber_start.year == Date.today.year # current year policy
-      last_term_event = ExternalEvents::EnrollmentEventNotification.new("", "", "", found_event.sort_by(&:created_at).last.hbx_enrollment_vocabulary, "")
+      processed_term_event = found_event.sort_by(&:created_at).last # check latest enrollemt term event eligible for retro reprocess
+      termination = ExternalEvents::EnrollmentEventNotification.new("", "", "", processed_term_event.hbx_enrollment_vocabulary, "")
       return false unless subscriber_end.present?
-      (existing_policy.present? && existing_policy.policy_end.nil? && subscriber_end < last_term_event.subscriber_end) # retro term for active policy
+      (existing_policy.present? && existing_policy.policy_end.nil? && subscriber_end < termination.subscriber_end) # retro term for active policy
     end
 
     def enrollment_action

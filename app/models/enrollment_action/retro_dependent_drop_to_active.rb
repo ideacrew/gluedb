@@ -26,6 +26,7 @@ module EnrollmentAction
       pol_updater.subscriber_start(action.subscriber_start)
       pol_updater.member_drop_date(select_termination_date)
       pol_updater.persist
+      true
     end
 
     def dropped_dependents
