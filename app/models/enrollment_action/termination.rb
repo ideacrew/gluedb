@@ -13,12 +13,9 @@ module EnrollmentAction
     def persist
       if termination.existing_policy
         policy_to_term = termination.existing_policy
-        policy_to_term.reload
         unless policy_to_term.is_shop?
-          # last span id should result in policy termination
-          return false if policy_to_term.hbx_enrollment_ids.sort.last.to_s != termination.hbx_enrollment_id.to_s
-          # reterm of policy should be handled by different action
-          return false if (policy_to_term.terminated? || policy_to_term.canceled?)
+          policy_to_term.reload
+          return false if policy_to_term.canceled?
         end
         existing_npt = policy_to_term.term_for_np
         result =  if termination.is_cancel? && termination.subscriber_start != policy_to_term.policy_start
@@ -34,10 +31,9 @@ module EnrollmentAction
         unless termination_event_exempt_from_notification?(policy_to_term, termination.subscriber_end, true, existing_npt)
           Observers::PolicyUpdated.notify(policy_to_term)
         end
-        true
-      else
-        false
+        return result
       end
+      true
     end
 
     def publish

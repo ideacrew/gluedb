@@ -35,13 +35,12 @@ describe EnrollmentAction::CarefirstTermination, "given a valid terminated enrol
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], carrier: carrier, reload: true, is_shop?: true) }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], carrier: carrier, is_shop?: true) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     is_cancel?: false,
     policy_cv: terminated_policy_cv,
     existing_policy: policy,
-    hbx_enrollment_id: 1,
     all_member_ids: [1,2]
     ) }
 
@@ -59,7 +58,7 @@ describe EnrollmentAction::CarefirstTermination, "given a valid terminated enrol
   end
 end
 
-describe EnrollmentAction::CarefirstTermination, "given an valid IVL enrollment, cancel event with subscriber start date in past", :dbclean => :after_each do
+describe EnrollmentAction::CarefirstTermination, "given an valid IVL enrollment, cancel event with subscriber start date in past" do
   let(:member) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
@@ -73,15 +72,12 @@ describe EnrollmentAction::CarefirstTermination, "given an valid IVL enrollment,
       existing_policy: policy,
       subscriber_start: term_date,
       subscriber_end: term_date,
-      hbx_enrollment_id: 1,
       all_member_ids: [1,2]
   ) }
 
   before :each do
-    policy.update_attributes(hbx_enrollment_ids: ['1'])
     policy.enrollees.update_all(coverage_start: start_date, coverage_end: nil)
     allow(policy).to receive(:term_for_np).and_return(true, false)
-    allow(policy).to receive(:is_shop?).and_return(false)
     allow(termination_event).to receive(:is_cancel?).and_return(true)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
@@ -109,7 +105,6 @@ describe EnrollmentAction::CarefirstTermination, "given a valid canceled enrollm
     is_cancel?: true,
     policy_cv: canceled_policy_cv,
     existing_policy: policy,
-    hbx_enrollment_id: 1,
     all_member_ids: [1,2]
     ) }
 

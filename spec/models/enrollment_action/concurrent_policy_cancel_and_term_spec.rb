@@ -30,12 +30,11 @@ describe EnrollmentAction::ConcurrentPolicyCancelAndTerm, "given a valid enrollm
   let(:member) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], canceled?: false, terminated?: false, reload: true, is_shop?: false) }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1]) }
   let(:termination_event) { instance_double(
       ::ExternalEvents::EnrollmentEventNotification,
       policy_cv: terminated_policy_cv,
       existing_policy: policy,
-      hbx_enrollment_id: 1,
       all_member_ids: [1,2]
   ) }
 

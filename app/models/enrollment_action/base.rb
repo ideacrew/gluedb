@@ -2,11 +2,13 @@ module EnrollmentAction
   class Base
     attr_reader :action
     attr_reader :termination
+    attr_reader :additional_init_or_term
     attr_reader :errors
 
-    def initialize(term, init)
+    def initialize(term, init, additional_init_or_term = nil)
       @termination = term
       @action = init
+      @additional_init_or_term = additional_init_or_term
       @errors = ActiveModel::Errors.new(self)
     end
 
@@ -17,10 +19,32 @@ module EnrollmentAction
       if @action
         @action.update_business_process_history(entry)
       end
+      if @additional_init_or_term
+        @additional_init_or_term.update_business_process_history(entry)
+      end
+    end
+
+    def self.check_for_full_action(chunk)
+      selected_action = [
+        # placeholder for specific scenario that handles entire enrollment action set.
+      ].detect { |kls| kls.qualifies?(chunk) }
+      selected_action
+    end
+
+    def self.check_for_action_3(chunk)
+      selected_action = [
+        ::EnrollmentAction::RetroDependentAddToActive,
+        ::EnrollmentAction::RetroDependentDropToActive,
+        ::EnrollmentAction::RetroAssistanceChangeToActive
+      ].detect { |kls| kls.qualifies_3?(chunk) }
+      selected_action
     end
 
     def self.select_action_for(chunk)
       selected_action = [
+        ::EnrollmentAction::RetroDependentAddToActive,
+        ::EnrollmentAction::RetroDependentDropToActive,
+        ::EnrollmentAction::RetroAssistanceChangeToActive,
         ::EnrollmentAction::TobaccoOrRatingAreaChange,
         ::EnrollmentAction::SimpleRenewal,
         ::EnrollmentAction::PassiveRenewal,
@@ -64,15 +88,20 @@ module EnrollmentAction
       end
     end
 
+    def self.qualifies_3?(chunk)
+      false
+    end
+
     def self.construct(chunk)
       term = chunk.detect { |c| c.is_termination? }
       action = chunk.detect { |c| !c.is_termination? }
-      self.new(term, action)
+      additional_init_or_term = chunk.select { |c| c.is_termination? }.last if chunk.length > 2
+      self.new(term, action, additional_init_or_term)
     end
 
     # Check if an enrollment already exists - if it does and you don't want to send out a new transaction, call this method.
     def check_already_exists
-      if @action && action.existing_policy
+      if @action && action.existing_policy || (@additional_init_or_term && !additional_init_or_term.is_termination? && additional_init_or_term.existing_policy)
         errors.add(:action, "enrollment already exists")
         return true
       end
@@ -101,6 +130,9 @@ module EnrollmentAction
       if @action
         @action.drop_not_yet_implemented!(self.class.name.to_s, batch_id, idx)
       end
+      if @additional_init_or_term
+        @additional_init_or_term.drop_not_yet_implemented!(self.class.name.to_s, batch_id, idx)
+      end
     end
 
     def persist_failed!(persist_errors)
@@ -112,6 +144,9 @@ module EnrollmentAction
       end
       if @action
         @action.persist_failed!(self.class.name.to_s, persist_errors, batch_id, idx)
+      end
+      if @additional_init_or_term
+        @additional_init_or_term.persist_failed!(self.class.name.to_s, persist_errors, batch_id, idx)
       end
     end
 
@@ -125,6 +160,9 @@ module EnrollmentAction
       if @action
         @action.publish_failed!(self.class.name.to_s, publish_errors, batch_id, idx)
       end
+      if @additional_init_or_term
+        @additional_init_or_term.publish_failed!(self.class.name.to_s, publish_errors, batch_id, idx)
+      end
     end
 
     def flow_successful!
@@ -135,6 +173,9 @@ module EnrollmentAction
       end
       if @action
         @action.flow_successful!(self.class.name.to_s, batch_id, idx)
+      end
+      if @additional_init_or_term
+        @additional_init_or_term.flow_successful!(self.class.name.to_s, batch_id, idx)
       end
     end
 

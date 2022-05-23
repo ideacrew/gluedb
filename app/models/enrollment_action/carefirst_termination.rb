@@ -12,12 +12,9 @@ module EnrollmentAction
     def persist
       if termination.existing_policy
         policy_to_term = termination.existing_policy
-        policy_to_term.reload
         unless policy_to_term.is_shop?
-          # last span id should result in policy termination
-          return false if policy_to_term.hbx_enrollment_ids.sort.last.to_s != termination.hbx_enrollment_id.to_s
-          # reterm of policy should be handled by different action
-          return false if (policy_to_term.terminated? || policy_to_term.canceled?)
+          policy_to_term.reload
+          return false if policy_to_term.canceled?
         end
         # Is this even a cancellation, if so, check for custom NPT behaviour,
         # otherwise do nothing
@@ -53,10 +50,8 @@ module EnrollmentAction
             pol.cancel_via_hbx!
           end
         end
-        true
-      else
-        false
       end
+      true
     end
 
     def publish
