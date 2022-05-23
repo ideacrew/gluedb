@@ -745,6 +745,7 @@ describe "#drop_if_already_processed" do
       allow(subject).to receive(:hbx_enrollment_id).and_return(hbx_enrollment_id)
       allow(subject).to receive(:enrollment_action).and_return("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
       allow(subject).to receive(:is_reterm_with_earlier_date?).and_return(false)
+      allow(subject).to receive(:is_retro_term_event_of_active_policy?).and_return(false)
     end
 
     it "returns notify event already processed" do

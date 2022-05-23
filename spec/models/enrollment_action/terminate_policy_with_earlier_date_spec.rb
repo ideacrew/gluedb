@@ -41,7 +41,8 @@ describe EnrollmentAction::TerminatePolicyWithEarlierDate, "given a valid enroll
         ::ExternalEvents::EnrollmentEventNotification,
         policy_cv: terminated_policy_cv,
         existing_policy: policy,
-        all_member_ids: [1,2]
+        all_member_ids: [1,2],
+        is_reterm_with_earlier_date?: true
     ) }
 
     before do

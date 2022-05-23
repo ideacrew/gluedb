@@ -45,11 +45,12 @@ describe EnrollmentAction::Termination, "given a valid shop enrollment" do
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: (Date.today - 1.day), is_shop?: true, :carrier => carrier, reload: true, canceled?: false) }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: (Date.today - 1.day), is_shop?: true, :carrier => carrier, reload: true, canceled?: false, terminated?: false) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     policy_cv: terminated_policy_cv,
     existing_policy: policy,
+    hbx_enrollment_id: 1,
     all_member_ids: [1,2]
     ) }
 
@@ -80,11 +81,12 @@ describe EnrollmentAction::Termination, "given a valid IVL enrollment, ending 12
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: ((Date.today - 1.day)), is_shop?: false, :carrier => carrier, reload: true, canceled?: false) }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: ((Date.today - 1.day)), is_shop?: false, :carrier => carrier, reload: true, canceled?: false, terminated?: false) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     policy_cv: terminated_policy_cv,
     existing_policy: policy,
+    hbx_enrollment_id: 1,
     all_member_ids: [1,2]
     ) }
 
@@ -115,11 +117,12 @@ describe EnrollmentAction::Termination, "given a valid IVL enrollment, ending 12
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: ((Date.today - 1.day)), is_shop?: false, carrier: carrier, reload: true, canceled?: false) }
+  let(:policy) { instance_double(Policy, hbx_enrollment_ids: [1], policy_end: ((Date.today - 1.day)), is_shop?: false, carrier: carrier, reload: true, canceled?: false, terminated?: false) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     policy_cv: terminated_policy_cv,
     existing_policy: policy,
+    hbx_enrollment_id: 1,
     all_member_ids: [1,2]
     ) }
 
@@ -145,7 +148,7 @@ describe EnrollmentAction::Termination, "given a valid IVL enrollment, ending 12
   end
 end
 
-describe EnrollmentAction::Termination, "given an valid IVL enrollment, cancel event with subscriber start date in past" do
+describe EnrollmentAction::Termination, "given an valid IVL enrollment, cancel event with subscriber start date in past", :dbclean => :after_each do
   let(:member) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
   let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
   let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
@@ -159,12 +162,15 @@ describe EnrollmentAction::Termination, "given an valid IVL enrollment, cancel e
       existing_policy: policy,
       subscriber_start: term_date,
       subscriber_end: term_date,
+      hbx_enrollment_id: 1,
       all_member_ids: [1,2]
   ) }
 
   before :each do
+    policy.update_attributes(hbx_enrollment_ids: ['1'])
     policy.enrollees.update_all(coverage_start: start_date, coverage_end: nil)
     allow(policy).to receive(:term_for_np).and_return(true, false)
+    allow(policy).to receive(:is_shop?).and_return(false)
     allow(termination_event).to receive(:is_cancel?).and_return(true)
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
@@ -185,7 +191,7 @@ describe EnrollmentAction::Termination, "given a valid enrollment" do
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
   let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil, coverage_end: :one_month_ago) }
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, aasm_state: "submitted", employer_id: '', carrier: carrier, reload: true, canceled?: false) }
+  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, aasm_state: "submitted", employer_id: '', carrier: carrier, reload: true, canceled?: false, terminated?: false) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     event_xml: event_xml,

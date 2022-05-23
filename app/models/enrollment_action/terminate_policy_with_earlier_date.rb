@@ -10,7 +10,7 @@ module EnrollmentAction
     end
 
     def persist
-      if termination.existing_policy
+      if termination.existing_policy && termination.is_reterm_with_earlier_date?
         @existing_policy = termination.existing_policy
         result = @existing_policy.terminate_as_of(termination.subscriber_end)
         Observers::PolicyUpdated.notify(@existing_policy)
