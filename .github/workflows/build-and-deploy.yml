@@ -9,7 +9,6 @@ on:
     branches:
       - "me_carrier_boarding"
       - "handle_retro_events"
-
 concurrency:
   group: docker-${{ github.ref }}
   cancel-in-progress: true
