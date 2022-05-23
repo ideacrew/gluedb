@@ -175,3 +175,215 @@ describe Parsers::Edi::IncomingTransaction do
     end
   end
 end
+
+context '_term_enrollee_on_subscriber_term' do
+  let(:eg_id) { '1' }
+  let(:carrier_id) { '2' }
+  let(:kind) { 'individual' }
+  let(:carrier) { Carrier.create }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
+  let!(:primary) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let!(:dep) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let!(:dep2) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:prim_coverage_start) { Date.today.beginning_of_year }
+  let(:subscriber_enrollee) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: prim_coverage_start, coverage_end: prim_coverage_end, :c_id => nil, :cp_id => nil)}
+  let(:child_enrollee1) { Enrollee.new(m_id: dep.authority_member.hbx_member_id, rel_code: 'child', coverage_start: child1_coverage_start, coverage_end: child1_coverage_end, :c_id => nil, :cp_id => nil)}
+  let(:child_enrollee2) { Enrollee.new(m_id: dep2.authority_member.hbx_member_id, rel_code: 'child', coverage_start: child2_coverage_start, coverage_end: child2_coverage_end, :c_id => nil, :cp_id => nil)}
+  let!(:active_policy) {
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, hbx_enrollment_ids: [eg_id], carrier_id: carrier_id, plan: active_plan, carrier: carrier, coverage_start: prim_coverage_start, coverage_end: nil, kind: kind)
+    policy.update_attributes(enrollees: [subscriber_enrollee, child_enrollee1, child_enrollee2])
+    policy.save
+    policy
+  }
+  let(:policy_loop) { double(id: eg_id, action: :stop, coverage_end: coverage_end) }
+  let(:person_loop) { instance_double(Parsers::Edi::Etf::PersonLoop, member_id: primary.authority_member.hbx_member_id, carrier_member_id: '1234', policy_loops: [policy_loop], :non_payment_change? => false) }
+  let(:etf) { double(people: [person_loop], is_shop?: false) }
+  let(:incoming) do
+    incoming = Parsers::Edi::IncomingTransaction.new(etf)
+    incoming.policy_found(active_policy)
+    incoming
+  end
+  let(:event_broadcaster) { instance_double(Amqp::EventBroadcaster) }
+  before :each do
+    allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(event_broadcaster)
+    allow(event_broadcaster).to receive(:broadcast).with({
+                                                           :routing_key => "info.events.policy.terminated",
+                                                           :headers => {
+                                                             :resource_instance_uri => active_policy.eg_id,
+                                                             :event_effective_date => active_policy.policy_end.try(:strftime, "%Y%m%d"),
+                                                             :hbx_enrollment_ids => JSON.dump(active_policy.hbx_enrollment_ids)
+                                                           }
+                                                         }, "")
+    allow(Observers::PolicyUpdated).to receive(:notify).with(active_policy)
+  end
+
+  context "when enrollee have coverage end date" do
+    context "when member end date greater than subscriber end date" do
+      let(:prim_coverage_end) { (Date.today.beginning_of_year + 2.months).end_of_month }
+
+      let(:child1_coverage_start) { Date.today.beginning_of_year  }
+      let(:child1_coverage_end) { (Date.today.beginning_of_year + 3.months).end_of_month  }
+
+      let(:child2_coverage_start) { Date.today.beginning_of_year }
+      let(:child2_coverage_end) { (Date.today.beginning_of_year + 3.months).end_of_month }
+
+      let(:coverage_end) { prim_coverage_end.strftime("%Y%m%d") }
+
+      it "should update member to match subscriber end date" do
+        # Before importing EDI
+        expect(child_enrollee1.coverage_end).to eq child1_coverage_end
+        expect(child_enrollee1.termed_by_carrier).to eq false
+        expect(child_enrollee2.coverage_end).to eq child2_coverage_end
+        expect(child_enrollee2.termed_by_carrier).to eq false
+        incoming.import
+        # After importing EDI
+        active_policy.reload
+        expect(active_policy.policy_end).to eq prim_coverage_end
+        expect(child_enrollee1.coverage_end).to eq prim_coverage_end
+        expect(child_enrollee1.termed_by_carrier).to eq true
+        expect(child_enrollee2.coverage_end).to eq prim_coverage_end
+        expect(child_enrollee2.termed_by_carrier).to eq true
+      end
+    end
+
+    context "when member start and end date greater than subscriber end date and member canceled" do
+      let(:prim_coverage_end) { (Date.today.beginning_of_year + 2.months).end_of_month }
+
+      let(:child1_coverage_start) { Date.today.beginning_of_year + 3.months  }
+      let(:child1_coverage_end) { Date.today.beginning_of_year + 3.months  }
+
+      let(:child2_coverage_start) { Date.today.beginning_of_year + 3.months }
+      let(:child2_coverage_end) { Date.today.beginning_of_year + 3.months }
+
+      let(:coverage_end) { prim_coverage_end.strftime("%Y%m%d") }
+
+
+      it "should not update member end date to match subscriber end date" do
+        # Before importing EDI
+        expect(child_enrollee1.coverage_start).to eq child1_coverage_start
+        expect(child_enrollee1.termed_by_carrier).to eq false
+        expect(child_enrollee1.coverage_end).to eq child1_coverage_start
+        expect(child_enrollee2.termed_by_carrier).to eq false
+
+        expect(child_enrollee1.coverage_start).to eq child2_coverage_start
+        expect(child_enrollee2.coverage_end).to eq child2_coverage_start
+
+        incoming.import
+        # After importing EDI
+        active_policy.reload
+        expect(active_policy.policy_end).to eq prim_coverage_end
+
+        expect(child_enrollee1.coverage_end).to eq child1_coverage_end
+        expect(child_enrollee1.termed_by_carrier).to eq false
+        expect(child_enrollee2.coverage_end).to eq child2_coverage_end
+        expect(child_enrollee2.termed_by_carrier).to eq false
+      end
+    end
+
+    context "when member start date and end date greater than subscriber end date and member terminated" do
+      let(:prim_coverage_end) { (Date.today.beginning_of_year + 2.months).end_of_month }
+
+      let(:child1_coverage_start) { Date.today.beginning_of_year + 3.months  }
+      let(:child1_coverage_end) { Date.today.beginning_of_year + 6.months  }
+
+      let(:child2_coverage_start) { Date.today.beginning_of_year + 3.months }
+      let(:child2_coverage_end) { Date.today.beginning_of_year + 6.months }
+
+      let(:coverage_end) { prim_coverage_end.strftime("%Y%m%d") }
+
+
+      it "should update member end date to match member start date" do
+        # Before importing EDI
+        expect(child_enrollee1.coverage_start).to eq child1_coverage_start
+        expect(child_enrollee1.coverage_end).to eq child1_coverage_end
+
+        expect(child_enrollee1.coverage_start).to eq child2_coverage_start
+        expect(child_enrollee2.coverage_end).to eq child2_coverage_end
+
+        incoming.import
+        # After importing EDI
+        active_policy.reload
+        expect(active_policy.policy_end).to eq prim_coverage_end
+
+        expect(child_enrollee1.coverage_end).to eq child1_coverage_start
+        expect(child_enrollee2.coverage_end).to eq child2_coverage_start
+      end
+    end
+  end
+
+  context "when enrollee has no coverage end date" do
+    context "when member start date before subscriber end date" do
+      let(:prim_coverage_end) { (Date.today.beginning_of_year + 2.months).end_of_month }
+
+      let(:child1_coverage_start) { Date.today.beginning_of_year  }
+      let(:child1_coverage_end) { nil  }
+
+      let(:child2_coverage_start) { Date.today.beginning_of_year }
+      let(:child2_coverage_end) { nil }
+
+      let(:coverage_end) { prim_coverage_end.strftime("%Y%m%d") }
+
+      it "should terminate member with subscriber end date" do
+        # Before importing EDI
+        expect(child_enrollee1.coverage_end).to eq nil
+        expect(child_enrollee1.termed_by_carrier).to eq false
+        expect(child_enrollee2.coverage_end).to eq nil
+        expect(child_enrollee2.termed_by_carrier).to eq false
+        incoming.import
+        # After importing EDI
+        active_policy.reload
+        expect(active_policy.policy_end).to eq prim_coverage_end
+
+        expect(child_enrollee1.coverage_end).to eq prim_coverage_end
+        expect(child_enrollee1.termed_by_carrier).to eq true
+
+        expect(child_enrollee2.coverage_end).to eq prim_coverage_end
+        expect(child_enrollee2.termed_by_carrier).to eq true
+      end
+    end
+
+    context "when member start greater than subscriber end date" do
+      let(:prim_coverage_end) { (Date.today.beginning_of_year + 2.months).end_of_month }
+
+      let(:child1_coverage_start) { Date.today.beginning_of_year + 3.months  }
+      let(:child1_coverage_end) { nil  }
+
+      let(:child2_coverage_start) { Date.today.beginning_of_year + 3.months }
+      let(:child2_coverage_end) { nil }
+
+      let(:coverage_end) { prim_coverage_end.strftime("%Y%m%d") }
+
+
+      it "should cancel member coverage and update end date of member to start date of member" do
+        # Before importing EDI
+        expect(child_enrollee1.coverage_start).to eq child1_coverage_start
+        expect(child_enrollee1.coverage_end).to eq nil
+
+        expect(child_enrollee1.coverage_start).to eq child2_coverage_start
+        expect(child_enrollee2.coverage_end).to eq nil
+
+        incoming.import
+        # After importing EDI
+        active_policy.reload
+        expect(active_policy.policy_end).to eq prim_coverage_end
+
+        expect(child_enrollee1.coverage_end).to eq child1_coverage_start
+        expect(child_enrollee1.termed_by_carrier).to eq true
+        expect(child_enrollee2.coverage_end).to eq child2_coverage_start
+        expect(child_enrollee2.termed_by_carrier).to eq true
+      end
+    end
+  end
+end
