@@ -1,6 +1,6 @@
 site:
   short_name: "OPM"
-  long_name: "OPM Glue DB"
+  long_name: "OPM EDI DB"
   copyright_period_start: "2014"
 
 
