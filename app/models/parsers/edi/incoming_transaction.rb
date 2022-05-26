@@ -51,6 +51,7 @@ module Parsers
 
             if(!@etf.is_shop? && policy_loop.action == :stop )
               enrollee.coverage_status = 'inactive'
+              enrollee.termed_by_carrier = true
               enrollee.coverage_end = policy_loop.coverage_end
               if enrollee.subscriber?
                 is_non_payment = person_loop.non_payment_change?
@@ -76,6 +77,7 @@ module Parsers
           end
         end
         save_val = @policy.save
+        _term_enrollee_on_subscriber_term if save_val && (is_policy_term || is_policy_cancel)
         unless exempt_from_notification?(@policy, is_policy_cancel, is_policy_term, old_npt_flag == is_non_payment)
           Observers::PolicyUpdated.notify(@policy)
         end
@@ -121,6 +123,34 @@ module Parsers
         save_val
       end
 
+      def _term_enrollee_on_subscriber_term
+        # term members thats missing in the incoming edi term
+        # re-term invalid end date members
+        return unless @policy.policy_end.present?
+        dependents = @policy.enrollees.where(:rel_code.ne => 'self')
+        dependents.each do |enrollee|
+          if enrollee.coverage_end.present? # member with end dates
+            if enrollee.coverage_end > @policy.policy_end && enrollee.coverage_end != enrollee.coverage_start
+              if enrollee.coverage_start > @policy.policy_end
+                enrollee.coverage_end = enrollee.coverage_start
+              else
+                enrollee.coverage_end = @policy.policy_end
+              end
+              enrollee.coverage_status = 'inactive'
+              enrollee.termed_by_carrier = true
+            end
+          else # member without end dates
+            if enrollee.coverage_start > @policy.policy_end
+              enrollee.coverage_end = enrollee.coverage_start
+            else
+              enrollee.coverage_end = @policy.policy_end
+            end
+            enrollee.coverage_status = 'inactive'
+            enrollee.termed_by_carrier = true
+          end
+        end
+      end
+
       def exempt_from_notification?(policy, is_cancel, is_term, npt_changed)
         return false if is_cancel
         return false if npt_changed
@@ -130,6 +160,10 @@ module Parsers
 
       def policy_found(policy)
         @policy = policy
+      end
+
+      def invalid_ins_combination(details)
+        @errors << "Invalid INS03/04 combination for member #{details[:member_id]}: #{details[:change_code]}/#{details[:change_reason]}"
       end
 
       def termination_with_no_end_date(details)
@@ -154,6 +188,10 @@ module Parsers
 
       def termination_date_after_expiration(details)
         @errors << "Termination date after natural policy expiration: member #{details[:member_id]}, coverage end: #{details[:coverage_end]}, expiration_date: #{details[:expiration_date]}"
+      end
+
+      def termination_extends_coverage(details)
+        @errors << "Termination would extend coverage period: member #{details[:member_id]}, coverage end: #{details[:coverage_end]}, existing_member_end: #{details[:enrollee_end]}"
       end
 
       def policy_not_found(subkeys)

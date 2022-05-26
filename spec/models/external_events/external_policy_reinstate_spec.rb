@@ -50,6 +50,7 @@ describe ExternalEvents::ExternalPolicyReinstate, "given:
     allow(enrollee).to receive(:ben_stat=).with("active")
     allow(enrollee).to receive(:emp_stat=).with("active")
     allow(enrollee).to receive(:coverage_end=).with(nil)
+    allow(enrollee).to receive(:termed_by_carrier=).with(false)
     allow(enrollee).to receive(:save!)
     allow(hbx_enrollment_ids_field_proxy).to receive(:<<).with(policy_id)
     allow(policy).to receive(:reload)
