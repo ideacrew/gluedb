@@ -86,7 +86,10 @@ module EnrollmentAction
       return false unless (plan.year == pol.plan.year)
       return false unless (plan.carrier_id == pol.plan.carrier_id) 
       return false unless (plan.id.to_s == pol.plan_id.to_s)
-      pol.policy_end == subscriber_start - 1.day
+      pol.policy_end == subscriber_start - 1.day ||
+        (pol.policy_start == pol.policy_end && pol.policy_end == subscriber_start) || # allows to reinstate canceled policy
+        ((pol.term_for_np? || pol.subscriber.termed_by_carrier?) && (pol.policy_start..pol.policy_end).cover?(subscriber_start) &&
+          pol.policy_end == Date.new(pol.policy_start.year, 12, 31)) # exception policy that termianted with end of year
     end
   end
 end
