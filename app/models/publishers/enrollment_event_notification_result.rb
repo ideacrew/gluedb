@@ -99,6 +99,15 @@ module Publishers
       event_responder.ack_message(message_tag)
     end
 
+    def drop_term_event_processed_by_carrier!(event_notification)
+      event_responder.broadcast_ok_response(
+        "term_event_processed_by_carrier",
+        event_xml,
+        headers
+      )
+      event_responder.ack_message(message_tag)
+    end
+
     def drop_bogus_renewal_term!(event_notification)
       event_responder.broadcast_ok_response(
         "renewal_termination_reduced",
