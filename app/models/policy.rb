@@ -615,23 +615,19 @@ class Policy
         if aptc_record.start_on == aptc_date
           # update matching aptc credits
           aptc_record.update_attributes(pre_amt_tot: pre_total_amount, aptc: aptc_amount, tot_res_amt: remaining_owed_by_consumer, end_on: coverage_period_end)
-          # end any future aptc credits
-          update_future_aptc_credit(aptc_date)
         else
           # end current aptc credits
           aptc_record.update_attributes(end_on: (aptc_date - 1.day))
           # create next aptc credits
           self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
-          # end any future aptc credits
-          update_future_aptc_credit(aptc_date)
         end
       else
         # create next aptc credits
         self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
-        # end any future aptc credits
-        update_future_aptc_credit(aptc_date)
       end
     end
+    # delete invalid aptc credits
+    delete_invalid_aptc_credit(aptc_date)
     self.pre_amt_tot = pre_total_amount
     self.tot_res_amt = remaining_owed_by_consumer
     self.applied_aptc = aptc_amount
@@ -647,12 +643,10 @@ class Policy
     )
   end
 
-  def update_future_aptc_credit(aptc_date)
-    aptc_credits.select { |credit| credit.start_on > aptc_date && credit.end_on != credit.start_on}.each do |end_aptc|
-      aptc_record.update_attributes(
-        end_on: end_aptc.start_on
-      )
-    end
+  def delete_invalid_aptc_credit(aptc_date)
+    aptc_credits.select { |credit| credit.start_on > aptc_date || credit.end_on == credit.start_on}.each do |invalid_aptc|
+      invalid_aptc.delete
+    end if aptc_credits.count > 1
   end
 
   def coverage_period
@@ -842,10 +836,13 @@ class Policy
 
   def update_aptc_credit(end_date)
     aptc_credits.where(:end_on => {"$gt" => end_date }).each do |aptc_record|
-      end_on = aptc_record.start_on >= end_date ? aptc_record.start_on : end_date
-      aptc_record.update_attributes(
-        end_on: end_on
-      )
+      if aptc_record.start_on > end_date
+        aptc_record.delete
+      else
+        aptc_record.update_attributes(
+          end_on: end_date
+        )
+      end
     end
   end
 
