@@ -70,14 +70,15 @@ module EnrollmentAction
       subscriber_id = extract_member_id(subscriber_enrollee)
       subscriber_person = Person.find_by_member_id(subscriber_id)
       plan_year = find_employer_plan_year(policy_cv)
+      rating_area = Maybe.new(policy_cv).policy_enrollment.rating_area.value
       return [] if subscriber_person.nil?
       plan = extract_plan(policy_cv)
       subscriber_person.policies.select do |pol|
-        ivl_reinstatement_candidate?(pol, plan, subscriber_id, subscriber_start)
+        ivl_reinstatement_candidate?(pol, plan, subscriber_id, subscriber_start, rating_area)
       end
     end
 
-    def ivl_reinstatement_candidate?(pol, plan, subscriber_id, subscriber_start)
+    def ivl_reinstatement_candidate?(pol, plan, subscriber_id, subscriber_start, rating_area)
       return false unless pol.employer_id.blank?
       return false if pol.subscriber.blank?
       return false if pol.policy_end.blank?
@@ -86,10 +87,12 @@ module EnrollmentAction
       return false unless (plan.year == pol.plan.year)
       return false unless (plan.carrier_id == pol.plan.carrier_id) 
       return false unless (plan.id.to_s == pol.plan_id.to_s)
-      pol.policy_end == subscriber_start - 1.day ||
-        (pol.policy_start == pol.policy_end && pol.policy_end == subscriber_start) || # allows to reinstate canceled policy
-        ((pol.term_for_np? || pol.subscriber.termed_by_carrier?) && (pol.policy_start..pol.policy_end).cover?(subscriber_start) &&
-          pol.policy_end == Date.new(pol.policy_start.year, 12, 31)) # exception policy that termianted with end of year
+      return false if pol.rating_area.present? && pol.rating_area != rating_area
+      return true if pol.policy_end == subscriber_start - 1.day # regular cases
+
+      return false unless pol.term_for_np? || pol.subscriber.termed_by_carrier? # carrier expections
+      (pol.policy_start == pol.policy_end && pol.policy_end == subscriber_start) || # allows to reinstate canceled policy
+        (pol.policy_start..pol.policy_end).cover?(subscriber_start) && pol.policy_end == Date.new(pol.policy_start.year, 12, 31) # exception policy that termianted with end of year
     end
   end
 end
