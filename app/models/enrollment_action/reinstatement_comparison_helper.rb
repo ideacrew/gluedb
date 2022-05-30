@@ -87,7 +87,7 @@ module EnrollmentAction
       return false unless (plan.year == pol.plan.year)
       return false unless (plan.carrier_id == pol.plan.carrier_id) 
       return false unless (plan.id.to_s == pol.plan_id.to_s)
-      return false if pol.rating_area.present? && pol.rating_area != rating_area
+      return false if pol.rating_area != rating_area
       return true if pol.policy_end == subscriber_start - 1.day # regular cases
 
       return false unless pol.term_for_np? || pol.subscriber.termed_by_carrier? # carrier expections
