@@ -1014,7 +1014,7 @@ class Policy
   end
 
   def duplicate_eg_id_check
-    policies = Policy.where(eg_id: self.eg_id)
+    policies = Policy.where(:eg_id => self.eg_id) || Policy.where(:hbx_enrollment_ids => self.eg_id)
     if policies.present?
       Rails.logger.error("Already Policy Exists With Exchange-Assigned ID:#{self.eg_id}, Exisiting Policy ID: #{policies.first.id}")
       raise "Already Policy Exists With Exchange-Assigned ID:#{self.eg_id}, Exisiting Policy ID: #{policies.first.id}"

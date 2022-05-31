@@ -940,7 +940,7 @@ context "Given policy cv with Existing Exchange-Assigned ID", :dbclean => :after
   let(:active_enrollee) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', termed_by_carrier: true, coverage_start:  Date.today.beginning_of_year, coverage_end: Date.today.beginning_of_year.next_month.end_of_month)}
   let!(:active_policy) {
     policy =  FactoryGirl.create(:policy, enrollment_group_id: "123", carrier_id: carrier_id, plan: active_plan, coverage_start: Date.today.beginning_of_year, coverage_end: Date.today.beginning_of_year.next_month.end_of_month, kind: "individual")
-    policy.update_attributes(enrollees: [active_enrollee], hbx_enrollment_ids: ["123"], term_for_np: true)
+    policy.update_attributes(enrollees: [active_enrollee], hbx_enrollment_ids: ["1233"], term_for_np: true)
     policy.save
     policy
   }
@@ -1033,10 +1033,10 @@ context "Given policy cv with Existing Exchange-Assigned ID", :dbclean => :after
 
   subject { ExternalEvents::ExternalPolicy.new(action.policy_cv, action.existing_plan, false, policy_reinstate: true) }
 
-  it "skips creating another policy with same Exchange-Assigned ID" do
+  it "skips creating another policy with same Exchange-Assigned ID and raises error" do
     expect(Policy.where(:eg_id  => action.hbx_enrollment_id).first.present?).to eq true
     expect(Policy.all.count).to eq 1
-    subject.persist
+    expect { subject.persist }.to raise_error(RuntimeError, /Already Policy Exists With Exchange-Assigned ID:123, Exisiting Policy ID: 1/)
     expect(Policy.all.count).to eq 1
   end
 end
