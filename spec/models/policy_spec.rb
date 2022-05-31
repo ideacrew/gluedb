@@ -824,7 +824,7 @@ describe "#cancel_renewal", :dbclean => :after_each do
     policy
   }
   let!(:renewal_policy) {
-    policy = FactoryGirl.create(:policy, enrollment_group_id: eg_id,
+    policy = FactoryGirl.create(:policy, enrollment_group_id: "12",
                                  employer: employer, carrier: carrier, plan: plan,
                                  coverage_start: Date.today.next_year.beginning_of_year,
                                  coverage_end: coverage_end, kind: kind)
@@ -905,6 +905,41 @@ describe "#cancel_renewal", :dbclean => :after_each do
     it "should return empty array when checked for renewal policy" do
       expect(renewal_policy.is_shop?).to eq true
       expect(active_policy.matched_ivl_renewals).to eq []
+    end
+  end
+end
+
+describe "#duplicate_eg_id_check", :dbclean => :after_each do
+  let(:carrier_id) { '2' }
+  let(:plan_id) { '3' }
+  let(:plan_hios_id) { "a hios id" }
+  let(:plan) { Plan.create!(:name => "test_plan", :hios_plan_id => plan_hios_id, carrier_id: carrier_id, :coverage_type => "health") }
+  let!(:primary) {
+    person = FactoryGirl.create :person, dob: Date.new(1970, 5, 1)
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:coverage_start) {Date.new(2019, 1, 1)}
+  let(:enrollee) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: coverage_start)}
+  let(:policy) { Policy.new(enrollment_group_id: eg_id, carrier_id: carrier_id, plan: plan, coverage_start: coverage_start, coverage_end: nil, kind: 'individual', enrollees: [enrollee]) }
+
+  context "When no policy exists with Exchange-Assigned ID" do
+    let(:eg_id) { '123' }
+    it "should able to create policy" do
+      expect(Policy.all.count).to eq 0
+      expect(policy.valid?).to eq true
+      policy.save
+      expect(Policy.all.count).to eq 1
+    end
+  end
+
+  context "When policy exists with Exchange-Assigned ID" do
+    let(:eg_id) { '123' }
+    it "should raise error when creating policy with already Exchange-Assigned ID " do
+      policy.save
+      expect(Policy.where(eg_id: eg_id).count).to eq 1
+      new_policy = Policy.new(enrollment_group_id: eg_id, carrier_id: carrier_id, plan: plan, coverage_start: coverage_start, coverage_end: nil, kind: 'individual', enrollees: [enrollee])
+      expect { new_policy.save }.to raise_error(RuntimeError, /Already Policy Exists With Exchange-Assigned ID:123/)
     end
   end
 end

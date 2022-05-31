@@ -466,7 +466,7 @@ describe ExternalEvents::ExternalPolicy, "with reinstated policy cv", dbclean: :
 end
 
 context "Given a reinstated policy cv, on reinstate carrier term flag needs to reset", :dbclean => :after_each do
-  let(:eg_id) { '1' }
+  let(:eg_id) { '111' }
   let(:carrier_id) { '1' }
   let(:carrier) { Carrier.create }
   let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, hios_plan_id: 1, :coverage_type => "health", year: Date.today.year) }
@@ -477,7 +477,7 @@ context "Given a reinstated policy cv, on reinstate carrier term flag needs to r
   }
   let(:active_enrollee) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', termed_by_carrier: true, coverage_start:  Date.today.beginning_of_year, coverage_end: Date.today.beginning_of_year.next_month.end_of_month)}
   let!(:active_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, carrier_id: carrier_id, plan: active_plan, coverage_start: Date.today.beginning_of_year, coverage_end: Date.today.beginning_of_year.next_month.end_of_month, kind: "individual")
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "123", carrier_id: carrier_id, plan: active_plan, coverage_start: Date.today.beginning_of_year, coverage_end: Date.today.beginning_of_year.next_month.end_of_month, kind: "individual")
     policy.update_attributes(enrollees: [active_enrollee], hbx_enrollment_ids: ["123"], term_for_np: true)
     policy.save
     policy
@@ -924,5 +924,119 @@ context "Given a new SHOP policy CV", :dbclean => :after_each do
 
     # creates aptc credits
     expect(policy.first.aptc_credits.count).to eq 0
+  end
+end
+
+context "Given policy cv with Existing Exchange-Assigned ID", :dbclean => :after_each do
+  let(:eg_id) { '123' }
+  let(:carrier_id) { '1' }
+  let(:carrier) { Carrier.create }
+  let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, hios_plan_id: 1, :coverage_type => "health", year: Date.today.year) }
+  let!(:primary) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:active_enrollee) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', termed_by_carrier: true, coverage_start:  Date.today.beginning_of_year, coverage_end: Date.today.beginning_of_year.next_month.end_of_month)}
+  let!(:active_policy) {
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "123", carrier_id: carrier_id, plan: active_plan, coverage_start: Date.today.beginning_of_year, coverage_end: Date.today.beginning_of_year.next_month.end_of_month, kind: "individual")
+    policy.update_attributes(enrollees: [active_enrollee], hbx_enrollment_ids: ["123"], term_for_np: true)
+    policy.save
+    policy
+  }
+
+  let(:coverage_start) { Date.today.beginning_of_year.next_month.end_of_month + 1.day }
+  let(:applied_aptc_amount) { 200.0 }
+  let(:premium_total_amount) { 300.0 }
+  let(:total_responsible_amount) { 100.0 }
+
+  let(:source_event_xml) { <<-EVENTXML
+   <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+   <header>
+     <hbx_id>29035</hbx_id>
+     <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+   </header>
+   <event>
+     <body>
+       <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+         <affected_members>
+           <affected_member>
+             <member>
+               <id><id>1</id></id>
+             </member>
+             <benefit>
+               <premium_amount>465.13</premium_amount>
+               <begin_date>#{coverage_start.strftime("%Y%m%d")}</begin_date>
+             </benefit>
+           </affected_member>
+         </affected_members>
+         <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+           <policy>
+             <id>
+               <id>#{eg_id}</id>
+             </id>
+             <previous_policy_id>
+               <id>123</id>
+             </previous_policy_id>
+           <enrollees>
+             <enrollee>
+               <member>
+                 <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+               </member>
+               <is_subscriber>true</is_subscriber>
+               <benefit>
+                 <premium_amount>111.11</premium_amount>
+                 <begin_date>#{coverage_start.strftime("%Y%m%d")}</begin_date>
+               </benefit>
+             </enrollee>
+           </enrollees>
+           <enrollment>
+           <plan>
+             <id>
+               <id>#{active_plan.hios_plan_id}</id>
+             </id>
+             <name>BluePreferred PPO Standard Platinum $0</name>
+             <active_year>#{active_plan.year}</active_year>
+             <is_dental_only>false</is_dental_only>
+             <carrier>
+               <id>
+                 <id>#{carrier.hbx_carrier_id}</id>
+               </id>
+               <name>CareFirst</name>
+             </carrier>
+             <metal_level>urn:openhbx:terms:v1:plan_metal_level#platinum</metal_level>
+             <coverage_type>urn:openhbx:terms:v1:qhp_benefit_coverage#health</coverage_type>
+             <ehb_percent>99.64</ehb_percent>
+           </plan>
+           <individual_market>
+             <assistance_effective_date>#{coverage_start.strftime("%Y%m%d")}</assistance_effective_date>
+             <applied_aptc_amount>#{applied_aptc_amount}</applied_aptc_amount>
+           </individual_market>
+           <premium_total_amount>#{premium_total_amount}</premium_total_amount>
+           <total_responsible_amount>#{total_responsible_amount}</total_responsible_amount>
+           </enrollment>
+           </policy>
+         </enrollment>
+         </enrollment_event_body>
+     </body>
+   </event>
+ </enrollment_event>
+  EVENTXML
+  }
+  let(:m_tag) { double('m_tag') }
+  let(:t_stamp) { double('t_stamp') }
+  let(:headers) { double('headers') }
+  let(:responder) { instance_double('::ExternalEvents::EventResponder') }
+  let :action do
+    ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, source_event_xml, headers
+  end
+
+  subject { ExternalEvents::ExternalPolicy.new(action.policy_cv, action.existing_plan, false, policy_reinstate: true) }
+
+  it "skips creating another policy with same Exchange-Assigned ID" do
+    expect(Policy.where(:eg_id  => action.hbx_enrollment_id).first.present?).to eq true
+    expect(Policy.all.count).to eq 1
+    subject.persist
+    expect(Policy.all.count).to eq 1
   end
 end

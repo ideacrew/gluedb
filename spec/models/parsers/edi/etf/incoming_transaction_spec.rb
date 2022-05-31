@@ -1,5 +1,5 @@
 require 'rails_helper'
-describe Parsers::Edi::IncomingTransaction do
+describe Parsers::Edi::IncomingTransaction, :dbclean => :after_each do
   let(:enrollee) { Enrollee.new(m_id: '1',
                                 relationship_status_code: 'self',
                                 employment_status_code: 'active',
@@ -7,7 +7,7 @@ describe Parsers::Edi::IncomingTransaction do
                                 coverage_start: coverage_start,
                                 coverage_end: coverage_end ) }
   let(:policy) do
-    policy = Policy.new(eg_id: '1', plan_id: '1')
+    policy = Policy.new(eg_id: '7899', plan_id: '1')
     policy.enrollees << enrollee
     policy.save!
     policy
@@ -176,8 +176,8 @@ describe Parsers::Edi::IncomingTransaction do
   end
 end
 
-context '_term_enrollee_on_subscriber_term' do
-  let(:eg_id) { '1' }
+context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
+  let(:eg_id) { '987' }
   let(:carrier_id) { '2' }
   let(:kind) { 'individual' }
   let(:carrier) { Carrier.create }
