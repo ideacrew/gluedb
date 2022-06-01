@@ -137,4 +137,102 @@ describe EnrollmentAction::ReinstatementComparisonHelper do
       end
     end
   end
+
+  describe "#ivl_reinstatement_candidate??" do
+    let(:eg_id) { '1' }
+    let(:carrier_id) { '2' }
+    let(:kind) { 'individual' }
+    let(:carrier) { Carrier.create }
+    let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.year) }
+    let!(:primary) {
+      person = FactoryGirl.create :person
+      person.update(authority_member_id: person.members.first.hbx_member_id)
+      person
+    }
+    let(:subscriber_enrollee) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: prim_coverage_start, coverage_end: prim_coverage_end, :c_id => nil, :cp_id => nil)}
+    let!(:policy) {
+      policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, hbx_enrollment_ids: [eg_id], carrier_id: carrier_id, aasm_state: aasm_state, plan: active_plan, carrier: carrier, term_for_np: true, coverage_start: prim_coverage_start, coverage_end: prim_coverage_end, kind: kind)
+      policy.update_attributes(enrollees: [subscriber_enrollee], rating_area: "R-ME003")
+      policy.save
+      policy
+    }
+
+    context "when reinstate date is next day of policy end date " do
+      let(:prim_coverage_start) { Date.today.beginning_of_year }
+      let(:prim_coverage_end) { Date.today.beginning_of_year + 1.month }
+      let(:aasm_state) { 'terminated' }
+      let(:rating_area) { "R-ME003" }
+
+      it "returns true for the matching cases" do
+        expect(subject.ivl_reinstatement_candidate?(policy, active_plan, primary.authority_member.hbx_member_id, prim_coverage_end + 1.day, rating_area)).to be_truthy
+      end
+    end
+
+    context "when reinstate date is same as policy end date and policy is canceled" do
+      let(:prim_coverage_start) { Date.today.beginning_of_year }
+      let(:prim_coverage_end) { Date.today.beginning_of_year }
+      let(:aasm_state) { 'canceled' }
+      let(:rating_area) { "R-ME003" }
+
+      it "returns true for the matching cases" do
+        expect(subject.ivl_reinstatement_candidate?(policy, active_plan, primary.authority_member.hbx_member_id, prim_coverage_end, rating_area)).to be_truthy
+      end
+    end
+
+    context "when reinstate date is same as policy end date and policy is canceled rating area not matched" do
+      let(:prim_coverage_start) { Date.today.beginning_of_year }
+      let(:prim_coverage_end) { Date.today.beginning_of_year }
+      let(:aasm_state) { 'canceled' }
+      let(:rating_area) { "R-ME004" }
+
+      it "returns true for the matching cases" do
+        expect(subject.ivl_reinstatement_candidate?(policy, active_plan, primary.authority_member.hbx_member_id, prim_coverage_end, rating_area)).to be_falsey
+      end
+    end
+
+    context "exception case, when reinstate date falls in policy start & end date and policy terminated by carrier" do
+      let(:prim_coverage_start) { Date.today.beginning_of_year }
+      let(:prim_coverage_end) { Date.new(Date.today.beginning_of_year.year, 12, 31) }
+      let(:aasm_state) { 'terminated' }
+      let(:rating_area) { "R-ME003" }
+
+      it "returns true for the matching cases" do
+        expect(subject.ivl_reinstatement_candidate?(policy, active_plan, primary.authority_member.hbx_member_id, prim_coverage_start + 1.month, rating_area)).to be_truthy
+      end
+    end
+
+    context "exception case, when reinstate date falls in policy start & end date and policy terminated by carrier and rating area not matched" do
+      let(:prim_coverage_start) { Date.today.beginning_of_year }
+      let(:prim_coverage_end) { Date.new(Date.today.beginning_of_year.year, 12, 31) }
+      let(:aasm_state) { 'terminated' }
+      let(:rating_area) { "R-ME004" }
+
+      it "should return false" do
+        expect(subject.ivl_reinstatement_candidate?(policy, active_plan, primary.authority_member.hbx_member_id, prim_coverage_start + 1.month, rating_area)).to be_falsey
+      end
+    end
+
+    context "exception case, when reinstate date falls in policy start & end date and policy not terminated by carrier" do
+      let(:prim_coverage_start) { Date.today.beginning_of_year }
+      let(:prim_coverage_end) { Date.new(Date.today.beginning_of_year.year, 12, 31) }
+      let(:aasm_state) { 'terminated' }
+      let(:rating_area) { "R-ME003" }
+
+      it "should return false" do
+        policy.update_attributes(term_for_np: false)
+        expect(subject.ivl_reinstatement_candidate?(policy, active_plan, primary.authority_member.hbx_member_id, prim_coverage_start + 1.month, rating_area)).to be_falsey
+      end
+    end
+
+    context "when reinstate date does not aligns with policy end date" do
+      let(:prim_coverage_start) { Date.today.beginning_of_year }
+      let(:prim_coverage_end) { Date.today.beginning_of_year + 1.month }
+      let(:aasm_state) { 'terminated' }
+      let(:rating_area) { "R-ME003" }
+
+      it "should return false, when reinstate date is not next day of policy term date" do
+        expect(subject.ivl_reinstatement_candidate?(policy, active_plan, primary.authority_member.hbx_member_id, prim_coverage_end + 1.month, rating_area)).to be_falsey
+      end
+    end
+  end
 end
