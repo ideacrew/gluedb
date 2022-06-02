@@ -7,4 +7,4 @@ event_exchange: "<%= ENV['HBX_ID'] || 'hx0' %>.<%= ENV['ENV_NAME'] || 'dev' %>.e
 event_publish_exchange: "<%= ENV['HBX_ID'] || 'hx0' %>.<%= ENV['ENV_NAME'] || 'dev' %>.e.fanout.events"
 request_exchange: "<%= ENV['HBX_ID'] || 'hx0'%>.<%= ENV['ENV_NAME'] || 'dev' %>.e.direct.requests"
 amqp_uri: "amqp://<%= ENV['RABBMITMQ_USER'] || 'guest' %>.<%= ENV['RABBITMQ_PASSWORD'] || 'guest' %>@<%= ENV['ACAPI_BROKER_HOST'] || 'localhost' %>:<%= ENV['ACAPI_BROKER_PORT'] || '5672' %>"
-file_storage_uri: localhost
+file_storage_uri: "<%= ENV['DOCUMENTS_URL'] %>" 
