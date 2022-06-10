@@ -57,6 +57,13 @@ module ExternalEvents
       end
     end
 
+    def drop_term_event_if_term_processed_by_carrier!
+      return false unless term_processed_by_carrier?
+      response_with_publisher do |result_publisher|
+        result_publisher.drop_term_event_processed_by_carrier!(self)
+      end
+    end
+
     def drop_if_term_with_no_end!
       return false unless is_termination?
       return false unless subscriber_end.blank?
@@ -433,6 +440,13 @@ module ExternalEvents
       else
         false
       end
+    end
+
+    def term_processed_by_carrier?
+      return false unless is_termination?
+      return false if existing_policy.blank?
+      (existing_policy.canceled? || existing_policy.terminated?) &&
+        (existing_policy.term_for_np || existing_policy.subscriber.termed_by_carrier)
     end
 
     def plan_matched?(active_plan, renewal_plan)

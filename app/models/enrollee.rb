@@ -34,6 +34,7 @@ class Enrollee
   field :coverage_end, type: Date
   field :coverage_status, type: String, default: "active"
   field :tobacco_use, type: String
+  field :termed_by_carrier, type: Boolean, default: false
 
   embedded_in :policy, :inverse_of => :enrollees
 

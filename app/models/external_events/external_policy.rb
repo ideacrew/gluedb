@@ -269,6 +269,14 @@ module ExternalEvents
         previous_policy = Policy.where(:hbx_enrollment_ids  => {"$in" => [@policy_node.previous_policy_id.to_s]}).first
         if previous_policy.present?
           previous_policy.update_attributes!(term_for_np: false)
+          @policy_node.enrollees.each do |enrollee_node|
+            member_id = extract_member_id(enrollee_node)
+            enrollee = previous_policy.enrollees.detect { |en| en.m_id == member_id }
+            if enrollee
+              enrollee.termed_by_carrier = false
+              enrollee.save!
+            end
+          end
           Observers::PolicyUpdated.notify(previous_policy)
         end
       end

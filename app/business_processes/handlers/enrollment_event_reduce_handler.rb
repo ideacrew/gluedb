@@ -5,7 +5,8 @@ module Handlers
     # We split out and collate the events into buckets.  Then we call the step after us once for each bucket.
     def call(context)
       no_dupe_events = discard_already_processed_events(context)
-      no_bad_terms = discard_terms_with_no_end_date(no_dupe_events)
+      processable_terms = discard_term_event_if_term_processed_by_carrier(no_dupe_events)
+      no_bad_terms = discard_terms_with_no_end_date(processable_terms)
       no_rerun_terms = discard_already_processed_terminations(no_bad_terms)
       reduced_list = perform_reduction(no_rerun_terms)
       reduced_list.map do |element|
@@ -21,6 +22,11 @@ module Handlers
 
     def discard_already_processed_terminations(enrollments)
       filter = ::ExternalEvents::EnrollmentEventNotificationFilters::AlreadyProcessedTermination.new
+      filter.filter(enrollments)
+    end
+
+    def discard_term_event_if_term_processed_by_carrier(enrollments)
+      filter = ::ExternalEvents::EnrollmentEventNotificationFilters::TerminationAlreadyProcessedByCarrier.new
       filter.filter(enrollments)
     end
 

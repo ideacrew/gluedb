@@ -191,6 +191,14 @@ module Parsers
           end
         end
 
+        def change_code
+          @loop["INS"][3]
+        end
+
+        def change_reason
+          @loop["INS"][4]
+        end
+
         def reporting_catergories
           Etf::ReportingCatergories.new(@loop["L2700s"])
         end
