@@ -77,7 +77,6 @@ module EnrollmentAction
       ].detect { |kls| kls.qualifies?(chunk) }
 
       if selected_action
-        puts selected_action.inspect
         selected_action.construct(chunk)
       else
         batch_id = SecureRandom.uuid

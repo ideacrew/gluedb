@@ -1,6 +1,6 @@
 require "rails_helper"
 
-describe Handlers::EnrollmentEventReduceHandler, "given an event that has already been processed" do
+describe Handlers::EnrollmentEventReduceHandler, "given an event that has already been processed", :dbclean => :after_each do
   let(:next_step) { double }
   let(:filter) { instance_double(::ExternalEvents::EnrollmentEventNotificationFilters::AlreadyProcessedEvent) }
   let(:event) { instance_double(::ExternalEvents::EnrollmentEventNotification) }
