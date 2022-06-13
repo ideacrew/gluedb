@@ -149,6 +149,7 @@ module Parsers
             enrollee.termed_by_carrier = true
           end
         end
+        @policy.save
       end
 
       def exempt_from_notification?(policy, is_cancel, is_term, npt_changed)
