@@ -132,6 +132,10 @@ module Parsers
         @policy = policy
       end
 
+      def invalid_ins_combination(details)
+        @errors << "Invalid INS03/04 combination for member #{details[:member_id]}: #{details[:change_code]}/#{details[:change_reason]}"
+      end
+
       def termination_with_no_end_date(details)
         @errors << "File is a termination, but no or invalid end date is provided for a member: Member #{details[:member_id]}, Coverage End: #{details[:coverage_end_string]}"
       end
@@ -154,6 +158,10 @@ module Parsers
 
       def termination_date_after_expiration(details)
         @errors << "Termination date after natural policy expiration: member #{details[:member_id]}, coverage end: #{details[:coverage_end]}, expiration_date: #{details[:expiration_date]}"
+      end
+
+      def termination_extends_coverage(details)
+        @errors << "Termination would extend coverage period: member #{details[:member_id]}, coverage end: #{details[:coverage_end]}, existing_member_end: #{details[:enrollee_end]}"
       end
 
       def policy_not_found(subkeys)
