@@ -649,7 +649,7 @@ class Policy
 
   def update_future_aptc_credit(aptc_date)
     aptc_credits.select { |credit| credit.start_on > aptc_date && credit.end_on != credit.start_on}.each do |end_aptc|
-      aptc_record.update_attributes(
+      end_aptc.update_attributes(
         end_on: end_aptc.start_on
       )
     end
