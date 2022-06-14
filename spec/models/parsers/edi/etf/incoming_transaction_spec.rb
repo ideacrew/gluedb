@@ -250,11 +250,13 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
         incoming.import
         # After importing EDI
         active_policy.reload
-        expect(active_policy.policy_end).to eq prim_coverage_end
-        expect(child_enrollee1.coverage_end).to eq prim_coverage_end
-        expect(child_enrollee1.termed_by_carrier).to eq true
-        expect(child_enrollee2.coverage_end).to eq prim_coverage_end
-        expect(child_enrollee2.termed_by_carrier).to eq true
+        policy = Policy.where(eg_id: active_policy.eg_id).first
+        expect(policy.policy_end).to eq prim_coverage_end
+
+        expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.coverage_end).to eq prim_coverage_end
+        expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.termed_by_carrier).to eq true
+        expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.coverage_end).to eq prim_coverage_end
+        expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.termed_by_carrier).to eq true
       end
     end
 
@@ -283,12 +285,13 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
         incoming.import
         # After importing EDI
         active_policy.reload
-        expect(active_policy.policy_end).to eq prim_coverage_end
+        policy = Policy.where(eg_id: active_policy.eg_id).first
+        expect(policy.policy_end).to eq prim_coverage_end
 
-        expect(child_enrollee1.coverage_end).to eq child1_coverage_end
-        expect(child_enrollee1.termed_by_carrier).to eq false
-        expect(child_enrollee2.coverage_end).to eq child2_coverage_end
-        expect(child_enrollee2.termed_by_carrier).to eq false
+        expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.coverage_end).to eq child1_coverage_end
+        expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.termed_by_carrier).to eq false
+        expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.coverage_end).to eq child2_coverage_end
+        expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.termed_by_carrier).to eq false
       end
     end
 
@@ -315,10 +318,10 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
         incoming.import
         # After importing EDI
         active_policy.reload
-        expect(active_policy.policy_end).to eq prim_coverage_end
-
-        expect(child_enrollee1.coverage_end).to eq child1_coverage_start
-        expect(child_enrollee2.coverage_end).to eq child2_coverage_start
+        policy = Policy.where(eg_id: active_policy.eg_id).first
+        expect(policy.policy_end).to eq prim_coverage_end
+        expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.coverage_end).to eq child1_coverage_start
+        expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.coverage_end).to eq child2_coverage_start
       end
     end
   end
@@ -344,13 +347,14 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
         incoming.import
         # After importing EDI
         active_policy.reload
-        expect(active_policy.policy_end).to eq prim_coverage_end
+        policy = Policy.where(eg_id: active_policy.eg_id).first
+        expect(policy.policy_end).to eq prim_coverage_end
 
-        expect(child_enrollee1.coverage_end).to eq prim_coverage_end
-        expect(child_enrollee1.termed_by_carrier).to eq true
+        expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.coverage_end).to eq prim_coverage_end
+        expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.termed_by_carrier).to eq true
 
-        expect(child_enrollee2.coverage_end).to eq prim_coverage_end
-        expect(child_enrollee2.termed_by_carrier).to eq true
+        expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.coverage_end).to eq prim_coverage_end
+        expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.termed_by_carrier).to eq true
       end
     end
 
@@ -377,12 +381,12 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
         incoming.import
         # After importing EDI
         active_policy.reload
-        expect(active_policy.policy_end).to eq prim_coverage_end
-
-        expect(child_enrollee1.coverage_end).to eq child1_coverage_start
-        expect(child_enrollee1.termed_by_carrier).to eq true
-        expect(child_enrollee2.coverage_end).to eq child2_coverage_start
-        expect(child_enrollee2.termed_by_carrier).to eq true
+        policy = Policy.where(eg_id: active_policy.eg_id).first
+        expect(policy.policy_end).to eq prim_coverage_end
+        expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.coverage_end).to eq child1_coverage_start
+        expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.termed_by_carrier).to eq true
+        expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.coverage_end).to eq child2_coverage_start
+        expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.termed_by_carrier).to eq true
       end
     end
   end
