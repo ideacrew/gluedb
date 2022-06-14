@@ -1,6 +1,6 @@
 require "rails_helper"
 
-describe EnrollmentAction::ReinstatementComparisonHelper do
+describe EnrollmentAction::ReinstatementComparisonHelper, :dbclean => :after_each  do
   subject { Class.new { extend EnrollmentAction::ReinstatementComparisonHelper } }
 
   describe "shop_reinstatement_candidate?" do
@@ -138,8 +138,8 @@ describe EnrollmentAction::ReinstatementComparisonHelper do
     end
   end
 
-  describe "#ivl_reinstatement_candidate??" do
-    let(:eg_id) { '1' }
+  describe "#ivl_reinstatement_candidate?", :dbclean => :after_each do
+    let(:eg_id) { '1000' }
     let(:carrier_id) { '2' }
     let(:kind) { 'individual' }
     let(:carrier) { Carrier.create }
