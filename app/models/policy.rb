@@ -644,7 +644,7 @@ class Policy
   end
 
   def delete_invalid_aptc_credit(aptc_date)
-    aptc_credits.select { |credit| credit.start_on > aptc_date || credit.end_on == credit.start_on}.each do |invalid_aptc|
+    aptc_credits.select { |credit| (credit.start_on > aptc_date) || (credit.end_on == credit.start_on) }.each do |invalid_aptc|
       invalid_aptc.delete
     end if aptc_credits.count > 1
   end
