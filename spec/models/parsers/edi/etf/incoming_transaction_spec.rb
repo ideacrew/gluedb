@@ -7,7 +7,7 @@ describe Parsers::Edi::IncomingTransaction, :dbclean => :after_each do
                                 coverage_start: coverage_start,
                                 coverage_end: coverage_end ) }
   let(:policy) do
-    policy = Policy.new(eg_id: '1', plan_id: '1')
+    policy = Policy.new(eg_id: '7899', plan_id: '1')
     policy.enrollees << enrollee
     policy.save!
     policy
@@ -177,7 +177,7 @@ describe Parsers::Edi::IncomingTransaction, :dbclean => :after_each do
 end
 
 context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
-  let(:eg_id) { '1' }
+  let(:eg_id) { '987' }
   let(:carrier_id) { '2' }
   let(:kind) { 'individual' }
   let(:carrier) { Carrier.create }

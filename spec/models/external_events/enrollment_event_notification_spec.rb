@@ -892,7 +892,7 @@ describe "#drop_if_already_processed" do
 end
 
 describe "#has_renewal_cancel_policy", :dbclean => :after_each do
-  let(:eg_id) { '1' }
+  let(:eg_id) { '123' }
   let(:carrier_id) { '2' }
   let(:plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
   let!(:primary) {
@@ -911,7 +911,8 @@ describe "#has_renewal_cancel_policy", :dbclean => :after_each do
     policy
   }
   let!(:renewal_cancel_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: Date.today.beginning_of_year, kind: kind, enrollees: [enrollee2])
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "333", employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: Date.today.beginning_of_year, kind: kind, enrollees: [enrollee2])
+    policy.update_attributes(hbx_enrollment_ids: ["333"])
     policy.save
     policy
   }
@@ -1067,13 +1068,13 @@ describe "#renewal_policies_to_cancel", :dbclean => :after_each do
     policy
   }
   let!(:renewal_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind)
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "333", employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind)
     policy.update_attributes(enrollees: [enrollee2])
     policy.save
     policy
   }
   let!(:renewal_dental_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: dental_plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind, enrollees: [enrollee2])
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "3333", employer: employer, carrier_id: carrier_id, plan: dental_plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind, enrollees: [enrollee2])
     policy.save
     policy
   }
@@ -1287,7 +1288,7 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
     policy
   }
   let!(:renewal_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "444", employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
     policy.update_attributes(enrollees: [renewal_enrollee1, renewal_enrollee2], hbx_enrollment_ids: ["123"])
     policy.save
     policy
@@ -1637,7 +1638,7 @@ describe "#plan_change_dep_add_or_drop_to_renewal_policy?", :dbclean => :after_e
     policy
   }
   let!(:renewal_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "333", employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
     policy.update_attributes(enrollees: [renewal_enrollee1, renewal_enrollee2], hbx_enrollment_ids: ["123"])
     policy.save
     policy
@@ -1944,7 +1945,7 @@ describe "#is_retro_renewal_policy?", :dbclean => :after_each do
     policy
   }
   let!(:renewal_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "333", employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
     policy.update_attributes(enrollees: [renewal_enrollee1, renewal_enrollee2], hbx_enrollment_ids: ["123"])
     policy.save
     policy
