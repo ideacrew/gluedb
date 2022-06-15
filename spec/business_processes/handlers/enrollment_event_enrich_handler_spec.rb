@@ -150,8 +150,8 @@ describe "events with in the year" do
   - resulted in cancel of current prospective coverage(2022)(event2)
   - and also resulted in adjustment of dates to retro coverage(event3)
   - events occured in sequence with in the year
-  - events are adjacent" do
-    let(:eg_id) { '1' }
+  - events are adjacent", :dbclean => :after_each do
+    let(:eg_id) { '1001' }
     let(:carrier_id) { '1' }
     let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, hios_plan_id: 1, :coverage_type => "health", year: Date.today.year) }
     let!(:primary) {
@@ -460,7 +460,7 @@ describe "events with in the year" do
   - resulted in cancel of current prospective coverage(2022)(event2)
   - and also resulted in adjustment of dates to retro coverage(event3)
   - events occured in sequence with in the year
-  - events are adjacent" do
+  - events are adjacent",:dbclean => :after_each do
     let(:eg_id) { '1' }
     let(:carrier_id) { '1' }
     let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, hios_plan_id: 1, :coverage_type => "health", year: Date.today.year) }
@@ -794,8 +794,8 @@ describe "events with in the year" do
   - resulted in cancel of current prospective coverage(2022)(event2)
   - and also resulted in adjustment of dates to retro coverage(event3)
   - events occured in sequence with in the year
-  - events are adjacent" do
-    let(:eg_id) { '1' }
+  - events are adjacent",:dbclean => :after_each do
+    let(:eg_id) { '1004' }
     let(:carrier_id) { '1' }
     let(:active_plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, hios_plan_id: 1, :coverage_type => "health", year: Date.today.year) }
     let!(:primary) {

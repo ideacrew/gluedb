@@ -124,7 +124,7 @@ describe Member, :dbclean => :after_each do
         policy.save!
 
         unrelated_enrollee = Enrollee.new(m_id: different_id, relationship_status_code: 'spouse', employment_status_code: 'active', benefit_status_code: 'active')
-        other_policy = Policy.new(eg_id: '1', plan_id: '1')
+        other_policy = Policy.new(eg_id: '1111', plan_id: '1')
         other_policy.enrollees << unrelated_enrollee
         other_policy.save!
 
@@ -141,7 +141,7 @@ describe Member, :dbclean => :after_each do
         policy.save!
 
         unrelated_enrollee = Enrollee.new(m_id: different_id, relationship_status_code: 'spouse', employment_status_code: 'active', benefit_status_code: 'active')
-        other_policy = Policy.new(eg_id: '1', plan_id: '1')
+        other_policy = Policy.new(eg_id: '111111', plan_id: '1')
         other_policy.enrollees << unrelated_enrollee
         other_policy.save!
 
