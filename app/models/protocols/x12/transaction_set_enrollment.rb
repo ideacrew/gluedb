@@ -69,13 +69,19 @@ class Protocols::X12::TransactionSetEnrollment < Protocols::X12::TransactionSetH
     end
 
     def search_hash(s_rex)
-      search_rex = Regexp.compile(Regexp.escape(s_rex), true)
-      {
-        "$or" => ([
-          {"error_list" => search_rex},
-          {"receiver_id" => search_rex}
-        ])
-      }
+      search_string = {}
+      return search_string if s_rex[:search_string].nil? && s_rex[:carrier].nil?
+      if s_rex[:search_string].present?
+        search_rex = Regexp.compile(Regexp.escape(s_rex[:search_string]), true)
+        policies = Policy.where(Policy.search_hash(s_rex[:search_string]))
+        search_string = if policies.present?
+                          {:"policy_id".in => policies.map(&:id)}
+                        else
+                          {"error_list" => search_rex}
+                        end
+      end
+      return search_string unless s_rex[:carrier].present?
+      search_string.merge({:"transmission_id".in => Protocols::X12::Transmission.where(ic_sender_id: /#{s_rex[:carrier].fein}/i).map(&:id)})
     end
 
   end
