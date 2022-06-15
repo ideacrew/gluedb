@@ -657,4 +657,42 @@ describe "given dependent add policy cv with aptc change, should create aptc cre
       subject.publish
     end
   end
+
+  context "should delete invalid aptc credits" do
+    before do
+      allow(Amqp::EventBroadcaster).to receive(:with_broadcaster).and_yield(event_broadcaster)
+      allow(event_broadcaster).to receive(:broadcast)
+      active_policy.aptc_credits.create!(start_on: Date.new(Date.today.year,1,1), end_on: Date.new(Date.today.year,3,31), pre_amt_tot: 100.0, tot_res_amt: 50.0, aptc: 50.0)
+      active_policy.aptc_credits.create!(start_on: Date.new(Date.today.year,4,1), end_on: Date.new(Date.today.year,12,31), pre_amt_tot: 100.0, tot_res_amt: 50.0, aptc: 50.0)
+    end
+
+    it "creates aptc credits and updates premium" do
+      expect(EnrollmentAction::DependentAdd.qualifies?([termination_event, dependent_add_event])).to be_truthy
+      expect(active_policy.tot_res_amt.to_f).to eq old_total_responsible_amount
+      expect(active_policy.pre_amt_tot.to_f).to eq old_premium_total_amount
+      expect(active_policy.applied_aptc.to_f).to eq old_applied_aptc_amount
+
+      expect(active_policy.aptc_credits.count).to eq 2
+
+      expect(active_policy.aptc_credits.where(start_on: Date.new(Date.today.year,1,1)).count).to eq 1
+      expect(active_policy.aptc_credits.where(start_on: Date.new(Date.today.year,4,1)).count).to eq 1
+
+      expect(subject.persist).to be_truthy
+      active_policy.reload
+      expect(Policy.where(hbx_enrollment_ids: dependent_add_event.hbx_enrollment_id).count).to eq 1
+
+      # APTC and premiums updated
+      expect(active_policy.aptc_credits.count).to eq 2
+      expect(active_policy.aptc_credits.where(start_on: Date.new(Date.today.year,1,1)).count).to eq 1
+      expect(active_policy.aptc_credits.where(start_on: Date.new(Date.today.year,4,1)).count).to eq 0 # deletes future aptc credits
+      expect(active_policy.aptc_credits.where(start_on: Date.new(Date.today.year,2,1)).count).to eq 1
+
+      expect(active_policy.tot_res_amt.to_f).to eq new_total_responsible_amount
+      expect(active_policy.pre_amt_tot.to_f).to eq new_premium_total_amount
+      expect(active_policy.applied_aptc.to_f).to eq new_applied_aptc_amount
+
+      expect_any_instance_of(EnrollmentAction::ActionPublishHelper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#change_member_add")
+      subject.publish
+    end
+  end
 end
