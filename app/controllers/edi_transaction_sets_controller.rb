@@ -11,8 +11,14 @@ class EdiTransactionSetsController < ApplicationController
 
   def errors
     @q = params[:q]
-    @transaction = Protocols::X12::TransactionSetEnrollment.search(carrier_map(@q)).where("error_list" => {"$exists" => true, "$not" => {"$size" => 0}}).page(params[:page]).per(15)
-    authorize! params, @transaction || Protocols::X12::TransactionSetEnrollment
+    @carriers = Carrier.by_name
+    @carrier = Carrier.find(params['carrier']) if params['carrier'].present?
+    @to_date = (params["to_date"] || Date.today).to_date
+    @from_date = (params["from_date"] || Date.new(2014,1,1)).to_date > @to_date ? @to_date : (params["from_date"] || Date.new(2014,1,1)).to_date
+    @result_set = Protocols::X12::TransactionSetEnrollment.where("error_list" => {"$exists" => true, "$not" => {"$size" => 0}},
+                                                                 "submitted_at" => (@from_date..@to_date)).search({search_string: @q, carrier: @carrier})
+    @transactions = @result_set.page(params[:page]).per(15)
+    authorize! params, @transactions || Protocols::X12::TransactionSetEnrollment
   end
 
   def show

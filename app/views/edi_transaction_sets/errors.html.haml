@@ -1,19 +1,22 @@
 .row
-  .col-md-offset-8.col-md-4
-    = render 'shared/search', url: errors_edi_transaction_sets_path, q: @q, placeholder: "Errors, Receiver Name"
+  .col-md-offset-3.col-md-9
+    = render 'shared/search', url: errors_edi_transaction_sets_path, q: @q, range_search: true, carriers: @carriers, carrier: @carrier, from_date: @from_date, to_date: @to_date, placeholder: "Error List, Policy ID"
 
-%table.table.table-condensed
+%table.table.margin-top-error.table-condensed
   %thead
     %tr
+      %th Policy ID
       %th Transaction
       %th Created GMT
       %th Submitted GMT
       %th Sender
       %th Error List
   %tbody
-    = table_empty_to_human if @transaction.count < 1
-    - @transaction.each do |t|
+    = table_empty_to_human if @transactions.count < 1
+    - @transactions.each do |t|
       %tr
+        %td.col-md-1
+          = t.try(:policy).try(:eg_id)
         %td.col-md-1
           = link_to "#{t.st01}_#{t.transaction_kind}_#{t.transmission.gs02}", edi_transaction_set_path(t)
         %td.col-md-1
@@ -23,12 +26,18 @@
         %td.col-md-1
           = transaction_error_sender_name(t)
         %td.col-md-9
-          = t.error_list
+          - errors = t.error_list.uniq
+          - if errors.count > 1
+            - errors.each do |error|
+              %li
+                = error
+          - else
+            = errors.first
 
 .row
   .col-md-8
-    = paginate @transaction, theme: "twitter-bootstrap", pagination_class: "pagination-plain"
+    = paginate @transactions, theme: "twitter-bootstrap", pagination_class: "pagination-plain"
   .rol-md-4
     %p
-      = "#{number_with_delimiter(@transaction.to_a.count)} / #{number_with_delimiter(Protocols::X12::TransactionSetEnrollment.count)} "
+      = "#{number_with_delimiter(@transactions.to_a.count)} / #{number_with_delimiter(@result_set.count)} "
       %small (transactions selected / total)
