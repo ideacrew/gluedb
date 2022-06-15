@@ -97,7 +97,7 @@ class Policy
   index({ "enrollees.coverage_start" => 1})
   index({ "enrollees.coverage_end" => 1})
 
-  before_create :generate_enrollment_group_id
+  before_create :generate_enrollment_group_id, :duplicate_eg_id_check
   before_save :invalidate_find_cache
   before_save :check_for_cancel_or_term
   before_save :check_multi_aptc
@@ -1007,6 +1007,14 @@ class Policy
   def member_ids
     self.enrollees.map do |enrollee|
       enrollee.m_id
+    end
+  end
+
+  def duplicate_eg_id_check
+    policies = Policy.where(:eg_id => self.eg_id) || Policy.where(:hbx_enrollment_ids => self.eg_id)
+    if policies.present?
+      Rails.logger.error("Already Policy Exists With Exchange-Assigned ID:#{self.eg_id}, Exisiting Policy ID: #{policies.first.id}")
+      raise "Already Policy Exists With Exchange-Assigned ID:#{self.eg_id}, Exisiting Policy ID: #{policies.first.id}"
     end
   end
 end
