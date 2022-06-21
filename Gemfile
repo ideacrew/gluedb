@@ -89,7 +89,7 @@ gem 'nokogiri-happymapper', "~> 0.5.9", :require => 'happymapper'
 gem 'prawn', '~> 2.2'
 gem 'prawn-templates', '~> 0.1.2'
 gem 'forkr', '1.0.2'
-gem 'edi_codec', git: "https://github.com/ideacrew/edi_codec.git", branch: "carrier_boarding"
+gem 'edi_codec', git: "https://github.com/ideacrew/edi_codec.git", branch: "pt_182479669"
 gem 'ibsciss-middleware', git: "https://github.com/ideacrew/ruby-middleware.git", branch: "trunk", :require => "middleware"
 gem 'rgl', '0.5.2'
 gem 'aws-sdk', "~> 2.2.4"

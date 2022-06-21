@@ -16,7 +16,7 @@ class EdiTransactionSetsController < ApplicationController
     @to_date = (params["to_date"] || Date.today).to_date
     @from_date = (params["from_date"] || Date.new(2014,1,1)).to_date > @to_date ? @to_date : (params["from_date"] || Date.new(2014,1,1)).to_date
     @result_set = Protocols::X12::TransactionSetEnrollment.where("error_list" => {"$exists" => true, "$not" => {"$size" => 0}},
-                                                                 "submitted_at" => (@from_date..@to_date)).search({search_string: @q, carrier: @carrier})
+                                                                 "submitted_at" => (@from_date.beginning_of_day..@to_date.end_of_day)).search({search_string: @q, carrier: @carrier})
     @transactions = @result_set.page(params[:page]).per(15)
     authorize! params, @transactions || Protocols::X12::TransactionSetEnrollment
   end

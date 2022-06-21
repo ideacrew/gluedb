@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "me_carrier_boarding"
+      - "ctf_image"
   pull_request:
     branches:
       - "me_carrier_boarding"
