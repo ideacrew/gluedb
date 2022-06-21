@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - "me_carrier_boarding"
-      - "rel-me-20220613"
+      - "rel-me-20220621"
   pull_request:
     branches:
       - "me_carrier_boarding"
