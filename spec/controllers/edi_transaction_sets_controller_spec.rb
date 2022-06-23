@@ -19,7 +19,11 @@ describe EdiTransactionSetsController, :dbclean => :after_each do
     let(:plan) { Plan.create!(:name => "test_plan", :coverage_type => "health") }
     let!(:policy) { Policy.create!(enrollment_group_id: eg_id, carrier_id: carrier.id, plan: plan)}
     let!(:transmission) { Protocols::X12::Transmission.create(isa06: carrier.fein) }
-    let!(:transation_set_enrollment) { Protocols::X12::TransactionSetEnrollment.create!(transmission_id: transmission.id, policy: policy.id, submitted_at: range.first, error_list: ["test"], ts_purpose_code: '00', ts_action_code: '2', ts_reference_number: '1', ts_date: '1', ts_time: '1', ts_id: '1', ts_control_number: '1', ts_implementation_convention_reference: '1', transaction_kind: 'initial_enrollment') }
+    let!(:transation_set_enrollment) {
+      txrn = Protocols::X12::TransactionSetEnrollment.create!(transmission_id: transmission.id, policy: policy.id, submitted_at: range.first, error_list: ["test"], ts_purpose_code: '00', ts_action_code: '2', ts_reference_number: '1', ts_date: '1', ts_time: '1', ts_id: '1', ts_control_number: '1', ts_implementation_convention_reference: '1', transaction_kind: 'initial_enrollment')
+      txrn.update_attributes(submitted_at: range.first)
+      txrn
+    }
 
     let!(:another_transmission) { Protocols::X12::Transmission.create(isa06: another_carrier.fein) }
     let!(:another_transation_set_enrollment) {
@@ -64,8 +68,7 @@ describe EdiTransactionSetsController, :dbclean => :after_each do
 
       # search result
       expect(assigns(:transactions).count).to eq(2)
-      expect(assigns(:transactions)[0].transmission.ic_sender_id).to eq(carrier.fein)
-      expect(assigns(:transactions)[1].transmission.ic_sender_id).to eq(another_carrier.fein)
+      expect(assigns(:transactions).map(&:transmission).map(&:ic_sender_id).sort).to eq(["1234", "56789"])
     end
 
     it "renders errors page for date range" do
