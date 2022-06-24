@@ -29,6 +29,10 @@ jobs:
           gem update --system
           bundle config path vendor/bundle
           bundle install
-      # - uses: wbari/start-mongoDB@v0.2
-      #   with:
-      #     mongoDBVersion: 3.4
+      - uses: wbari/start-mongoDB@v0.2
+        with:
+          mongoDBVersion: 3.4
+      - name: run tests
+        run: |
+          cp config/exchange.yml.example config/exchange.yml
+          bundle exec rspec
