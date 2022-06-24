@@ -24,6 +24,7 @@ jobs:
           key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}-${{ hashFiles('**/Gemfile' ) }}
           restore-keys: |
             ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}-${{ hashFiles('**/Gemfile' ) }}
+            ${{ runner.os }}-
       - name: Install project gems
         run: |
           gem update --system
