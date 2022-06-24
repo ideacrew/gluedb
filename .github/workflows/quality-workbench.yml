@@ -32,7 +32,7 @@ jobs:
           bundle install
       - uses: wbari/start-mongoDB@v0.2
         with:
-          mongoDBVersion: 3.4
+          mongoDBVersion: 3.6
       - name: run tests
         run: |
           cp config/exchange.yml.example config/exchange.yml
