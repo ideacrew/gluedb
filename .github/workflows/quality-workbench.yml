@@ -8,7 +8,7 @@ concurrency:
   group: qb-${{ github.ref }}
   cancel-in-progress: true
 
-ENV:
+env:
   BUNDLE_GITHUB__COM: ${{ secrets.dchbx_deployments_token }}:x-oauth-basic
 
 jobs:
