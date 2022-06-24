@@ -50,7 +50,7 @@ end
 group :test do
   gem 'test-unit', "~> 3.2.3"
   gem 'mongoid-rspec', "~> 1.13.0"
-  gem 'rspec-rails', '3.3.3'
+  gem 'rspec-rails', '~> 3'
   gem 'rspec-collection_matchers', '1.1.2'
   gem 'capybara', '2.4.4'
   gem 'factory_girl_rails', '4.5.0'
