@@ -2,7 +2,7 @@
 ### Base image ###
 ############################################
 
-FROM ruby:2.1.7-slim as base
+FROM ruby:2.5.9-slim-stretch as base
 LABEL author="IdeaCrew"
 
 ENV USERNAME=gluedb
@@ -14,7 +14,7 @@ ARG BUNDLER_VERSION=1.17.3
 ENV BUNDLER_VERSION=$BUNDLER_VERSION
 
 # Only add packages that aren't already in the base image
-# https://github.com/docker-library/ruby/blob/99def14400fcd612782367830836dfcbc10c8c50/2.1/slim/Dockerfile
+# https://github.com/docker-library/ruby/blob/57fbb486ad5a793c83a47a4c1ef36160f7abd28e/2.5/stretch/slim/Dockerfile
 RUN apt-get update -qq \
     && apt-get -yq dist-upgrade \
     && apt-get install -y \
@@ -23,7 +23,7 @@ RUN apt-get update -qq \
       libxext6 \
       libxml2 \
       libxrender1 \
-      libyaml-cpp0.5 \
+      libyaml-cpp0.5v5 \
       nano \
       openssl \
       sshpass \
@@ -88,10 +88,7 @@ RUN apt-get update -qq \
     && truncate -s 0 /var/log/*log
 
 # Add NodeJS to sources list
-# Need to add gpg key first re: https://gist.github.com/opi/1dce5be10717183ccc03
-# Seems to be related to the version of Debian (jessie)
-RUN curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
-  && curl -fsSL https://deb.nodesource.com/setup_$NODE_MAJOR.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_$NODE_MAJOR.x | bash -
 
 RUN apt-get update -qq \
   && apt-get install -yq --no-install-recommends \
@@ -111,6 +108,8 @@ FROM builder as prod_gems_and_assets
 ARG GEM_OAUTH_TOKEN
 ARG BUNDLE_GITHUB__COM=$GEM_OAUTH_TOKEN
 
+COPY --chown=$USERNAME:$USERNAME ./project_gems/devise-3.5.10/devise.gemspec $HOME/project_gems/devise-3.5.10/devise.gemspec
+COPY --chown=$USERNAME:$USERNAME ./project_gems/devise-3.5.10/lib/devise/version.rb $HOME/project_gems/devise-3.5.10/lib/devise/version.rb
 COPY --chown=$USERNAME:$USERNAME ./Gemfile $HOME/Gemfile
 COPY --chown=$USERNAME:$USERNAME ./Gemfile.lock $HOME/Gemfile.lock
 
