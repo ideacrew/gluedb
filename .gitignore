@@ -48,3 +48,4 @@ config/environments/*.local.yml
 *.doc
 *.docx
 .env
+public

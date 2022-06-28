@@ -13,7 +13,7 @@ gem 'jquery-rails', '3.1.3'
 gem 'jquery-ui-rails', '5.0.5'
 gem 'virtus', "~> 1.0.5"
 gem 'spreadsheet', '1.0.4'
-gem 'ruby-ole', '1.2.11.7'
+gem 'ruby-ole', '~> 1.2.12'
 gem 'openhbx_cv2', git: "https://github.com/ideacrew/openhbx_cv2.git", branch: "trunk"
 gem "interactor", "~> 3.1.0"
 gem 'interactor-rails', '2.0.2'
@@ -30,8 +30,7 @@ group 'development', 'test' do
 end
 
 group :development, :assets, :test do
-  gem 'libv8', "~> 3.16.14.17"
-  gem 'therubyracer', '0.12.2', :platforms => :ruby
+  gem 'therubyracer', '0.12.3', :platforms => :ruby
   gem 'sass-rails',   '~> 3.2.3'
   gem 'coffee-rails', '~> 3.2.1'
   gem 'less-rails-bootstrap', '3.2.0'
@@ -65,8 +64,7 @@ end
 
 group :production do
   gem 'unicorn', '4.8.2'
-  gem 'eye', '0.6.4'
-  gem 'celluloid', '0.15.2'
+  gem 'eye', '0.10.0'
   gem 'nio4r', '1.1.1'
 end
 
@@ -76,7 +74,10 @@ gem 'kaminari', '0.16.3'
 gem 'bootstrap-kaminari-views', '0.0.5'
 gem "pd_x12", "~> 1.5.4"
 gem 'carrierwave-mongoid', '0.7.1', :require => 'carrierwave/mongoid'
-gem 'devise', '3.3.0'
+
+# Devise 4.x requires Rails > 4.1
+# Also, needed to patch this 3.5.10 version with our own
+gem 'devise', path: './project_gems/devise-3.5.10'
 gem "rsec", "~> 0.4.2"
 gem "mongoid_auto_increment", '0.1.2'
 gem 'american_date', '1.1.0'
