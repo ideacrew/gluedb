@@ -99,4 +99,4 @@ gem 'aws-sdk', "~> 2.2.4"
 # configuration support
 
 gem "config", '1.0.0'
-gem "puma", "~>2.16"
+gem "puma", "~>3.7.0"

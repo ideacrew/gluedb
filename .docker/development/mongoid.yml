@@ -35,9 +35,9 @@ development:
 test:
   sessions:
     default:
-      database: edidb_test<%= ENV['TEST_ENV_NUMBER'] %>
-      username: edidb_dev_user
-      password: edidb_dev_pass
+      database: edidb_test
+      username: edidb_test_user
+      password: edidb_test_pass
       hosts:
         - db:27017
       options:

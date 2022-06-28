@@ -4,13 +4,15 @@ CMD ["/bin/bash"]
 
 RUN groupadd -r mongodb && useradd -r -g mongodb mongodb
 
+RUN mkdir /home/mongodb && chown -R mongodb:mongodb /home/mongodb
+
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates wget numactl gpg dirmngr gpg-agent && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir ~/.gnupg
 
 RUN echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf
 
-ENV MONGO_VERSION=2.6.12
+ENV MONGO_VERSION=3.6.23
 
 RUN set -x && wget -O mongo.tgz "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-$MONGO_VERSION.tgz" && tar -xvf mongo.tgz -C /usr/local --strip-components=1 && rm mongo.tgz
 
@@ -18,8 +20,9 @@ RUN mkdir -p /data/db /data/configdb && chown -R mongodb:mongodb /data/db /data/
 
 COPY .docker/development/db_setup.sh .
 COPY .docker/development/create_users.js .
+COPY .docker/development/mongod.conf /etc/
 
-RUN chown mongodb:mongodb /db_setup.sh && chown mongodb:mongodb /create_users.js && chmod u+x /db_setup.sh
+RUN chown mongodb:mongodb /etc/mongod.conf && chown mongodb:mongodb /db_setup.sh && chown mongodb:mongodb /create_users.js && chmod u+x /db_setup.sh
 
 EXPOSE 27017/tcp
 

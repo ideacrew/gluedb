@@ -1,11 +1,11 @@
-FROM --platform=linux/amd64 ruby:2.1.7 AS base
+FROM --platform=linux/amd64 ruby:2.5.9 AS base
 
 LABEL author="IdeaCrew"
 
 # Install required packages/libraries
 RUN apt-get update && \
     apt-get -yq dist-upgrade && \
-    apt-get install -y git gcc openssl libyaml-dev libyaml-cpp-dev libyaml-cpp0.5 libffi-dev libffi6 libreadline-dev \
+    apt-get install -y git gcc openssl libyaml-dev libyaml-cpp-dev libffi-dev libffi6 libreadline-dev \
                        zlibc libgdbm-dev libncurses-dev autoconf fontconfig unzip zip sshpass bzip2 libxrender1 libxext6 \
                        build-essential && \
     apt-get autoremove -y
@@ -16,6 +16,7 @@ WORKDIR /usr/src/app
 # Adding gems
 COPY Gemfile Gemfile
 COPY Gemfile.lock Gemfile.lock
+COPY project_gems project_gems
 
 RUN gem install bundler --version "1.17.3"
 

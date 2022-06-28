@@ -1,25 +1,37 @@
-use admin
+use admin;
+db.createRole({role: 'fullaccess', privileges: [{resource: {anyResource: true}, actions: ["anyAction"]}], roles: []});
 
 db.createUser({
-  user: "edidb_dev_user",
-  pwd: "edidb_dev_pass",
-  roles: ["userAdminAnyDatabase", "dbAdminAnyDatabase", "readWriteAnyDatabase"]
-}, {w: 1, j: true})
+  user: "admin",
+  pwd: "admin",
+  roles: ["userAdminAnyDatabase", "dbAdminAnyDatabase", "readWriteAnyDatabase", "fullaccess"]
+}, {w: 1, j: true});
 
-use edidb_dev
+db.system.version.update({"_id": "authSchema"}, {currentVersion: 3});
 
 db.createUser({
   user: "edidb_dev_user",
   pwd: "edidb_dev_pass",
   roles: ["userAdmin", "dbAdmin", "dbOwner", "readWrite"]
-}, {w: 1, j: true})
+}, {w: 1, j: true});
+
+use edidb_dev;
+
+db.createUser({
+  user: "edidb_dev_user",
+  pwd: "edidb_dev_pass",
+  roles: ["userAdmin", "dbAdmin", "dbOwner", "readWrite"]
+}, {w: 1, j: true});
 
 use edidb_test
 
 db.createUser({
-  user: "edidb_dev_user",
-  pwd: "edidb_dev_pass",
+  user: "edidb_test_user",
+  pwd: "edidb_test_pass",
   roles: ["userAdmin", "dbAdmin", "dbOwner", "readWrite"]
-}, {w: 1, j: true})
+}, {w: 1, j: true});
 
-sleep(1000)
+use admin;
+db.system.version.update({"_id": "authSchema"}, {currentVersion: 5});
+
+sleep(1000);
