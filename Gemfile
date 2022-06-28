@@ -18,6 +18,7 @@ gem 'openhbx_cv2', git: "https://github.com/ideacrew/openhbx_cv2.git", branch: "
 gem "interactor", "~> 3.1.0"
 gem 'interactor-rails', '2.0.2'
 gem "psych", "2.0.5"
+gem "kgio", "2.11.0"
 
 group :development do
   gem 'capistrano', '2.15.4'
@@ -50,7 +51,7 @@ end
 group :test do
   gem 'test-unit', "~> 3.2.3"
   gem 'mongoid-rspec', "~> 1.13.0"
-  gem 'rspec-rails', '3.3.3'
+  gem 'rspec-rails', '~> 3'
   gem 'rspec-collection_matchers', '1.1.2'
   gem 'capybara', '2.4.4'
   gem 'factory_girl_rails', '4.5.0'

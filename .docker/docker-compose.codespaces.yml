@@ -9,12 +9,12 @@ services:
     image: mongo:3.6
     ports:
       - 27017:27017
-  # amqp:
-  #   image: rabbitmq:3.8-management
-  #   environment:
-  #     - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE:-123456789}
-  #     - RABBITMQ_USER=${RABBITMQ_DEFAULT_USER:-guest}
-  #     - RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS:-guest}
+  amqp:
+    image: rabbitmq:3.8-management
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE:-123456789}
+      - RABBITMQ_USER=${RABBITMQ_DEFAULT_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS:-guest}
   #   ports:
   #     - 4369
   #     - 5672:5672
