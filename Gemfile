@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 gem 'rake', '10.4.2'
 gem 'rails', '3.2.22.5'
 
-gem "mongoid", "~> 3.1.7"
+gem "mongoid", path: "./project_gems/mongoid-3.2.0"
 gem "origin", "~> 1.1.0"
 gem "aasm", "~> 3.0.26"
 gem "nokogiri", "~> 1.7"
