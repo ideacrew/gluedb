@@ -170,6 +170,17 @@ module Parsers
         end
       end
 
+      def policy_id
+        s_loop = subscriber_loop
+        return nil unless s_loop.present?
+        pol_loop = Parsers::Edi::Etf::PolicyLoop.new(s_loop["L2300s"].first)
+        return nil unless pol_loop.present?
+        eg_id = pol_loop.eg_id
+        hios = pol_loop.hios_id
+        return nil if eg_id.nil? || hios.nil?
+        Maybe.new(Policy.find_for_group_and_hios(eg_id, hios)).id.value
+      end
+
       private
 
       def is_shop?
@@ -201,14 +212,6 @@ module Parsers
       def log_error(attr, msg)
         errors.add(attr, msg)
         #        ParserLog.log(@file_name, @message_type, attr.to_s + " " + msg, @etf_loop.to_s)
-      end
-
-      def policy_id
-        s_loop = subscriber_loop
-        return nil unless s_loop.present?
-        pol_loop = Parsers::Edi::Etf::PolicyLoop.new(s_loop["L2300s"].first)
-        return nil unless pol_loop.present?
-        pol_loop.eg_id
       end
     end
   end
