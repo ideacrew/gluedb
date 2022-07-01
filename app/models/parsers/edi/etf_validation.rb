@@ -42,7 +42,7 @@ module Parsers
       def has_eg_id
         member_loops = @etf_loop["L2000s"]
         if (member_loops.any? { |ml| ml["L2300s"].first.blank? })
-            log_error(:etf_loop, "is missing coverage loops")
+            log_error(:base, "One or more Coverage loops are missing")
         else
           if !subscriber_loop.blank?
             unless (subscriber_loop["L2300s"].first["REFs"].any? { |r| r[1] == "1L" })
@@ -97,14 +97,14 @@ module Parsers
       def has_all_premium_amounts
         if right_subscriber_count
           unless (@etf_loop["L2000s"].all?{ |l| tsf_exists?(l, "PRE AMT 1") })
-            log_error(:etf_loop, "is missing PRE AMT 1")
+            log_error(:base, "One or more Member Reporting Category loop is missing the PRE AMT 1 element")
           end
         end
       end
 
       def has_right_number_of_subscribers
         if subscriber_count > 1
-          log_error(:etf_loop, "has too many subscribers")
+          log_error(:base, "A single transaction has multiple subscribers")
         elsif subscriber_count < 1
           log_error(:etf_loop, "has no subscriber")
         end
@@ -115,7 +115,7 @@ module Parsers
         if !s_loop.blank?
           pol_loop = Parsers::Edi::Etf::PolicyLoop.new(s_loop["L2300s"].first)
           if pol_loop.empty?
-            log_error(:etf_loop, "has no valid plan")
+            log_error(:base, "Plan HIOS Id missing")
           else
             plan = nil
             coverage_start = Maybe.new(pol_loop.coverage_start).fmap { |cs| Date.parse(cs) }.value
@@ -155,7 +155,7 @@ module Parsers
               plan = Maybe.new(Policy.find_for_group_and_hios(eg_id, hios)).plan.value
             end
             if plan.blank?
-              log_error(:etf_loop, "has no valid plan")
+              log_error(:base, "Policy id and/or plan HIOS Id does not match")
             end
           end
         end
@@ -166,7 +166,7 @@ module Parsers
         return true if !broker_loop.valid?
         found_broker = Broker.find_by_npn(broker_loop.npn)
         if found_broker.nil?
-          log_error(:etf_loop, "has an invalid broker")
+          log_error(:base, "Broker Information is invalid")
         end
       end
 
@@ -201,6 +201,14 @@ module Parsers
       def log_error(attr, msg)
         errors.add(attr, msg)
         #        ParserLog.log(@file_name, @message_type, attr.to_s + " " + msg, @etf_loop.to_s)
+      end
+
+      def policy_id
+        s_loop = subscriber_loop
+        return nil unless s_loop.present?
+        pol_loop = Parsers::Edi::Etf::PolicyLoop.new(s_loop["L2300s"].first)
+        return nil unless pol_loop.present?
+        pol_loop.eg_id
       end
     end
   end

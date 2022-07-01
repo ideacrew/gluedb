@@ -69,50 +69,55 @@ TradingPartner.all.each do |td|
 	errors = "@#{td.name.downcase.gsub(" ", "_") + "_error"}"
   carrier_errors = instance_variable_get(errors)
   CSV.open(filename,"w") do |csv|
-		csv << ["Carrier","Transaction Kind", "Filename", "BGN02","Policy ID","Subscriber HBX ID", "Submitted At Date",
-            "Submitted At Time", "Market", "isa13", "Error Description"]
+		csv << ["Carrier","Transaction Kind", "Filename", "ISA13", "Transaction ID", "BGN02","Policy ID","Subscriber HBX ID", "Submitted At Date",
+            "Submitted At Time", "Market", "Error Description"]
 		carrier_errors.each do |transaction_error|
 			count += 1
 			if count % 1000 == 0
 				puts "#{((count.to_d/total_transactions.to_d)*100.to_d)}% complete."
 			end
 			begin
-				if transaction_error.policy_id != nil
-					filename = transaction_error.body.to_s
-					carrier_name = td.name
-					transmission = transaction_error.transmission
-					transaction_kind = transaction_error.transaction_kind
-					error_description = transaction_error.error_list.uniq
-					bgn02 = transaction_error.bgn02
-					policy = transaction_error.policy
-					eg_id = policy.eg_id
-					subscriber = find_subscriber(policy)
-					subscriber_hbx_id = subscriber.try(:m_id)
-					submitted_at_date = transaction_error.submitted_at.strftime("%m-%d-%Y")
-					submitted_at_time = transaction_error.submitted_at.strftime("%H:%M:%S")
-					market = transmission.gs02
-					isa13 = transmission.isa13
-					csv << [carrier_name, transaction_kind, filename.gsub("uploads/#{bgn02}_",""), bgn02, eg_id, subscriber_hbx_id,
-									submitted_at_date,submitted_at_time, market, isa13,
-									error_description]
-				elsif transaction_error.policy_id == nil
-					filename = transaction_error.body.to_s
-					carrier_name = td.name
-					transmission = transaction_error.transmission
-					transaction_kind = transaction_error.transaction_kind
-					error_description = transaction_error.error_list.uniq
-					bgn02 = transaction_error.bgn02
-					edi_body = transaction_error.body.read
-					eg_id = parse_edi_for_eg_id(edi_body)
-					subscriber_hbx_id = parse_edi_for_hbx_id(edi_body)
-					submitted_at_date = transaction_error.submitted_at.strftime("%m-%d-%Y")
-					submitted_at_time = transaction_error.submitted_at.strftime("%H:%M:%S")
-					market = transmission.gs02
-					isa13 = transmission.isa13
-					csv << [carrier_name, transaction_kind, filename.gsub("uploads/#{bgn02}_",""), bgn02, eg_id, subscriber_hbx_id,
-									submitted_at_date,submitted_at_time, market, isa13,
-									error_description]
-				end
+				transaction_error.error_list.uniq.each do |error|
+          next if error.to_s == "inbound reinstatements are blocked for legacy imports"
+					if transaction_error.policy_id != nil
+						filename = transaction_error.body.to_s
+						carrier_name = td.name
+						transmission = transaction_error.transmission
+						transaction_kind = transaction_error.transaction_kind
+						error_description = error
+						bgn02 = transaction_error.bgn02
+						policy = transaction_error.policy
+						eg_id = policy.eg_id
+						subscriber = find_subscriber(policy)
+						subscriber_hbx_id = subscriber.try(:m_id)
+						submitted_at_date = transaction_error.submitted_at.strftime("%m-%d-%Y")
+						submitted_at_time = transaction_error.submitted_at.strftime("%H:%M:%S")
+						market = transmission.gs02
+						isa13 = transmission.isa13
+						txrn_id = transaction_error.st02
+						csv << [carrier_name, transaction_kind, filename.gsub("uploads/#{bgn02}_",""), isa13, txrn_id, bgn02, eg_id, subscriber_hbx_id,
+										submitted_at_date,submitted_at_time, market,
+										error_description]
+					elsif transaction_error.policy_id == nil
+						filename = transaction_error.body.to_s
+						carrier_name = td.name
+						transmission = transaction_error.transmission
+						transaction_kind = transaction_error.transaction_kind
+						error_description = error
+						bgn02 = transaction_error.bgn02
+						edi_body = transaction_error.body.read
+						eg_id = parse_edi_for_eg_id(edi_body)
+						subscriber_hbx_id = parse_edi_for_hbx_id(edi_body)
+						submitted_at_date = transaction_error.submitted_at.strftime("%m-%d-%Y")
+						submitted_at_time = transaction_error.submitted_at.strftime("%H:%M:%S")
+						market = transmission.gs02
+						isa13 = transmission.isa13
+						txrn_id = transaction_error.st02
+						csv << [carrier_name, transaction_kind, filename.gsub("uploads/#{bgn02}_",""), isa13, txrn_id, bgn02, eg_id, subscriber_hbx_id,
+										submitted_at_date,submitted_at_time, market,
+										error_description]
+					end
+        end
 			end
 		end
 	end
