@@ -64,7 +64,7 @@ end
 
 Dir.mkdir("error_reports") unless File.exists?("error_reports")
 TradingPartner.all.each do |td|
-  report_file = "transaction_errors_#{td.name.gsub(" ", "_")}_#{formatted_start_date}-#{formatted_end_date}.csv"
+  report_file = "TransactionErrors_#{td.trading_profiles.last.profile_name.gsub("_IVL", "")}_#{start_date.strftime("%Y%m%d%H%M%S")}_#{end_date.strftime("%Y%m%d%H%M%S")}.csv"
 	filename = "#{Rails.root}/error_reports/#{report_file}"
 	errors = "@#{td.name.downcase.gsub(" ", "_") + "_error"}"
   carrier_errors = instance_variable_get(errors)
