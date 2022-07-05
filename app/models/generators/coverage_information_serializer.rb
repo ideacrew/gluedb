@@ -110,12 +110,21 @@ module Generators
       enrollee_coverage_end = enrollee.coverage_end.blank? ? @policy.policy_start.end_of_year : enrollee.coverage_end
 
       if (enrollee_coverage_start..enrollee_coverage_end).cover?(financial_dates[0])
-        params = {
-          id: "#{subscriber_m_id}-#{policy_id}-#{start_date}",
-          effective_start_date: format_date(financial_dates[0]),
-          effective_end_date: format_date(financial_dates[1]),
-          individual_premium_amount: enrollee.premium_amount.to_f,
-        }
+        if enrollee_coverage_start == enrollee_coverage_end
+          params = {
+            id: "#{subscriber_m_id}-#{policy_id}-#{start_date}",
+            effective_start_date: format_date(enrollee_coverage_start),
+            effective_end_date: format_date(enrollee_coverage_end),
+            individual_premium_amount: enrollee.premium_amount.to_f,
+          }
+        else
+          params = {
+            id: "#{subscriber_m_id}-#{policy_id}-#{start_date}",
+            effective_start_date: format_date(financial_dates[0]),
+            effective_end_date: format_date(financial_dates[1]),
+            individual_premium_amount: enrollee.premium_amount.to_f,
+          }
+        end
 
         if enrollee.subscriber?
           aptc_credit = @policy.aptc_record_on(financial_dates[0])
@@ -154,6 +163,7 @@ module Generators
         enrollee_coverage_start = enrollee.coverage_start
         enrollee_coverage_end = enrollee.coverage_end.blank? ? @policy.policy_start.end_of_year : enrollee.coverage_end
         if (enrollee_coverage_start..enrollee_coverage_end).cover?(date)
+          next if enrollee_coverage_start == enrollee_coverage_end #Do not sum individual premiums for cancel dependents
           premium_amount += as_dollars(enrollee.premium_amount)
         end
       end
