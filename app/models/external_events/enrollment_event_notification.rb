@@ -57,6 +57,13 @@ module ExternalEvents
       end
     end
 
+    def drop_term_event_if_term_processed_by_carrier!
+      return false unless term_processed_by_carrier?
+      response_with_publisher do |result_publisher|
+        result_publisher.drop_term_event_processed_by_carrier!(self)
+      end
+    end
+
     def drop_if_term_with_no_end!
       return false unless is_termination?
       return false unless subscriber_end.blank?
@@ -71,7 +78,7 @@ module ExternalEvents
         :enrollment_action_uri => {"$in" => event_search_uri}
       )
       if found_event.any?
-        if is_reterm_with_earlier_date?
+        if is_reterm_with_earlier_date? || is_retro_term_event_of_active_policy?(found_event)
           false
         else
           response_with_publisher do |result_publisher|
@@ -301,6 +308,16 @@ module ExternalEvents
       (existing_policy.present? && existing_policy.terminated? && existing_policy.policy_end > extract_enrollee_end(subscriber))
     end
 
+    def is_retro_term_event_of_active_policy?(found_event) # reprocess retro term events of current year active policy
+      return false unless (enrollment_action == "urn:openhbx:terms:v1:enrollment#terminate_enrollment")
+      return false unless subscriber_start.present?
+      return false unless subscriber_start.year == Date.today.year # current year policy
+      processed_term_event = found_event.sort_by(&:created_at).last # check latest enrollemt term event eligible for retro reprocess
+      termination = ExternalEvents::EnrollmentEventNotification.new("", "", "", processed_term_event.hbx_enrollment_vocabulary, "")
+      return false unless subscriber_end.present?
+      (existing_policy.present? && existing_policy.policy_end.nil? && subscriber_end < termination.subscriber_end) # retro term for active policy
+    end
+
     def enrollment_action
       @enrollment_action ||= extract_enrollment_action(enrollment_event_xml)
     end
@@ -425,6 +442,13 @@ module ExternalEvents
       end
     end
 
+    def term_processed_by_carrier?
+      return false unless is_termination?
+      return false if existing_policy.blank?
+      (existing_policy.canceled? || existing_policy.terminated?) &&
+        (existing_policy.term_for_np || existing_policy.subscriber.termed_by_carrier)
+    end
+
     def plan_matched?(active_plan, renewal_plan)
       if active_plan.metal_level == "catastrophic" && active_plan.coverage_type == "health"
         ['94506DC0390008','86052DC0400004'].include?(active_plan.hios_plan_id.split("-").first) &&
@@ -542,6 +566,16 @@ module ExternalEvents
       return false unless existing_plan.coverage_type == pol.plan.coverage_type
       return false unless existing_plan.year == pol.plan.year
       pol.canceled? && pol.subscriber.coverage_start == subscriber_start
+    end
+
+    def tobacco_usage_hash
+      tobacco_usage_hash = Hash.new
+      policy_cv.enrollees.each do |en|
+        member_id = Maybe.new(en.member).id.strip.split("#").last.value
+        tu_value = Maybe.new(en.member).tobacco_use_value.value
+        tobacco_usage_hash[member_id] = tu_value
+      end
+      tobacco_usage_hash
     end
 
     private

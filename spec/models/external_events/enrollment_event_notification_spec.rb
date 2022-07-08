@@ -697,6 +697,142 @@ describe "#is_reterm_with_earlier_date?" do
   end
 end
 
+describe "#is_retro_term_event_of_active_policy?", :dbclean => :after_each do
+  let(:eg_id) { '1' }
+  let(:carrier_id) { '1' }
+  let!(:primary) {
+    person = FactoryGirl.create :person
+    person.update(authority_member_id: person.members.first.hbx_member_id)
+    person
+  }
+  let(:active_enrollee) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start:  Date.today.beginning_of_year, coverage_end: '')}
+  let!(:active_policy) {
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, carrier_id: carrier_id, coverage_start: Date.today.beginning_of_year, coverage_end: nil, kind: 'individual')
+    policy.update_attributes(enrollees: [active_enrollee], hbx_enrollment_ids: ["123"])
+    policy.save
+    policy
+  }
+  let(:term_event_xml) { <<-EVENTXML
+     <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+     <header>
+       <hbx_id>29035</hbx_id>
+       <submitted_timestamp>2021-12-08T17:44:49</submitted_timestamp>
+     </header>
+     <event>
+       <body>
+         <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+           <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+            <type>urn:openhbx:terms:v1:enrollment#terminate_enrollment</type>
+             <policy>
+               <id>
+                 <id>123</id>
+               </id>
+             <enrollees>
+               <enrollee>
+                 <member>
+                   <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+                 </member>
+                 <is_subscriber>true</is_subscriber>
+                 <benefit>
+                   <premium_amount>111.11</premium_amount>
+                   <begin_date>#{Date.today.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+                   <end_date>#{member_term_date.strftime("%Y%m%d")}</end_date>
+                 </benefit>
+               </enrollee>
+             </enrollees>
+             </policy>
+           </enrollment>
+           </enrollment_event_body>
+       </body>
+     </event>
+   </enrollment_event>
+  EVENTXML
+  }
+  let(:retro_event_xml) { <<-EVENTXML
+     <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+     <header>
+       <hbx_id>29035</hbx_id>
+       <submitted_timestamp>2021-12-08T17:44:49</submitted_timestamp>
+     </header>
+     <event>
+       <body>
+         <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+           <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+            <type>urn:openhbx:terms:v1:enrollment#terminate_enrollment</type>
+             <policy>
+               <id>
+                 <id>123</id>
+               </id>
+             <enrollees>
+               <enrollee>
+                 <member>
+                   <id><id>#{primary.authority_member.hbx_member_id}</id></id>
+                 </member>
+                 <is_subscriber>true</is_subscriber>
+                 <benefit>
+                   <premium_amount>111.11</premium_amount>
+                   <begin_date>#{Date.today.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+                   <end_date>#{retro_term_date.strftime("%Y%m%d")}</end_date>
+                 </benefit>
+               </enrollee>
+             </enrollees>
+             </policy>
+           </enrollment>
+           </enrollment_event_body>
+       </body>
+     </event>
+   </enrollment_event>
+  EVENTXML
+  }
+
+  let(:m_tag) { double('m_tag') }
+  let(:t_stamp) { double('t_stamp') }
+  let(:e_xml) { double('e_xml') }
+  let(:headers) { double('headers') }
+  let(:responder) { instance_double('::ExternalEvents::EventResponder') }
+  let!(:enrollment_action_issue) do
+    ::EnrollmentAction::EnrollmentActionIssue.create(
+      :hbx_enrollment_id => '123',
+      :hbx_enrollment_vocabulary => term_event_xml.to_s,
+      :enrollment_action_uri => "urn:openhbx:terms:v1:enrollment#terminate_enrollment"
+    )
+  end
+
+  let :subject do
+    ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, retro_event_xml, headers
+  end
+
+  context "when retro term event date less(<) than original term event for term date" do
+    let(:member_start) { Date.today.beginning_of_year }
+    let(:member_term_date) { Date.today.beginning_of_year.next_month.end_of_month }
+    let(:retro_term_date) { Date.today.beginning_of_year.end_of_month }
+
+    it "should return true" do
+      expect(subject.is_retro_term_event_of_active_policy?([enrollment_action_issue])).to be_truthy
+    end
+  end
+
+  context "when retro term event date greater(>) than original term event for term date" do
+    let(:member_start) { Date.today.beginning_of_year }
+    let(:member_term_date) { Date.today.beginning_of_year.next_month.end_of_month }
+    let(:retro_term_date) { member_term_date.next_month }
+
+    it "should return false" do
+      expect(subject.is_retro_term_event_of_active_policy?([enrollment_action_issue])).to be_falsey
+    end
+  end
+
+  context "when retro term event date equals(===) original term event for term date" do
+    let(:member_start) { Date.today.beginning_of_year }
+    let(:member_term_date) { Date.today.beginning_of_year.next_month.end_of_month }
+    let(:retro_term_date) { member_term_date }
+
+    it "should return false" do
+      expect(subject.is_retro_term_event_of_active_policy?([enrollment_action_issue])).to be_falsey
+    end
+  end
+end
+
 describe "#drop_if_already_processed" do
   let(:start_date) {Date.today.beginning_of_month}
   let(:enrollee) {double}
@@ -745,6 +881,7 @@ describe "#drop_if_already_processed" do
       allow(subject).to receive(:hbx_enrollment_id).and_return(hbx_enrollment_id)
       allow(subject).to receive(:enrollment_action).and_return("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
       allow(subject).to receive(:is_reterm_with_earlier_date?).and_return(false)
+      allow(subject).to receive(:is_retro_term_event_of_active_policy?).and_return(false)
     end
 
     it "returns notify event already processed" do
@@ -755,7 +892,7 @@ describe "#drop_if_already_processed" do
 end
 
 describe "#has_renewal_cancel_policy", :dbclean => :after_each do
-  let(:eg_id) { '1' }
+  let(:eg_id) { '123' }
   let(:carrier_id) { '2' }
   let(:plan) { Plan.create!(:name => "test_plan", carrier_id: carrier_id, :coverage_type => "health", year: Date.today.next_year.year) }
   let!(:primary) {
@@ -774,7 +911,8 @@ describe "#has_renewal_cancel_policy", :dbclean => :after_each do
     policy
   }
   let!(:renewal_cancel_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: Date.today.beginning_of_year, kind: kind, enrollees: [enrollee2])
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "333", employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: Date.today.beginning_of_year, kind: kind, enrollees: [enrollee2])
+    policy.update_attributes(hbx_enrollment_ids: ["333"])
     policy.save
     policy
   }
@@ -930,13 +1068,13 @@ describe "#renewal_policies_to_cancel", :dbclean => :after_each do
     policy
   }
   let!(:renewal_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind)
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "333", employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind)
     policy.update_attributes(enrollees: [enrollee2])
     policy.save
     policy
   }
   let!(:renewal_dental_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: dental_plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind, enrollees: [enrollee2])
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "3333", employer: employer, carrier_id: carrier_id, plan: dental_plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: coverage_end, kind: kind, enrollees: [enrollee2])
     policy.save
     policy
   }
@@ -1150,7 +1288,7 @@ describe "#dep_add_or_drop_to_renewal_policy?", :dbclean => :after_each do
     policy
   }
   let!(:renewal_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "444", employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
     policy.update_attributes(enrollees: [renewal_enrollee1, renewal_enrollee2], hbx_enrollment_ids: ["123"])
     policy.save
     policy
@@ -1500,7 +1638,7 @@ describe "#plan_change_dep_add_or_drop_to_renewal_policy?", :dbclean => :after_e
     policy
   }
   let!(:renewal_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "333", employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
     policy.update_attributes(enrollees: [renewal_enrollee1, renewal_enrollee2], hbx_enrollment_ids: ["123"])
     policy.save
     policy
@@ -1807,7 +1945,7 @@ describe "#is_retro_renewal_policy?", :dbclean => :after_each do
     policy
   }
   let!(:renewal_policy) {
-    policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
+    policy =  FactoryGirl.create(:policy, enrollment_group_id: "333", employer: employer, carrier_id: carrier_id, plan: plan, coverage_start: Date.today.next_year.beginning_of_year , coverage_end: nil, kind: kind,)
     policy.update_attributes(enrollees: [renewal_enrollee1, renewal_enrollee2], hbx_enrollment_ids: ["123"])
     policy.save
     policy
@@ -1942,5 +2080,94 @@ describe "#is_retro_renewal_policy?", :dbclean => :after_each do
     it "should return false" do
       expect(subject.is_retro_renewal_policy?).to eq false
     end
+  end
+end
+
+describe ::ExternalEvents::EnrollmentEventNotification, "#tobacco_usage_hash" do
+  let(:m_tag) { double('m_tag') }
+  let(:t_stamp) { double('t_stamp') }
+  let(:headers) { double('headers') }
+
+  let(:source_event_xml) { <<-EVENTXML
+    <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
+    <header>
+      <hbx_id>29035</hbx_id>
+      <submitted_timestamp>2016-11-08T17:44:49</submitted_timestamp>
+    </header>
+    <event>
+      <body>
+        <enrollment_event_body xmlns="http://openhbx.org/api/terms/1.0">
+          <affected_members>
+            <affected_member>
+              <member>
+                <id><id>1</id></id>
+              </member>
+              <benefit>
+                <premium_amount>465.13</premium_amount>
+                <begin_date>20190101</begin_date>
+              </benefit>
+            </affected_member>
+          </affected_members>
+          <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+            <policy>
+              <id>
+                <id>123</id>
+              </id>
+            <enrollees>
+              <enrollee>
+                <member>
+                  <id><id>1</id></id>
+                </member>
+                <is_subscriber>true</is_subscriber>
+                <benefit>
+                  <premium_amount>111.11</premium_amount>
+                  <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+                </benefit>
+              </enrollee>
+              <enrollee>
+                <member>
+                  <id><id>2</id></id>
+                  <person_health>
+                    <is_tobacco_user>false</is_tobacco_user>
+                  </person_health>
+                </member>
+                <is_subscriber>true</is_subscriber>
+                <benefit>
+                  <premium_amount>111.11</premium_amount>
+                  <begin_date>#{Date.today.next_year.beginning_of_year.strftime("%Y%m%d")}</begin_date>
+                </benefit>
+              </enrollee>
+            </enrollees>
+            <enrollment>
+            <individual_market>
+              <assistance_effective_date>TOTALLY BOGUS</assistance_effective_date>
+              <applied_aptc_amount>100.00</applied_aptc_amount>
+            </individual_market>
+            <premium_total_amount>56.78</premium_total_amount>
+            <total_responsible_amount>123.45</total_responsible_amount>
+            </enrollment>
+            </policy>
+          </enrollment>
+          </enrollment_event_body>
+      </body>
+    </event>
+  </enrollment_event>
+   EVENTXML
+   }
+
+  let(:responder) { instance_double('::ExternalEvents::EventResponder') }
+  let :subject do
+    ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, source_event_xml, headers
+  end
+
+  let(:expected_tobacco_usage_hash) do
+    {
+      "1" => nil,
+      "2" => 'N'
+    }
+  end
+
+  it "returns the tobacco_use_hash" do
+    expect(subject.tobacco_usage_hash).to eq expected_tobacco_usage_hash
   end
 end

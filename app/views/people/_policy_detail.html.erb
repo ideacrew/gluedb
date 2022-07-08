@@ -1,7 +1,9 @@
 <div class="well well-sm">
   <h6 style='inverse'>
     <span class="fui-folder">&nbsp;</span>
-    <%= "HBX Enrollment Group ID: #{p.eg_id}" %>
+		<span data-toggle="tooltip" title="Enrollment Chain IDS: <%= p.hbx_enrollment_ids.join(', ') %>">
+			<%= "HBX Enrollment Group ID: #{p.eg_id}" %>
+		</span>
   </h6>
 </div>
 <div class="row">
@@ -67,6 +69,10 @@
       <% end %>
 		</dl>
 	</div>
+	<div class="col-md-2">
+	  <%= link_to "APTC Credits", "#", :class => "btn btn-primary", "data-toggle"=> "modal", "data-target"=>"#aptcModal_#{p.id}" %>
+		<p></p>
+	</div>
 	<% if can? :edit, @people%>
 	<div class="col-md-2">
 		<%= link_to "Create CV", new_change_vocabulary_path(p, {:change_vocabulary => {:policy_id => p.id}}), :class => "btn btn-primary" %>
@@ -113,3 +119,54 @@
   <h6>Premium Payments</h6>
   <%= render 'payments_table', premium_payments: p.premium_payments %>
 <% end %>
+
+<div class="modal fade" id="aptcModal_<%= p.id %>" tabindex="-1" role="dialog" aria-labelledby="aptcModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title" id="aptcModalLabel">APTC Credits</h4>
+			</div>
+			<div class="modal-body">
+				<table class="table table-condensed">
+					<thead>
+					<tr>
+						<th>Start Date</th>
+						<th>End Date</th>
+						<th>Pre Amt Total</th>
+						<th>APTC Amt</th>
+						<th>Total Res Amt</th>
+					</tr>
+					</thead>
+					<tbody>
+					<% p.aptc_credits.each do |aptc_credit| %>
+						<tr>
+							<td><%= aptc_credit.start_on %></td>
+							<td><%= aptc_credit.end_on %></td>
+							<td><%= aptc_credit.pre_amt_tot %></td>
+							<td><%= aptc_credit.aptc %></td>
+							<td><%= aptc_credit.tot_res_amt %></td>
+						</tr>
+					<% end %>
+					</tbody>
+				</table>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	.tooltip-inner {
+		white-space:nowrap;
+		max-width:none;
+	}
+</style>
+
+<script>
+	$(document).ready(function(){
+		$('[data-toggle="tooltip"]').tooltip('hide')
+	});
+</script>

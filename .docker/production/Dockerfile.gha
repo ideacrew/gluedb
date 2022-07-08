@@ -22,12 +22,13 @@ RUN apt-get update -qq \
       libffi6 \
       libxext6 \
       libxml2 \
-      # libxml2-dev \
       libxrender1 \
       libyaml-cpp0.5 \
+      nano \
       openssl \
       sshpass \
       unzip \
+      vim \
       zip \
       zlibc \
     && apt-get clean \
@@ -115,8 +116,8 @@ COPY --chown=$USERNAME:$USERNAME ./Gemfile.lock $HOME/Gemfile.lock
 
 RUN gem install libxml-ruby -v '2.9.0' --source 'https://rubygems.org/'
 
-RUN bundle config set --local without 'development test' \
-  && bundle install
+ENV BUNDLE_WITHOUT=development:test
+RUN bundle install
 
 COPY --chown=$USERNAME:$USERNAME . $HOME
 
