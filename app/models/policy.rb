@@ -97,7 +97,7 @@ class Policy
   index({ "enrollees.coverage_start" => 1})
   index({ "enrollees.coverage_end" => 1})
 
-  before_create :generate_enrollment_group_id
+  before_create :generate_enrollment_group_id, :duplicate_eg_id_check
   before_save :invalidate_find_cache
   before_save :check_for_cancel_or_term
   before_save :check_multi_aptc
@@ -325,7 +325,7 @@ class Policy
     s_rex = Regexp.new(Regexp.escape(clean_str), true)
     {
       "$or" => [
-        {"eg_id" => s_rex},
+        {"hbx_enrollment_ids" => s_rex},
         {"id" => s_rex.source},
         {"enrollees.m_id" => s_rex}
       ]
@@ -604,53 +604,49 @@ class Policy
   def set_aptc_effective_on(aptc_date, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
     if self.aptc_credits.empty?
       if aptc_date == policy_start
-        self.aptc_credits << AptcCredit.new(
-          start_on: aptc_date,
-          end_on: coverage_period_end,
-          pre_amt_tot: pre_total_amount,
-          aptc: aptc_amount,
-          tot_res_amt: remaining_owed_by_consumer
-        )
+        self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
       else
-        self.aptc_credits << AptcCredit.new(
-          start_on: policy_start,
-          end_on: aptc_date - 1.day,
-          pre_amt_tot: self.pre_amt_tot,
-          aptc: self.applied_aptc,
-          tot_res_amt: self.tot_res_amt
-        )
-        self.aptc_credits << AptcCredit.new(
-          start_on: aptc_date,
-          end_on: coverage_period_end,
-          pre_amt_tot: pre_total_amount,
-          aptc: aptc_amount,
-          tot_res_amt: remaining_owed_by_consumer
-        )
+        self.aptc_credits << create_aptc_credit(policy_start, aptc_date - 1.day, self.applied_aptc, self.pre_amt_tot, self.tot_res_amt)
+        self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
       end
     else
       aptc_record = self.aptc_record_on(aptc_date)
-      if aptc_record.start_on == aptc_date
-        aptc_record.update_attributes(
-          pre_amt_tot: pre_total_amount,
-          aptc: aptc_amount,
-          tot_res_amt: remaining_owed_by_consumer
-        )
+      if aptc_record
+        if aptc_record.start_on == aptc_date
+          # update matching aptc credits
+          aptc_record.update_attributes(pre_amt_tot: pre_total_amount, aptc: aptc_amount, tot_res_amt: remaining_owed_by_consumer, end_on: coverage_period_end)
+        else
+          # end current aptc credits
+          aptc_record.update_attributes(end_on: (aptc_date - 1.day))
+          # create next aptc credits
+          self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+        end
       else
-        aptc_record.update_attributes(
-          end_on: (aptc_date - 1.day)
-        )
-        self.aptc_credits << AptcCredit.new(
-          start_on: aptc_date,
-          end_on: coverage_period_end,
-          pre_amt_tot: pre_total_amount,
-          aptc: aptc_amount,
-          tot_res_amt: remaining_owed_by_consumer
-        )
+        # create next aptc credits
+        self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
       end
     end
+    # delete invalid aptc credits
+    delete_invalid_aptc_credit(aptc_date)
     self.pre_amt_tot = pre_total_amount
     self.tot_res_amt = remaining_owed_by_consumer
     self.applied_aptc = aptc_amount
+  end
+
+  def create_aptc_credit(aptc_date, aptc_end_date, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+    AptcCredit.new(
+      start_on: aptc_date,
+      end_on: aptc_end_date,
+      pre_amt_tot: pre_total_amount,
+      aptc: aptc_amount,
+      tot_res_amt: remaining_owed_by_consumer
+    )
+  end
+
+  def delete_invalid_aptc_credit(aptc_date)
+    aptc_credits.select { |credit| (credit.start_on > aptc_date) || (credit.end_on == credit.start_on) }.each do |invalid_aptc|
+      invalid_aptc.delete
+    end if aptc_credits.count > 1
   end
 
   def coverage_period
@@ -702,7 +698,9 @@ class Policy
         en.employment_status_code = "terminated"
       end
     end
-    self.save
+    if self.save
+      update_aptc_credit(policy_end)
+    end
   end
 
   def terminate_member_id_on(member_id, term_date)
@@ -723,7 +721,9 @@ class Policy
       en.coverage_status = 'inactive'
       en.employment_status_code = 'terminated'
     end
-    self.save!
+    if self.save!
+      update_aptc_credit(policy_end)
+    end
   end
 
   def clone_for_renewal(start_date)
@@ -796,9 +796,11 @@ class Policy
     else
       latest_record = self.latest_aptc_record
     end
-    self.applied_aptc = latest_record.aptc
-    self.pre_amt_tot = latest_record.pre_amt_tot
-    self.tot_res_amt = latest_record.tot_res_amt
+    if latest_record
+      self.applied_aptc = latest_record.aptc
+      self.pre_amt_tot = latest_record.pre_amt_tot
+      self.tot_res_amt = latest_record.tot_res_amt
+    end
   end
 
   def reported_tot_res_amt_on(date)
@@ -824,11 +826,24 @@ class Policy
   end
 
   def latest_aptc_record
-    aptc_credits.sort_by { |aptc_rec| aptc_rec.start_on }.last
+    latest_aptc_credit = aptc_credits.select { |aptc| aptc.start_on != aptc.end_on }.sort_by { |aptc_rec| aptc_rec.start_on }.last
+    latest_aptc_credit.present? ? latest_aptc_credit : aptc_credits.sort_by { |aptc_rec| aptc_rec.start_on }.last
   end
 
   def aptc_record_on(date)
     self.aptc_credits.detect { |aptc_rec| aptc_rec.start_on <= date && aptc_rec.end_on >= date }
+  end
+
+  def update_aptc_credit(end_date)
+    aptc_credits.where(:end_on => {"$gt" => end_date }).each do |aptc_record|
+      if aptc_record.start_on > end_date
+        aptc_record.delete
+      else
+        aptc_record.update_attributes(
+          end_on: end_date
+        )
+      end
+    end
   end
 
   def assistance_effective_date
@@ -992,6 +1007,14 @@ class Policy
   def member_ids
     self.enrollees.map do |enrollee|
       enrollee.m_id
+    end
+  end
+
+  def duplicate_eg_id_check
+    policies = Policy.where(:eg_id => self.eg_id) || Policy.where(:hbx_enrollment_ids => self.eg_id)
+    if policies.present?
+      Rails.logger.error("Already Policy Exists With Exchange-Assigned ID:#{self.eg_id}, Exisiting Policy ID: #{policies.first.id}")
+      raise "Already Policy Exists With Exchange-Assigned ID:#{self.eg_id}, Exisiting Policy ID: #{policies.first.id}"
     end
   end
 end

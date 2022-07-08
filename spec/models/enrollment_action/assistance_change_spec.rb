@@ -3,7 +3,8 @@ require 'rails_helper'
 describe EnrollmentAction::AssistanceChange, "given an enrollment event set that:
 - is the same plan
 - with no dependents changed
-- and aptc unchanged" do
+- and aptc unchanged between transactions
+- and aptc matches what is on the policy object" do
   let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
   let(:new_plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
 
@@ -15,8 +16,9 @@ describe EnrollmentAction::AssistanceChange, "given an enrollment event set that
   let(:policy_enrollment_2) { instance_double(Openhbx::Cv2::PolicyEnrollment, :individual_market => ivl_policy_enrollment_2) }
   let(:ivl_policy_enrollment_2) { instance_double(Openhbx::Cv2::PolicyEnrollmentIndividualMarket, applied_aptc_amount: aptc_amount_2) }
   let(:policy_cv_2) { instance_double(Openhbx::Cv2::Policy, :policy_enrollment => policy_enrollment_2) }
+  let(:policy) { instance_double(Policy, {:applied_aptc => BigDecimal.new(aptc_amount_2) }) }
 
-  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2], :is_shop? => false, :policy_cv => policy_cv_1) }
+  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2], :is_shop? => false, :policy_cv => policy_cv_1, :existing_policy => policy) }
   let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => new_plan, :all_member_ids => [1,2], :is_shop? => false, :policy_cv => policy_cv_2) }
   let(:event_set) { [event_1, event_2] }
 
@@ -30,7 +32,37 @@ end
 describe EnrollmentAction::AssistanceChange, "given an enrollment event set that:
 - is the same plan
 - with no dependents changed
-- and aptc changed" do
+- and aptc unchanged between transactions
+- BUT the aptc does not match the data in the database" do
+  let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
+  let(:new_plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
+
+  let(:aptc_amount_1) { "1234.00" }
+  let(:aptc_amount_2) { " 1234.00" }
+  let(:aptc_amount_3) { " 1234.01" }
+  let(:policy_enrollment_1) { instance_double(Openhbx::Cv2::PolicyEnrollment, :individual_market => ivl_policy_enrollment_1) }
+  let(:ivl_policy_enrollment_1) { instance_double(Openhbx::Cv2::PolicyEnrollmentIndividualMarket, applied_aptc_amount: aptc_amount_1) }
+  let(:policy_cv_1) { instance_double(Openhbx::Cv2::Policy, :policy_enrollment => policy_enrollment_1) }
+  let(:policy_enrollment_2) { instance_double(Openhbx::Cv2::PolicyEnrollment, :individual_market => ivl_policy_enrollment_2) }
+  let(:ivl_policy_enrollment_2) { instance_double(Openhbx::Cv2::PolicyEnrollmentIndividualMarket, applied_aptc_amount: aptc_amount_2) }
+  let(:policy_cv_2) { instance_double(Openhbx::Cv2::Policy, :policy_enrollment => policy_enrollment_2) }
+
+  let(:event_1) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => plan, :all_member_ids => [1,2], :is_shop? => false, :policy_cv => policy_cv_1, :existing_policy => policy) }
+  let(:event_2) { instance_double(ExternalEvents::EnrollmentEventNotification, :existing_plan => new_plan, :all_member_ids => [1,2], :is_shop? => false, :policy_cv => policy_cv_2) }
+  let(:event_set) { [event_1, event_2] }
+
+  subject { EnrollmentAction::AssistanceChange }
+  let(:policy) { instance_double(Policy, {:applied_aptc => BigDecimal.new(aptc_amount_3) }) }
+
+  it "qualifies" do
+    expect(subject.qualifies?(event_set)).to be_truthy
+  end
+end
+
+describe EnrollmentAction::AssistanceChange, "given an enrollment event set that:
+- is the same plan
+- with no dependents changed
+- and aptc changed between transactions" do
   let(:plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
   let(:new_plan) { instance_double(Plan, :id => 1, carrier_id: 1) }
 

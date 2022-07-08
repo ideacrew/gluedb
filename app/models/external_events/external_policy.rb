@@ -32,6 +32,20 @@ module ExternalEvents
       BigDecimal.new(Maybe.new(p_enrollment).total_responsible_amount.strip.value)
     end
 
+    def extract_aptc_value
+      p_enrollment = Maybe.new(@policy_node).policy_enrollment.value
+      return 0.00 if p_enrollment.blank?
+      applied_aptc_val = Maybe.new(p_enrollment).individual_market.applied_aptc_amount.strip.value
+      return 0.00 if applied_aptc_val.blank?
+      BigDecimal.new(applied_aptc_val)
+    end
+
+    def is_shop?
+      p_enrollment = Maybe.new(@policy_node).policy_enrollment.value
+      return false if p_enrollment.blank?
+      p_enrollment.shop_market
+    end
+
     def extract_cobra_eligibility_date
       p_enrollment = Maybe.new(@policy_node).policy_enrollment.value
       val = Maybe.new(p_enrollment).shop_market.cobra_eligibility_date.strip.value
@@ -153,7 +167,8 @@ module ExternalEvents
         :ben_stat => @cobra ? "cobra" : "active",
         :emp_stat => "active",
         :coverage_start => extract_enrollee_start(enrollee_node),
-        :pre_amt => extract_enrollee_premium(enrollee_node)
+        :pre_amt => extract_enrollee_premium(enrollee_node),
+        :tobacco_use => extract_tobacco_use(enrollee_node)
       })
       policy.save!
     end
@@ -173,7 +188,8 @@ module ExternalEvents
         :ben_stat => @cobra ? "cobra" : "active",
         :emp_stat => "active",
         :coverage_start => extract_enrollee_start(sub_node),
-        :pre_amt => extract_enrollee_premium(sub_node)
+        :pre_amt => extract_enrollee_premium(sub_node),
+        :tobacco_use => extract_tobacco_use(sub_node)
       })
       policy.save!
     end
@@ -214,6 +230,19 @@ module ExternalEvents
       responsible_person.responsible_parties.first if responsible_party_exists?
     end
 
+    def subscriber_start
+      sub_node = extract_subscriber(@policy_node)
+      extract_enrollee_start(sub_node)
+    end
+
+    def build_aptc_credits(policy)
+      unless is_shop?
+        new_aptc_date = subscriber_start
+        policy.set_aptc_effective_on(new_aptc_date, extract_aptc_value, extract_pre_amt_tot, extract_tot_res_amt)
+        policy.save!
+      end
+    end
+
     def persist
       return true if policy_exists?
 
@@ -240,6 +269,14 @@ module ExternalEvents
         previous_policy = Policy.where(:hbx_enrollment_ids  => {"$in" => [@policy_node.previous_policy_id.to_s]}).first
         if previous_policy.present?
           previous_policy.update_attributes!(term_for_np: false)
+          @policy_node.enrollees.each do |enrollee_node|
+            member_id = extract_member_id(enrollee_node)
+            enrollee = previous_policy.enrollees.detect { |en| en.m_id == member_id }
+            if enrollee
+              enrollee.termed_by_carrier = false
+              enrollee.save!
+            end
+          end
           Observers::PolicyUpdated.notify(previous_policy)
         end
       end
@@ -250,6 +287,9 @@ module ExternalEvents
       results = other_enrollees.each do |en|
         build_enrollee(policy, en)
       end
+
+      build_aptc_credits(policy)
+
       Observers::PolicyUpdated.notify(policy)
       results
     end

@@ -2,6 +2,7 @@ module EnrollmentAction
   class MarketChange < Base
     extend PlanComparisonHelper
     include NotificationExemptionHelper
+    include TerminationDateHelper
 
     def self.qualifies?(chunk)
       return false unless chunk.length > 1
@@ -23,7 +24,7 @@ module EnrollmentAction
       return false unless ep.persist
       policy_to_term = termination.existing_policy
       existing_npt = policy_to_term.term_for_np
-      result = policy_to_term.terminate_as_of(termination.subscriber_end)
+      result = policy_to_term.terminate_as_of(select_termination_date)
       unless termination_event_exempt_from_notification?(policy_to_term, termination.subscriber_end, true, existing_npt)
         Observers::PolicyUpdated.notify(policy_to_term)
       end
@@ -34,9 +35,11 @@ module EnrollmentAction
       amqp_connection = termination.event_responder.connection
       existing_policy = termination.existing_policy
       member_date_map = {}
+      member_end_date_map = {}
       termination_helper = ActionPublishHelper.new(termination.event_xml)
       existing_policy.enrollees.each do |en|
         member_date_map[en.m_id] = en.coverage_start
+        member_end_date_map[en.m_id] = en.coverage_end
         if en.c_id.present? || en.cp_id.present?
           action_helper.set_carrier_assigned_ids(en)
         end
@@ -44,6 +47,7 @@ module EnrollmentAction
       termination_helper.set_event_action("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
       termination_helper.set_policy_id(existing_policy.eg_id)
       termination_helper.set_member_starts(member_date_map)
+      termination_helper.set_member_end_date(member_end_date_map)
       termination_helper.swap_qualifying_event(action.event_xml)
       publish_result, publish_errors = publish_edi(amqp_connection, termination_helper.to_xml, existing_policy.eg_id, termination.employer_hbx_id)
       unless publish_result

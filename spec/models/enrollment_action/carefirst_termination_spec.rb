@@ -58,6 +58,40 @@ describe EnrollmentAction::CarefirstTermination, "given a valid terminated enrol
   end
 end
 
+describe EnrollmentAction::CarefirstTermination, "given an valid IVL enrollment, cancel event with subscriber start date in past" do
+  let(:member) { instance_double(Openhbx::Cv2::EnrolleeMember, id: 1) }
+  let(:enrollee) { instance_double(::Openhbx::Cv2::Enrollee, member: member) }
+  let(:terminated_policy_cv) { instance_double(Openhbx::Cv2::Policy, enrollees: [enrollee])}
+  let(:carrier) { Carrier.create }
+  let(:policy) { FactoryGirl.create(:policy, hbx_enrollment_ids: [1], carrier: carrier) }
+  let(:start_date) { Date.new(Date.today.year) }
+  let(:term_date) { start_date + 1.month}
+  let(:termination_event) { instance_double(
+      ::ExternalEvents::EnrollmentEventNotification,
+      policy_cv: terminated_policy_cv,
+      existing_policy: policy,
+      subscriber_start: term_date,
+      subscriber_end: term_date,
+      all_member_ids: [1,2]
+  ) }
+
+  before :each do
+    policy.enrollees.update_all(coverage_start: start_date, coverage_end: nil)
+    allow(policy).to receive(:term_for_np).and_return(true, false)
+    allow(termination_event).to receive(:is_cancel?).and_return(true)
+    allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
+  end
+
+  subject do
+    EnrollmentAction::CarefirstTermination.new(termination_event, nil)
+  end
+
+  it "should terminate policy with correct date" do
+    expect(subject.persist).to be_truthy
+    expect(policy.reload.policy_end).to eq (term_date - 1.day)
+  end
+end
+
 describe EnrollmentAction::CarefirstTermination, "given a valid canceled enrollment", :dbclean => :after_each do
   let(:plan_link) { instance_double(Openhbx::Cv2::PlanLink, :id => 1, :active_year => "2019", :carrier => carrier_link) }
   let(:carrier_link) { instance_double(Openhbx::Cv2::CarrierLink, :id => 1) }
@@ -76,7 +110,7 @@ describe EnrollmentAction::CarefirstTermination, "given a valid canceled enrollm
 
   let(:person) {FactoryGirl.create(:person)}
   let(:member) {person.members.first}
-  let!(:policy) { Policy.new(eg_id: '1', enrollees: [enrollee1], plan: plan, carrier: carrier ) }
+  let!(:policy) { Policy.new(eg_id: '1', enrollees: [enrollee1], plan: plan, carrier: carrier, policy_start: Date.today ) }
   let!(:policy2) { Policy.new(eg_id: '2', enrollees: [enrollee2], plan: plan, carrier: carrier, employer_id: nil, aasm_state: "terminated", term_for_np: true ) }
   let!(:plan) { build(:plan) }
   let!(:carrier) {create(:carrier, termination_cancels_renewal: false)}
@@ -101,7 +135,8 @@ describe EnrollmentAction::CarefirstTermination, "given a valid canceled enrollm
   before :each do
     person.update_attributes!(:authority_member_id => person.members.first.hbx_member_id)
     allow(termination_event.existing_policy).to receive(:terminate_as_of).and_return(true)
-    allow(termination_event).to receive(:subscriber_end).and_return(false)
+    allow(termination_event).to receive(:subscriber_end).and_return(Date.today)
+    allow(termination_event).to receive(:subscriber_start).and_return(Date.today)
     policy.save!
     policy2.save!
     policy2.update_attributes!(term_for_np: false)
@@ -123,8 +158,8 @@ describe EnrollmentAction::CarefirstTermination, "given a valid enrollment", :db
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
-  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil) }
-  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1) }
+  let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil, coverage_end: :one_month_ago ) }
+  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, policy_start: Date.today) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     event_xml: event_xml,
@@ -145,6 +180,7 @@ describe EnrollmentAction::CarefirstTermination, "given a valid enrollment", :db
     allow(action_publish_helper).to receive(:set_event_action).with("urn:openhbx:terms:v1:enrollment#terminate_enrollment")
     allow(action_publish_helper).to receive(:set_policy_id).with(policy.id)
     allow(action_publish_helper).to receive(:set_member_starts).with({1 => enrollee.coverage_start})
+    allow(action_publish_helper).to receive(:set_member_end_date).with({1 => enrollee.coverage_end})
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, termination_event.hbx_enrollment_id, termination_event.employer_hbx_id)
   end
 
@@ -164,6 +200,11 @@ describe EnrollmentAction::CarefirstTermination, "given a valid enrollment", :db
 
   it "sets member start" do
     expect(action_publish_helper).to receive(:set_member_starts).with({1 => enrollee.coverage_start})
+    subject.publish
+  end
+
+  it "sets member end" do
+    expect(action_publish_helper).to receive(:set_member_end_date).with({1 => enrollee.coverage_end})
     subject.publish
   end
 

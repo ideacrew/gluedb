@@ -7,7 +7,11 @@ module EnrollmentAction
       aptc_2 = extract_aptc(policy_2)
       return false if aptc_1.blank?
       return false if aptc_2.blank?
-      !(aptc_1 == aptc_2)
+      return true if !(aptc_1 == aptc_2)
+      if chunk.first.existing_policy
+        return true if chunk.first.existing_policy.applied_aptc != BigDecimal.new(aptc_2)
+      end
+      false
     end
 
     def extract_aptc(policy_cv)

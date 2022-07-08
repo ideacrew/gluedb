@@ -262,8 +262,8 @@ module Parsers
             if !etf_checker.valid?
               persist_edi_transactions(
                 l834,
-                nil,
-                nil,
+                etf_checker.policy_id,
+                carrier.try(:id),
                 nil,
                 edi_transmission,
                 etf_checker.errors.full_messages
