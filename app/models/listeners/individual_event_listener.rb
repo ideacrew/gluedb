@@ -88,12 +88,19 @@ module Listeners
       end
     end
 
+    def self.bind(channel, queue)
+      topic_exchange = channel.topic(ExchangeInformation.event_exchange, {durable: true})
+      queue.bind(topic_exchange, {:routing_key => "info.events.individual.created"})
+      queue.bind(topic_exchange, {:routing_key => "info.events.individual.updated"})
+    end
+
     def self.run
       Process.setproctitle("%s - %s" % [self.name , $$])
       conn = AmqpConnectionProvider.start_connection
       chan = conn.create_channel
       chan.prefetch(1)
       q = chan.queue(self.queue_name, :durable => true)
+      bind(chan, q)
       self.new(chan, q).subscribe(:block => true, :manual_ack => true, :ack => true)
       conn.close
     end
