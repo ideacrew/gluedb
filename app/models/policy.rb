@@ -603,27 +603,13 @@ class Policy
 
   def set_aptc_effective_on(aptc_date, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
     if self.aptc_credits.empty?
-      if aptc_date == policy_start
-        self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
-      else
-        self.aptc_credits << create_aptc_credit(policy_start, aptc_date - 1.day, self.applied_aptc, self.pre_amt_tot, self.tot_res_amt)
-        self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
-      end
+      _no_credits_found(aptc_date, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
     else
       aptc_record = self.aptc_record_on(aptc_date)
       if aptc_record
-        if aptc_record.start_on == aptc_date
-          # update matching aptc credits
-          aptc_record.update_attributes(pre_amt_tot: pre_total_amount, aptc: aptc_amount, tot_res_amt: remaining_owed_by_consumer, end_on: coverage_period_end)
-        else
-          # end current aptc credits
-          aptc_record.update_attributes(end_on: (aptc_date - 1.day))
-          # create next aptc credits
-          self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
-        end
+        _matching_credit_found(aptc_record, aptc_date, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
       else
-        # create next aptc credits
-        self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+        _no_matching_credit_found(aptc_date, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
       end
     end
     # delete invalid aptc credits
@@ -631,6 +617,42 @@ class Policy
     self.pre_amt_tot = pre_total_amount
     self.tot_res_amt = remaining_owed_by_consumer
     self.applied_aptc = aptc_amount
+  end
+
+  def _no_credits_found(aptc_date, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+    if aptc_date == policy_start
+      self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+    else
+      self.aptc_credits << create_aptc_credit(policy_start, aptc_date - 1.day, self.applied_aptc, self.pre_amt_tot, self.tot_res_amt)
+      self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+    end
+  end
+
+  def _matching_credit_found(aptc_record, aptc_date, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+    if aptc_record.start_on == aptc_date || _credit_not_changed(aptc_record, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+      # update matching aptc credits
+      aptc_record.update_attributes(pre_amt_tot: pre_total_amount, aptc: aptc_amount, tot_res_amt: remaining_owed_by_consumer, end_on: coverage_period_end)
+    else
+      # end current aptc credits
+      aptc_record.update_attributes(end_on: (aptc_date - 1.day))
+      # create next aptc credits
+      self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+    end
+  end
+
+  def _no_matching_credit_found(aptc_date, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+    aptc_record = self.latest_aptc_record
+    if _credit_not_changed(aptc_record, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+      # update latest credit end date
+      aptc_record.update_attributes(pre_amt_tot: pre_total_amount, aptc: aptc_amount, tot_res_amt: remaining_owed_by_consumer, end_on: coverage_period_end)
+    else
+      # create next aptc credits
+      self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+    end
+  end
+
+  def _credit_not_changed(aptc_record, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
+    aptc_record.aptc.to_s == aptc_amount.to_s && aptc_record.pre_amt_tot.to_s == pre_total_amount.to_s && aptc_record.tot_res_amt.to_s == remaining_owed_by_consumer.to_s
   end
 
   def create_aptc_credit(aptc_date, aptc_end_date, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
