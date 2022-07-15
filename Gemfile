@@ -41,7 +41,7 @@ end
 group :development, :assets do
   gem 'uglifier', '~> 3.0.4'
   gem 'font-awesome-rails', '4.2.0.0'
-  gem "rails_best_practices", "~> 1.17.0"
+#  gem "rails_best_practices", "~> 1.17.0"
 end
 
 group :development, :test do

@@ -157,8 +157,6 @@ GEM
       timers (>= 4.1.1)
     ci_reporter (2.0.0)
       builder (>= 2.1.2)
-    code_analyzer (0.5.5)
-      sexp_processor
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
     coffee-rails (3.2.2)
@@ -221,7 +219,7 @@ GEM
       thor (>= 0.14, < 2.0)
     jquery-ui-rails (5.0.5)
       railties (>= 3.2.16)
-    json (1.8.6)
+    json (2.6.2)
     kaminari (0.16.3)
       actionpack (>= 3.0.0)
       activesupport (>= 3.0.0)
@@ -310,14 +308,6 @@ GEM
       activesupport (= 3.2.22.5)
       bundler (~> 1.0)
       railties (= 3.2.22.5)
-    rails_best_practices (1.17.0)
-      activesupport
-      code_analyzer (>= 0.4.3)
-      erubis
-      i18n
-      json
-      require_all
-      ruby-progressbar
     railties (3.2.22.5)
       actionpack (= 3.2.22.5)
       activesupport (= 3.2.22.5)
@@ -330,10 +320,8 @@ GEM
     rb-fsevent (0.11.1)
     rb-inotify (0.10.1)
       ffi (~> 1.0)
-    rdoc (3.12.2)
-      json (~> 1.4)
+    rdoc (3.9.5)
     ref (2.0.0)
-    require_all (3.0.0)
     responders (1.1.2)
       railties (>= 3.2, < 4.2)
     rgl (0.5.2)
@@ -391,7 +379,6 @@ GEM
       nori (~> 2.4.0)
       uuid (~> 2.3.7)
       wasabi (~> 3.3.0)
-    sexp_processor (4.16.1)
     simplecov (0.12.0)
       docile (~> 1.1.0)
       json (>= 1.8, < 3)
@@ -496,7 +483,6 @@ DEPENDENCIES
   psych (= 2.0.5)
   puma (~> 3.7.0)
   rails (= 3.2.22.5)
-  rails_best_practices (~> 1.17.0)
   rake (= 10.4.2)
   rgl (= 0.5.2)
   roo (= 2.1.0)

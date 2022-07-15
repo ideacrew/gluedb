@@ -171,7 +171,7 @@ module Amqp
 
     def request(properties, payload, timeout = 15)
       req_chan = channel.connection
-      ::Amqp::Requestor.new(req_chan).request(properties, payload, timeout)
+      Amqp::Requestor.default.request(properties, payload, timeout)
     end
 
     def with_response_exchange

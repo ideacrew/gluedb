@@ -29,7 +29,7 @@ describe Listeners::EmployerUpdatedListener do
   before :each do
     allow(error_channel).to receive(:fanout).with(mock_event_exchange_name, {:durable => true}).and_return(mock_event_exchange)
     allow(ExchangeInformation).to receive(:event_publish_exchange).and_return(mock_event_exchange_name)
-    allow(Amqp::Requestor).to receive(:new).with(connection).and_return(mock_requestor)
+    allow(Amqp::Requestor).to receive(:default).and_return(mock_requestor)
     allow(Employer).to receive(:by_hbx_id).with(employer_hbx_id).and_return(matching_employers)
     allow(mock_requestor).to receive(:request).with(
       {:headers => { :employer_id => employer_hbx_id }, :routing_key => "resource.employer" }, "", 10

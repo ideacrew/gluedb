@@ -18,7 +18,8 @@ class ExchangeInformation
     'event_publish_exchange',
     'environment',
     'hbx_id',
-    'file_storage_uri'
+    'file_storage_uri',
+    'amqp_request_uri'
   ]
 
   attr_reader :config
