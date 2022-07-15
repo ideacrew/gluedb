@@ -644,7 +644,7 @@ class Policy
     aptc_record = self.latest_aptc_record
     if _credit_not_changed(aptc_record, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
       # update latest credit end date
-      aptc_record.update_attributes(end_on: coverage_period_end)
+      aptc_record.update_attributes(pre_amt_tot: pre_total_amount, aptc: aptc_amount, tot_res_amt: remaining_owed_by_consumer, end_on: coverage_period_end)
     else
       # create next aptc credits
       self.aptc_credits << create_aptc_credit(aptc_date, coverage_period_end, aptc_amount, pre_total_amount, remaining_owed_by_consumer)
