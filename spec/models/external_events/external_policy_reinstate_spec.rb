@@ -111,7 +111,7 @@ context "Given a new IVL policy CV with APTC", :dbclean => :after_each do
                              tot_res_amt: total_responsible_amount,
                              applied_aptc: applied_aptc_amount,
                              hbx_enrollment_ids: ["1"])
-    policy.aptc_credits.create!(start_on: coverage_start, end_on: Date.new(2022,12,31), pre_amt_tot: premium_total_amount, tot_res_amt: total_responsible_amount, aptc: applied_aptc_amount)
+    policy.aptc_credits.create!(start_on: coverage_start, end_on: coverage_end, pre_amt_tot: premium_total_amount, tot_res_amt: total_responsible_amount, aptc: applied_aptc_amount)
     policy.save
     policy
   }
@@ -196,12 +196,12 @@ context "Given a new IVL policy CV with APTC", :dbclean => :after_each do
 
   subject { ExternalEvents::ExternalPolicyReinstate.new(action.policy_cv, action.existing_policy) }
 
-  it "creates new policy on # persist and creates APTC Credits table with APTC" do
+  it "creates new policy on # persist and should extend APTC Credits end to 12/31" do
     expect(Policy.where(:hbx_enrollment_ids => eg_id, aasm_state: "terminated").count).to eq 1
 
     action.existing_policy.reload
     expect(action.existing_policy.aptc_credits.count).to eq 1
-    expect(action.existing_policy.aptc_credits.where(start_on: coverage_start, end_on: Date.new(2022,12,31)).count).to eq 1
+    expect(action.existing_policy.aptc_credits.where(start_on: coverage_start, end_on: Date.today.beginning_of_year.end_of_month).count).to eq 1
     subject.persist
     action.existing_policy.reload
 
@@ -209,8 +209,8 @@ context "Given a new IVL policy CV with APTC", :dbclean => :after_each do
     expect(Policy.where(:hbx_enrollment_ids => eg_id, aasm_state: "resubmitted").count).to eq 1
 
     # creates aptc credits
-    expect(action.existing_policy.aptc_credits.count).to eq 2
-    expect(action.existing_policy.aptc_credits.where(start_on: coverage_start, end_on: coverage_end).count).to eq 1
-    expect(action.existing_policy.aptc_credits.where(start_on: reinstate_date, end_on: Date.new(2022,12,31)).count).to eq 1
+    expect(action.existing_policy.aptc_credits.count).to eq 1
+    # extends aptc credits end date on reinstate
+    expect(action.existing_policy.aptc_credits.where(start_on: coverage_start, end_on: Date.new(2022,12,31)).count).to eq 1
   end
 end
