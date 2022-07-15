@@ -149,6 +149,7 @@ module Parsers
             enrollee.termed_by_carrier = true
           end
         end
+        @policy.update_aptc_credit(@policy.policy_end)
         @policy.save
       end
 
