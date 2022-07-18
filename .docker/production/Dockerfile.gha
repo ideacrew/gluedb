@@ -1,3 +1,6 @@
+ARG COMMIT_SHA
+ARG BRANCH=trunk
+
 ############################################
 ### Base image ###
 ############################################
@@ -175,4 +178,91 @@ COPY --chown=$USERNAME:$USERNAME ./.docker/config/secrets.yml $HOME/config
 COPY --chown=$USERNAME:$USERNAME ./.docker/config/unicorn.rb $HOME/config
 
 USER $USERNAME
+
+################################################################
+# Glue update image builder
+################################################################
+
+FROM builder as update_builder
+
+RUN apt-get update \
+    && apt-get -yq dist-upgrade \
+    && apt-get install -y \
+       wget \
+       default-jdk
+
+ARG GEM_OAUTH_TOKEN
+ENV BUNDLE_GITHUB__COM=x-access-token:"$GEM_OAUTH_TOKEN"
+
+RUN git clone https://"$GEM_OAUTH_TOKEN"@github.com/dchbx/ediparser.git
+RUN git clone https://"$GEM_OAUTH_TOKEN"@github.com/health-connector/hbx_oracle.git
+
+RUN wget https://repo1.maven.org/maven2/org/jruby/jruby-dist/1.7.27/jruby-dist-1.7.27-bin.zip  && unzip jruby-dist-1.7.27-bin.zip
+ENV PATH=$HOME/jruby-1.7.27/bin:$PATH
+WORKDIR $HOME/hbx_oracle
+RUN unset BUNDLE_APP_CONFIG && \
+    unset BUNDLE_BIN && \
+    unset BUNDLE_PATH && \
+    unset BUNDLER_VERSION && \
+    unset GEM_HOME && \
+    unset RUBYGEMS_VERSION && \
+    jruby -S gem install bundler -v 1.17.1 && \
+    jruby -S bundle install
+
+
+################################################################
+# Glue update image builder
+################################################################
+
+FROM public.ecr.aws/ideacrew/gluedb:${BRANCH}-${COMMIT_SHA} as update
+#FROM public.ecr.aws/ideacrew/gluedb:dc_k8_deployment-d2f55f6 as update 
+# ARG CLIENT -${CLIENT}
+
+# Switch back to root to install system libraries
+USER root
+
+# Install mongodb shell
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+RUN echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/3.4 main" | tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+
+# Install required packages/libraries
+RUN apt-get update \
+    && apt-get -yq dist-upgrade \
+    && apt-get install -y \
+       jq \ 
+       mongodb-org-shell \
+       default-jdk \
+       xz-utils \
+       gcc \
+       build-essential \
+       git \
+       libgmp-dev \
+       python
+
+RUN cd /root && curl -O https://downloads.haskell.org/~ghc/8.0.2/ghc-8.0.2-x86_64-deb8-linux.tar.xz && tar xf ghc-8.0.2-x86_64-deb8-linux.tar.xz && cd ghc-8.0.2 && ./configure && make install
+RUN cd /root && git clone https://github.com/haskell/cabal.git && cd /root/cabal && git checkout Cabal-v1.24.2.0 && cd cabal-install && ./bootstrap.sh 
+ENV PATH=$PATH:$HOME/.cabal/bin
+RUN cabal update
+
+RUN echo '\ngem "rubycritic"' >> Gemfile
+RUN bundle install --jobs 20 --retry 5 --without development test
+
+COPY --chown=$USERNAME:$USERNAME --from=update_builder $HOME/ediparser $HOME/ediparser
+COPY --chown=$USERNAME:$USERNAME --from=update_builder $HOME/hbx_oracle $HOME/hbx_oracle
+COPY --chown=$USERNAME:$USERNAME --from=update_builder $HOME/jruby-1.7.27 $HOME/jruby-1.7.27
+
+RUN cd /edidb/ediparser && cabal update && cabal install --dependencies-only && cabal build && cabal configure
+RUN mkdir -p /edidb/scripts
+COPY .docker/config/prepare_dev.js /edidb/scripts/prepare_dev.js
+COPY .docker/config/prepare_prod.js /edidb/scripts/prepare_prod.js
+COPY .docker/config/database.rb /edidb/hbx_oracle/config/database.rb
+COPY .docker/config/update_variables.sh /edidb/scripts/update_variables.sh 
+RUN  chmod 755 /edidb/scripts/update_variables.sh
+COPY .docker/config/glue_update.sh /edidb/scripts/glue_update.sh 
+RUN  chmod 755 /edidb/scripts/glue_update.sh
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.14/bin/linux/amd64/kubectl
+RUN chmod 744 ./kubectl
+RUN mv ./kubectl /usr/local/bin/kubectl
+RUN curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install && rm awscliv2.zip
+RUN chown -R $USERNAME:$USERNAME $HOME
 
