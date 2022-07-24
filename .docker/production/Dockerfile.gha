@@ -147,6 +147,14 @@ FROM base as deploy
 
 ARG HOSTNAME=localhost
 
+RUN apt-get update -qq \
+    && apt-get -yq dist-upgrade \
+    && apt-get install -y \
+      git
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && truncate -s 0 /var/log/*log
+
 # Needed to run client swap script
 ENV EDIDB_DB_AUTH=true
 ENV EDIDB_DB_HOST=${HOSTNAME}
