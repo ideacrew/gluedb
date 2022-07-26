@@ -201,11 +201,9 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
   let(:subscriber_enrollee) { Enrollee.new(m_id: primary.authority_member.hbx_member_id, rel_code: 'self', coverage_start: prim_coverage_start, coverage_end: prim_coverage_end, :c_id => nil, :cp_id => nil)}
   let(:child_enrollee1) { Enrollee.new(m_id: dep.authority_member.hbx_member_id, rel_code: 'child', coverage_start: child1_coverage_start, coverage_end: child1_coverage_end, :c_id => nil, :cp_id => nil)}
   let(:child_enrollee2) { Enrollee.new(m_id: dep2.authority_member.hbx_member_id, rel_code: 'child', coverage_start: child2_coverage_start, coverage_end: child2_coverage_end, :c_id => nil, :cp_id => nil)}
-  let(:aptc_credit) { AptcCredit.new(start_on: prim_coverage_start, end_on: Date.new(prim_coverage_start.year, 12, 31), aptc: 100.0, pre_amt_tot: 200.0, tot_res_amt: 100.0) }
   let!(:active_policy) {
     policy =  FactoryGirl.create(:policy, enrollment_group_id: eg_id, hbx_enrollment_ids: [eg_id], carrier_id: carrier_id, plan: active_plan, carrier: carrier, coverage_start: prim_coverage_start, coverage_end: nil, kind: kind)
     policy.update_attributes(enrollees: [subscriber_enrollee, child_enrollee1, child_enrollee2])
-    policy.aptc_credits = [aptc_credit]
     policy.save
     policy
   }
@@ -259,9 +257,6 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
         expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.termed_by_carrier).to eq true
         expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.coverage_end).to eq prim_coverage_end
         expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.termed_by_carrier).to eq true
-        # update aptc credit to match subscriber end date
-        expect(policy.aptc_credits.count).to eq 1
-        expect(policy.aptc_credits[0].end_on).to eq prim_coverage_end
       end
     end
 
@@ -297,10 +292,6 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
         expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.termed_by_carrier).to eq false
         expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.coverage_end).to eq child2_coverage_end
         expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.termed_by_carrier).to eq false
-
-        # update aptc credit to match subscriber end date
-        expect(policy.aptc_credits.count).to eq 1
-        expect(policy.aptc_credits[0].end_on).to eq prim_coverage_end
       end
     end
 
@@ -331,10 +322,6 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
         expect(policy.policy_end).to eq prim_coverage_end
         expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.coverage_end).to eq child1_coverage_start
         expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.coverage_end).to eq child2_coverage_start
-
-        # update aptc credit to match subscriber end date
-        expect(policy.aptc_credits.count).to eq 1
-        expect(policy.aptc_credits[0].end_on).to eq prim_coverage_end
       end
     end
   end
@@ -369,19 +356,6 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
         expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.coverage_end).to eq prim_coverage_end
         expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.termed_by_carrier).to eq true
       end
-
-      it "should update aptc credits to match subscriber end date" do
-        # Before importing EDI
-        expect(active_policy.aptc_credits.count).to eq 1
-        expect(active_policy.aptc_credits[0].end_on).to eq Date.new(prim_coverage_start.year, 12, 31) # credit end date greater policy end date
-
-        incoming.import
-        # After importing EDI
-        active_policy.reload
-        policy = Policy.where(eg_id: active_policy.eg_id).first
-        expect(policy.aptc_credits.count).to eq 1
-        expect(policy.aptc_credits[0].end_on).to eq prim_coverage_end
-      end
     end
 
     context "when member start greater than subscriber end date" do
@@ -394,13 +368,7 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
       let(:child2_coverage_end) { nil }
 
       let(:coverage_end) { prim_coverage_end.strftime("%Y%m%d") }
-      let(:aptc_credit1) { AptcCredit.new(start_on: prim_coverage_start, end_on: child1_coverage_start - 1.day, aptc: 100.0, pre_amt_tot: 200.0, tot_res_amt: 100.0) }
-      let(:aptc_credit2) { AptcCredit.new(start_on: child1_coverage_start, end_on: Date.new(child1_coverage_start.year, 12, 31), aptc: 100.0, pre_amt_tot: 200.0, tot_res_amt: 100.0) }
 
-      before do
-        active_policy.aptc_credits = [aptc_credit1, aptc_credit2]
-        active_policy.save
-      end
 
       it "should cancel member coverage and update end date of member to start date of member" do
         # Before importing EDI
@@ -419,20 +387,6 @@ context '_term_enrollee_on_subscriber_term', :dbclean => :after_each do
         expect(policy.enrollees.where(m_id: child_enrollee1.m_id).first.termed_by_carrier).to eq true
         expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.coverage_end).to eq child2_coverage_start
         expect(policy.enrollees.where(m_id: child_enrollee2.m_id).first.termed_by_carrier).to eq true
-      end
-
-      it "should aptc credits end date to match policy end date and delete future credits" do
-        # Before importing EDI
-        expect(active_policy.aptc_credits.count).to eq 2
-        expect(active_policy.aptc_credits[0].end_on).to eq prim_coverage_end # credit matching subscriber end date
-        expect(active_policy.aptc_credits[1].end_on).to eq Date.new(child1_coverage_start.year, 12, 31) # future credit
-
-        incoming.import
-        # After importing EDI
-        active_policy.reload
-        policy = Policy.where(eg_id: active_policy.eg_id).first
-        expect(policy.aptc_credits.count).to eq 1
-        expect(policy.aptc_credits[0].end_on).to eq prim_coverage_end
       end
     end
   end
