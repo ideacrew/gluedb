@@ -1,9 +1,9 @@
 site:
-  short_name: "DC HealthLink"
-  long_name: "DC HealthLink Glue DB"
+  short_name: "OPM"
+  long_name: "OPM Glue DB"
   copyright_period_start: "2014"
 
-  
+
   social_media:
     facebook_url: ""
 
