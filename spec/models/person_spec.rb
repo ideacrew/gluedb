@@ -88,6 +88,39 @@ describe Person, :dbclean => :after_each do
     end
   end
 
+  describe "set auhority member" do
+    let(:mbr_id) { "1234"}
+
+    before :each do
+      @date1 = Time.new(1980,10,23,0,0,0)
+      @mbr_ssn = 789999999
+      @mbr_sex = "female"
+      @mbr_tobacco = "unknown"
+      @mbr_language = "en"
+    end
+
+    it "sets authority member id on person" do
+      psn = Person.new(
+        name_pfx: "Mr",
+        name_first: "John",
+        name_middle: "Jacob",
+        name_last: "Jingle-Himer",
+        name_sfx: "Sr"
+      )
+
+      psn.members << Member.new(
+        hbx_member_id: mbr_id,
+        dob: @date1,
+        ssn: @mbr_ssn,
+        gender: @mbr_sex,
+        tobacco_use_code: @mbr_tobacco,
+        lui: @mbr_language
+      )
+      psn.save
+      expect(psn.authority_member_id).to eq mbr_id
+    end
+  end
+
   describe "manages enrollment roles" do
     # it "Sets MemberEnrollment attributes" do
     # 	psn = Person.first
