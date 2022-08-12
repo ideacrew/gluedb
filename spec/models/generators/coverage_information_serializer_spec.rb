@@ -19,7 +19,7 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
     person
   }
 
-  context 'should build coverage information hash for primary as a subscriber pilicies with an enrollee', :dbclean => :after_each do
+  context 'should build coverage information hash for primary as a subscriber policies with an enrollee', :dbclean => :after_each do
     let!(:policy_1) {
       policy = FactoryGirl.create :policy, plan_id: plan.id, coverage_start: coverage_start, coverage_end: coverage_end
       policy.enrollees[0].m_id = primary.authority_member.hbx_member_id
@@ -56,7 +56,7 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
     end
   end
 
-  context 'should build coverage information hash for primary as a subscriber pilicies with a canceled enrollee', :dbclean => :after_each do
+  context 'should build coverage information hash for primary as a subscriber policies with a canceled enrollee', :dbclean => :after_each do
     let!(:policy_1) {
       policy = FactoryGirl.create :policy, plan_id: plan.id, coverage_start: coverage_start, coverage_end: coverage_end
       policy.enrollees[0].m_id = primary.authority_member.hbx_member_id
@@ -90,6 +90,55 @@ describe Generators::CoverageInformationSerializer, :dbclean => :after_each do
       expect(result[0][:enrollees][0][:segments][0][:total_premium_amount]).to eq 666.66
       expect(result[0][:enrollees][0][:segments][0][:individual_premium_amount]).to eq 666.66
       expect(result[0][:enrollees][1][:segments][0][:individual_premium_amount]).to eq 666.66
+    end
+  end
+
+  context "when the policy is canceled and no aptc credits present" do
+    let!(:canceled_policy) {
+      policy = FactoryGirl.create :policy, plan_id: plan.id, coverage_start: Date.new(calender_year, 1, 1), coverage_end: Date.new(calender_year, 1, 1), aasm_state: "canceled"
+      policy.enrollees[0].m_id = primary.authority_member.hbx_member_id
+      policy.enrollees[0].coverage_end = nil
+      policy.enrollees[1].m_id = child.authority_member.hbx_member_id
+      policy.enrollees[1].rel_code ='child'
+      policy.enrollees[1].coverage_start = Date.new(calender_year, 1, 1)
+      policy.enrollees[1].coverage_end = Date.new(calender_year, 1, 1);
+      policy.save
+      policy
+    }
+
+    it 'should pull aptc amount and premium amounts from the policy' do
+      subject = Generators::CoverageInformationSerializer.new(primary, [plan.id])
+      result = subject.process
+      expect(result[0][:enrollees][0][:segments][0][:total_premium_amount]).to eq canceled_policy.pre_amt_tot.to_f
+      expect(result[0][:enrollees][0][:segments][0][:aptc_amount]).to eq canceled_policy.applied_aptc.to_f
+    end
+  end
+
+  context "when the policy is canceled and aptc credits present" do
+    let!(:canceled_policy) {
+      policy = FactoryGirl.create :policy, plan_id: plan.id, coverage_start: Date.new(calender_year, 1, 1), coverage_end: Date.new(calender_year, 1, 1), aasm_state: "canceled"
+      policy.enrollees[0].m_id = primary.authority_member.hbx_member_id
+      policy.enrollees[0].coverage_end = nil
+      policy.enrollees[1].m_id = child.authority_member.hbx_member_id
+      policy.enrollees[1].rel_code ='child'
+      policy.enrollees[1].coverage_start = Date.new(calender_year, 1, 1)
+      policy.enrollees[1].coverage_end = Date.new(calender_year, 1, 1);
+      policy.save
+      policy
+    }
+
+    let(:aptc_credit) { AptcCredit.new(start_on: Date.new(calender_year, 1, 1),
+                                       end_on: Date.new(calender_year, 1, 1),
+                                       pre_amt_tot: 550.00,
+                                       aptc: 100.00,
+                                       tot_res_amt: 450.00)}
+
+    it 'should pull aptc amount and premium amounts from the policy' do
+      canceled_policy.aptc_credits << aptc_credit
+      subject = Generators::CoverageInformationSerializer.new(primary, [plan.id])
+      result = subject.process
+      expect(result[0][:enrollees][0][:segments][0][:total_premium_amount]).to eq aptc_credit.pre_amt_tot.to_f
+      expect(result[0][:enrollees][0][:segments][0][:aptc_amount]).to eq aptc_credit.aptc.to_f
     end
   end
 end

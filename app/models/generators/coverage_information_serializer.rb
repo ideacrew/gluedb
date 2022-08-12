@@ -130,11 +130,15 @@ module Generators
           aptc_credit = @policy.aptc_record_on(financial_dates[0])
           total_premium_amount = if aptc_credit.present?
                                    aptc_credit.pre_amt_tot.to_f
+                                 elsif @policy.aasm_state == "canceled"
+                                   @policy.pre_amt_tot.to_f
                                  else
                                    calculate_total_premium(financial_dates[0]).to_f
                                  end
           aptc_amount = if aptc_credit.present?
                           aptc_credit.aptc.to_f
+                        elsif @policy.aasm_state == "canceled"
+                          @policy.applied_aptc.to_f
                         else
                           ehb_amount = as_dollars(total_premium_amount * @policy.plan.ehb)
                           @policy.applied_aptc.to_f > ehb_amount.to_f ? ehb_amount : @policy.applied_aptc.to_f
