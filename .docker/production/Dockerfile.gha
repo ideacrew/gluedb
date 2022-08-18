@@ -29,6 +29,7 @@ RUN apt-get update -qq \
       libyaml-cpp0.5 \
       nano \
       openssl \
+      p7zip-full \
       sshpass \
       unzip \
       vim \
@@ -189,7 +190,8 @@ RUN apt-get update \
     && apt-get -yq dist-upgrade \
     && apt-get install -y \
        wget \
-       default-jdk
+       default-jdk \
+       p7zip-full
 
 ARG GEM_OAUTH_TOKEN
 ENV BUNDLE_GITHUB__COM=x-access-token:"$GEM_OAUTH_TOKEN"
