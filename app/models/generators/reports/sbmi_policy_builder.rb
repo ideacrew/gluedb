@@ -1,6 +1,6 @@
 require 'ostruct'
 
-module Generators::Reports 
+module Generators::Reports
   class SbmiPolicyBuilder
     include MoneyMath
 
@@ -31,7 +31,7 @@ module Generators::Reports
       sbmi_policy.effectuation_status = if policy.canceled?
         'N'
       elsif policy.aasm_state == 'resubmitted'
-        'Y'  
+        'Y'
       else
         if policy.subscriber.coverage_start > Date.new(2020, 12, 31)
           policy.effectuated? ? 'Y' : 'N'
@@ -103,9 +103,15 @@ module Generators::Reports
     end
 
     def append_financial_information(financial_dates)
-      total_premium = @policy_disposition.as_of(financial_dates[0]).pre_amt_tot
-      applied_aptc = @policy_disposition.as_of(financial_dates[0]).applied_aptc
-      responsible_amount = @policy_disposition.as_of(financial_dates[0]).tot_res_amt
+      aptc_credit = @policy.aptc_record_on(financial_dates[0])
+      total_premium = aptc_credit.present? ? aptc_credit.pre_amt_tot.to_f : calculate_total_premium(financial_dates[0]).to_f
+      applied_aptc =  if aptc_credit.present?
+                        aptc_credit.aptc.to_f
+                      else
+                        ehb_amount = as_dollars(total_premium * @policy.plan.ehb)
+                        @policy.applied_aptc.to_f > ehb_amount.to_f ? ehb_amount : @policy.applied_aptc.to_f
+                      end
+      responsible_amount = aptc_credit.present? ? aptc_credit.tot_res_amt.to_f : as_dollars(total_premium - applied_aptc).to_f
 
       financial_info = PdfTemplates::FinancialInformation.new({
         financial_effective_start_date: format_date(financial_dates[0]),
@@ -144,6 +150,18 @@ module Generators::Reports
       end
 
       financial_info
+    end
+
+    def calculate_total_premium(date)
+      premium_amount = 0.00
+      @policy.enrollees.each do |enrollee|
+        enrollee_coverage_start = enrollee.coverage_start
+        enrollee_coverage_end = enrollee.coverage_end.blank? ? @policy.policy_start.end_of_year : enrollee.coverage_end
+        if (enrollee_coverage_start..enrollee_coverage_end).cover?(date)
+          premium_amount += as_dollars(enrollee.premium_amount)
+        end
+      end
+      as_dollars(premium_amount)
     end
 
     def mid_month_start_prorated_amount(mid_month_start_date, total_premium, applied_aptc)
@@ -224,7 +242,7 @@ module Generators::Reports
     def mid_month_end_date?(financial_dates)
       coverage_period_end = financial_dates[1]
       coverage_period_end.present? && (coverage_period_end.end_of_month != coverage_period_end)
-    end  
+    end
 
     def csr_variant
       if policy.plan.coverage_type =~ /health/i
