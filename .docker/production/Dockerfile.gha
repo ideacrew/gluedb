@@ -189,7 +189,8 @@ RUN apt-get update \
     && apt-get -yq dist-upgrade \
     && apt-get install -y \
        wget \
-       default-jdk
+       default-jdk \
+       p7zip-full
 
 ARG GEM_OAUTH_TOKEN
 ENV BUNDLE_GITHUB__COM=x-access-token:"$GEM_OAUTH_TOKEN"
