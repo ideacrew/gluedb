@@ -190,8 +190,7 @@ RUN apt-get update \
     && apt-get -yq dist-upgrade \
     && apt-get install -y \
        wget \
-       default-jdk \
-       p7zip-full
+       default-jdk 
 
 ARG GEM_OAUTH_TOKEN
 ENV BUNDLE_GITHUB__COM=x-access-token:"$GEM_OAUTH_TOKEN"
@@ -244,6 +243,7 @@ RUN apt-get update \
 RUN cd /root && curl -O https://downloads.haskell.org/~ghc/8.0.2/ghc-8.0.2-x86_64-deb8-linux.tar.xz && tar xf ghc-8.0.2-x86_64-deb8-linux.tar.xz && cd ghc-8.0.2 && ./configure && make install
 RUN cd /root && git clone https://github.com/haskell/cabal.git && cd /root/cabal && git checkout Cabal-v1.24.2.0 && cd cabal-install && ./bootstrap.sh 
 ENV PATH=$PATH:$HOME/.cabal/bin
+ENV PATH=$HOME/jruby-1.7.27/bin:$PATH
 RUN cabal update
 
 RUN echo '\ngem "rubycritic"' >> Gemfile
