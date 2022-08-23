@@ -5,13 +5,14 @@ describe Generators::Reports::IrsYearlySerializer, :dbclean => :after_each do
   let(:address)  { FactoryGirl.create(:address, state:"CA", street_1:"test", street_2:"test 2", city: 'city', zip: "12022", street_1:"street 1", street_2: "street 2", person: person) }
   let(:coverage_start) {Date.today.beginning_of_year.prev_year}
   let(:coverage_end) {coverage_start.end_of_year }
+  let(:current_year) {Date.today.year}
   let(:enrollee) {policy.enrollees.create!(m_id: person.members.first.hbx_member_id, rel_code: "self", coverage_start: coverage_start, coverage_end: coverage_end) }
   let(:plan) {FactoryGirl.create(:plan, hios_plan_id: "23232323", ehb: 12, carrier: carrier)} 
   let(:carrier) {FactoryGirl.create(:carrier)}  
 
-  let(:params) { {  policy_id: policy.id, type: "new", void_cancelled_policy_ids: [ Moped::BSON::ObjectId.new ] , void_active_policy_ids: [ Moped::BSON::ObjectId.new ], npt: policy.term_for_np } }
+  let(:params) { {  policy_id: policy.id, type: "new", void_cancelled_policy_ids: [ Moped::BSON::ObjectId.new ] , void_active_policy_ids: [ Moped::BSON::ObjectId.new ], npt: policy.term_for_np, calendar_year: current_year } }
   let(:household) {double(name:"name", ssn:"00000000")}
-  let(:options) { { multiple: false, calender_year: 2018, qhp_type: "assisted", notice_type: 'new'} }
+  let(:options) { { multiple: false, calendar_year: current_year, qhp_type: "assisted", notice_type: 'new'} }
   let(:premium) {double(premium_amount:100, slcsp_premium_amount: 200, aptc_amount:0)}
   let(:monthly_premiums) { [OpenStruct.new({serial: (1), premium_amount: 0.0, premium_amount_slcsp: 0.0, monthly_aptc: 0.0})] }  
   let(:h41_folder_name)  { "FEP0020DC.DSH.EOYIN.D#{Time.now.strftime('%Y%m%d')[2..-1]}.T#{Time.now.strftime("%H%M%S") + "000"}.P.IN" }

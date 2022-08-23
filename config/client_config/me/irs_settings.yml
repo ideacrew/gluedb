@@ -21,27 +21,17 @@ tax_document:
         active_false: '2020-1095A-VOID-ACTIVE-FALSE.pdf'
         active_true: '2020-1095A-VOID-ACTIVE-TRUE.pdf'
     coverage_page_no: 3
-  2021:
-    slcsp: "94506DC0390005-01"
-    new:
-      template:
-        unassisted: '2020-1095A-NEW-UQHP.pdf'
-        assisted: '2020-1095A-NEW-AQHP.pdf'
-    void:
-      template:
-        active_false: '2020-1095A-VOID-ACTIVE-FALSE.pdf'
-        active_true: '2020-1095A-VOID-ACTIVE-TRUE.pdf'
-    coverage_page_no: 3
-  2022:
-    slcsp: "94506DC0390005-01"
-    new:
-      template:
-        unassisted: '2020-1095A-NEW-UQHP.pdf'
-        assisted: '2020-1095A-NEW-AQHP.pdf'
-    void:
-      template:
-        active_false: '2020-1095A-VOID-ACTIVE-FALSE.pdf'
-        active_true: '2020-1095A-VOID-ACTIVE-TRUE.pdf'
-    coverage_page_no: 3
   documents_root_path: '/tmp/'
   documents_folder: 'irs_notices'
+
+cms_pbp_generation:
+  cms_pbp_source_sbm_id: "SBE00ME"
+  hios_prefix_ids: ["33653", "48396", "96667"]
+  subdirectory_prefix: "MEHBX"
+
+irs_h41_generation:
+  subdirectory_prefix: "MEHBX_H41"
+  irs_h41_source_sbm_id: "SBE00ME"
+
+irs_1095A:
+  subdirectory_prefix: 'MEEXCHANGE'
