@@ -8,7 +8,6 @@ module Generators::Reports
 
     def initialize(policy)
       @sbmi_policy = PdfTemplates::SbmiPolicy.new
-      @policy_disposition = PolicyDisposition.new(policy)
       @policy = policy
       @carrier_hash = {}
     end
@@ -103,9 +102,9 @@ module Generators::Reports
     end
 
     def append_financial_information(financial_dates)
-      total_premium = @policy_disposition.as_of(financial_dates[0]).pre_amt_tot
-      applied_aptc = @policy_disposition.as_of(financial_dates[0]).applied_aptc
-      responsible_amount = @policy_disposition.as_of(financial_dates[0]).tot_res_amt
+      total_premium = @policy.reported_pre_amt_tot_on(financial_dates[0])
+      applied_aptc = @policy.reported_aptc_on(financial_dates[0])
+      responsible_amount = @policy.reported_tot_res_amt_on(financial_dates[0])
 
       financial_info = PdfTemplates::FinancialInformation.new({
         financial_effective_start_date: format_date(financial_dates[0]),
