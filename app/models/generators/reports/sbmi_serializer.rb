@@ -25,11 +25,11 @@ module Generators::Reports
         plan_ids = Plan.where(hios_plan_id: /^#{hios_prefix}/, year: calendar_year).pluck(:_id)
         puts "Processing #{hios_prefix}"
 
-        # workbook = Spreadsheet::Workbook.new
-        # sheet = workbook.create_worksheet :name => "#{calendar_year} SBMI Report"
+        workbook = Spreadsheet::Workbook.new
+        sheet = workbook.create_worksheet :name => "#{calendar_year} SBMI Report"
 
-        # index = 0
-        # sheet.row(index).concat headers
+        index = 0
+        sheet.row(index).concat headers
 
         create_sbmi_folder(hios_prefix)
 
@@ -78,8 +78,8 @@ module Generators::Reports
             sbmi_xml.folder_path = "#{@sbmi_root_folder}/#{@sbmi_folder_name}"
             sbmi_xml.serialize
 
-            # index += 1
-            # sheet.row(index).concat builder.sbmi_policy.to_csv
+            index += 1
+            sheet.row(index).concat builder.sbmi_policy.to_csv
           rescue Exception => e
             puts "Exception: #{pol.id}"
             puts e.inspect
@@ -89,7 +89,7 @@ module Generators::Reports
 
         merge_and_validate_xmls(hios_prefix)
 
-        # workbook.write "#{Rails.root.to_s}/#{calendar_year}_SBMI_DATA_EXPORT_#{Time.now.strftime("%Y_%m_%d_%H_%M")}_#{hios_prefix}.xls"
+        workbook.write "#{Rails.root.to_s}/#{calendar_year}_SBMI_DATA_EXPORT_#{Time.now.strftime("%Y_%m_%d_%H_%M")}_#{hios_prefix}.xls"
       end
     end
 
