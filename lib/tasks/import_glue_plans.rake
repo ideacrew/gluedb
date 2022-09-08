@@ -18,7 +18,16 @@ namespace :import do
     puts "#{plan_data.size} plans in json file"
 
     plan_data.each do |pd|
-      pd['carrier_id'] = Carrier.for_fein(pd['fein']).id.to_s
+      carrier_through_fein = Carrier.for_fein(pd['fein'])
+      if carrier_through_fein.nil?
+        carrier_through_id = Carrier.where(id: pd['carrier_id']).first
+        if carrier_through_id.nil?
+          raise "carrier is not present with the carrier ID and Fein: #{pd['fein']} | #{pd['carrier_id']} "
+        end
+      else
+        pd['carrier_id'] = carrier_through_fein.id.to_s
+      end
+
       plan = Plan.where(year: year.to_i).and(hios_plan_id: pd['hios_plan_id']).first
 
       if plan.blank?
