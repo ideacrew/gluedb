@@ -336,6 +336,16 @@ module ExternalEvents
       when [false, true]
         false
       else
+        # HACK:
+        # This is a glorious, glorious hack.
+        # Basically what it says is if my term/initial pair differ on whether
+        # they are OSSE enrollments, split them up and don't try to process
+        # them in a single action.  In phase two we will do this correctly
+        # with more understanding of the use cases, and likely creation of
+        # better EnrollmentActions.  And this will go BYE BYE.
+        osse_1 = is_osse?(policy_cv)
+        osse_2 = is_osse?(other.policy_cv)
+        return false unless osse_1 == osse_2
         (self.subscriber_end == other.subscriber_start - 1.day) || (self.is_cancel? && (subscriber_start == other.subscriber_start))
       end
     end

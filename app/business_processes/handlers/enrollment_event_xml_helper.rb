@@ -101,5 +101,17 @@ module Handlers
       end
       extracted_ids.compact
     end
+
+    def is_osse?(policy_cv)
+      pe = policy_cv.policy_enrollment
+      return false unless pe
+      pcs = pe.premium_credits
+      return false unless pcs
+      return false if pcs.empty?
+      pcs.any? do |pc|
+        kind_value = (pc.kind || "").split("#").last || ""
+        kind_value.downcase == "osse"
+      end
+    end
   end
 end

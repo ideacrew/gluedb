@@ -231,7 +231,7 @@ module ExternalEvents
         :tot_res_amt => extract_tot_res_amt,
         :kind => @kind,
         :cobra_eligibility_date => @cobra ? extract_cobra_eligibility_date : nil
-      }.merge(extract_other_financials).merge(extract_rating_details).merge(responsible_party_attributes))
+      }.merge(extract_other_policy_details).merge(extract_other_financials).merge(extract_rating_details).merge(responsible_party_attributes))
 
       # reinstated policy aasm state need to be resubmitted
       if @policy_node.previous_policy_id.present? && @policy_reinstate
@@ -252,6 +252,14 @@ module ExternalEvents
       end
       Observers::PolicyUpdated.notify(policy)
       results
+    end
+
+    def extract_other_policy_details
+      if is_osse?(@policy_node)
+        { is_osse: true }
+      else
+        {}
+      end
     end
   end
 end
