@@ -46,4 +46,21 @@ RSpec.describe PoliciesHelper, :type => :helper do
       end
     end
   end
+
+  describe "osse_amt" do
+    let(:ivl_policy) { FactoryGirl.create(:policy, is_osse: true)}
+    let(:shop_policy) {FactoryGirl.create :shop_policy, is_osse: true}
+
+    context "individual policy" do
+      it "returns osse ivl amount" do
+        expect(helper.osse_amt(ivl_policy)).to eq 552.22
+      end
+    end
+
+    context "shop policy" do
+      it "returns osse shop amount" do
+        expect(helper.osse_amt(shop_policy)).to eq 333.33
+      end
+    end
+  end
 end
