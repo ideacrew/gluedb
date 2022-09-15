@@ -31,6 +31,12 @@
     		<td align="right">(<%= number_to_currency(policy.tot_emp_res_amt) %>)</td>
     	<% end %>
   	</tr>
+    <tr>
+      <% if policy.is_osse %>
+        <td colspan="4" align="right">Osse Amt</td>
+        <td align="right"><%= number_to_currency(osse_amt(policy)) %></td>
+      <% end %>
+    </tr>
   	<tr>
   		<td colspan="4" align="right"><strong>Total Responsible Amount</strong></td>
   		<td align="right"><strong><%= number_to_currency(policy.tot_res_amt) %></strong></td>
