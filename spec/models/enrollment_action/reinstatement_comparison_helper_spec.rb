@@ -148,4 +148,29 @@ describe EnrollmentAction::ReinstatementComparisonHelper do
       end
     end
   end
+
+  describe "#ivl_reinstatement_candidates" do
+    let(:policy_cv) { double }
+    let(:subscriber_enrollee) { instance_double(Enrollee) }
+    let(:subscriber_start) { DateTime.new(2017,1,1) }
+    let(:subscriber_id) { 1 }
+    let(:subscriber_person) { instance_double(Person, :policies => [:policy, :non_eligible_policy]) }
+
+    before do
+      allow(subject).to receive(:is_osse?).with(policy_cv).and_return(false)
+      allow(subject).to receive(:extract_subscriber).with(policy_cv).and_return(subscriber_enrollee)
+      allow(subject).to receive(:extract_enrollee_start).with(subscriber_enrollee).and_return(subscriber_start)
+      allow(subject).to receive(:extract_member_id).with(subscriber_enrollee).and_return(subscriber_id)
+      allow(subject).to receive(:extract_enrollee_end).with(subscriber_enrollee).and_return('')
+      allow(Person).to receive(:find_by_member_id).with(subscriber_id).and_return(subscriber_person)
+      allow(subject).to receive(:extract_plan).with(policy_cv).and_return(:plan)
+      allow(subject).to receive(:ivl_reinstatement_candidate?).
+        with(:policy, :plan, 1, subscriber_start, false).and_return(true)
+      allow(subject).to receive(:ivl_reinstatement_candidate?).
+        with(:non_eligible_policy, :plan, 1, subscriber_start, false).and_return(false)
+    end
+    it "sends :ivl_reinstatement_candidate? for each policy and returns a candidate if true" do
+      expect(subject.ivl_reinstatement_candidates(policy_cv)).to eq([:policy])
+    end
+  end
 end

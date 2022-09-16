@@ -71,11 +71,11 @@ module EnrollmentAction
       subscriber_start = extract_enrollee_start(subscriber_enrollee)
       subscriber_id = extract_member_id(subscriber_enrollee)
       subscriber_person = Person.find_by_member_id(subscriber_id)
-      plan_year = find_employer_plan_year(policy_cv)
+      is_osse = is_osse?(policy_cv)
       return [] if subscriber_person.nil?
       plan = extract_plan(policy_cv)
       subscriber_person.policies.select do |pol|
-        ivl_reinstatement_candidate?(pol, plan, subscriber_id, subscriber_start)
+        ivl_reinstatement_candidate?(pol, plan, subscriber_id, subscriber_start, is_osse)
       end
     end
 
