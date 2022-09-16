@@ -175,7 +175,8 @@ end
       tot_res_amt: BigDecimal.new("899.99"),
       rating_area: 'rating_area',
       created_at: Time.now - 1.week,
-      updated_at: nil
+      updated_at: nil,
+      is_osse: false
   end
 
   let(:life_partner_person) do

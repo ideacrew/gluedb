@@ -48,13 +48,15 @@ module EnrollmentAction
       plan_year = find_employer_plan_year(policy_cv)
       return [] if subscriber_person.nil?
       plan = extract_plan(policy_cv)
+      is_osse = is_osse?(policy_cv)
       subscriber_person.policies.select do |pol|
-        shop_reinstatement_candidate?(pol, plan, employer, subscriber_id, subscriber_start)
+        shop_reinstatement_candidate?(pol, plan, employer, subscriber_id, subscriber_start, is_osse)
       end
     end
 
-    def shop_reinstatement_candidate?(pol, plan, employer, subscriber_id, subscriber_start)
+    def shop_reinstatement_candidate?(pol, plan, employer, subscriber_id, subscriber_start, is_osse)
       return false if pol.employer_id.blank?
+      return false unless pol.is_osse == is_osse
       return false if pol.subscriber.blank?
       return false if (pol.subscriber.m_id != subscriber_id)
       return false unless (plan.coverage_type == pol.plan.coverage_type)
@@ -69,16 +71,17 @@ module EnrollmentAction
       subscriber_start = extract_enrollee_start(subscriber_enrollee)
       subscriber_id = extract_member_id(subscriber_enrollee)
       subscriber_person = Person.find_by_member_id(subscriber_id)
-      plan_year = find_employer_plan_year(policy_cv)
+      is_osse = is_osse?(policy_cv)
       return [] if subscriber_person.nil?
       plan = extract_plan(policy_cv)
       subscriber_person.policies.select do |pol|
-        ivl_reinstatement_candidate?(pol, plan, subscriber_id, subscriber_start)
+        ivl_reinstatement_candidate?(pol, plan, subscriber_id, subscriber_start, is_osse)
       end
     end
 
-    def ivl_reinstatement_candidate?(pol, plan, subscriber_id, subscriber_start)
+    def ivl_reinstatement_candidate?(pol, plan, subscriber_id, subscriber_start, is_osse)
       return false unless pol.employer_id.blank?
+      return false unless pol.is_osse == is_osse
       return false if pol.subscriber.blank?
       return false if pol.policy_end.blank?
       return false if (pol.subscriber.m_id != subscriber_id)

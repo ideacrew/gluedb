@@ -82,7 +82,10 @@
         %composite_rating_tier_name= policy.composite_rating_tier
   - else
     %individual_market
-      %is_carrier_to_bill true
+      - if policy.is_osse
+        %is_carrier_to_bill false
+      - else
+        %is_carrier_to_bill true
       %applied_aptc_amount= (policy.applied_aptc).round(2)
       %assistance_effective_date= simple_date_for(policy.assistance_effective_date) if policy.assistance_effective_date
   %premium_total_amount= policy.pre_amt_tot.round(2)

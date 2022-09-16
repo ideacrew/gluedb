@@ -143,6 +143,7 @@ describe ExternalEvents::ExternalPolicy, "given:
         allow(subject).to receive(:extract_enrollee_premium).with(enrollees1).and_return("100")
         allow(subject).to receive(:extract_enrollee_start).with(enrollees2).and_return(Date.today)
         allow(subject).to receive(:extract_enrollee_premium).with(enrollees2).and_return("100")
+        allow(subject).to receive(:is_osse?).with(policy_cv).and_return(false)
         allow(policy_cv).to receive(:responsible_party).and_return(responsible_party_node)
         allow(policy_cv).to receive(:previous_policy_id).and_return('')
         subject.instance_variable_set(:@plan,plan)
@@ -228,6 +229,7 @@ describe ExternalEvents::ExternalPolicy, "with a parsed market value param in th
       allow(subject).to receive(:extract_enrollee_premium).with(enrollees1).and_return("100")
       allow(subject).to receive(:extract_enrollee_start).with(enrollees2).and_return(Date.today)
       allow(subject).to receive(:extract_enrollee_premium).with(enrollees2).and_return("100")
+      allow(subject).to receive(:is_osse?).with(policy_cv).and_return(false)
       allow(policy_cv).to receive(:responsible_party).and_return(responsible_party_node)
       allow(policy_cv).to receive(:previous_policy_id).and_return('')
       subject.instance_variable_set(:@plan,plan)
@@ -250,7 +252,7 @@ describe ExternalEvents::ExternalPolicy, "with a parsed market value param in th
       subject.persist
     end
 
-    it "should populate the policy with the market being passed in the initalize method" do
+    it "should populate the policy with the market being passed in the initialize method" do
       expect(subject.kind).to eq("coverall")
     end
 
@@ -310,6 +312,7 @@ describe ExternalEvents::ExternalPolicy, "with reinstated policy cv", dbclean: :
     allow(subject).to receive(:extract_enrollee_premium).with(enrollees1).and_return("100")
     allow(subject).to receive(:extract_enrollee_start).with(enrollees2).and_return(Date.today)
     allow(subject).to receive(:extract_enrollee_premium).with(enrollees2).and_return("100")
+    allow(subject).to receive(:is_osse?).and_return(true)
     allow(policy_cv).to receive(:responsible_party).and_return('')
     subject.instance_variable_set(:@plan,plan)
     allow(Policy).to receive(:create!).with({
@@ -320,7 +323,8 @@ describe ExternalEvents::ExternalPolicy, "with reinstated policy cv", dbclean: :
       kind: nil,
       cobra_eligibility_date: nil, 
       applied_aptc: "0.0",
-      carrier_id: '01'
+      carrier_id: '01',
+      is_osse: true
       }).and_return(created_policy)
     allow(Observers::PolicyUpdated).to receive(:notify).with(created_policy)
     allow(Observers::PolicyUpdated).to receive(:notify).with(previous_policy)

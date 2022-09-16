@@ -10,7 +10,7 @@ GIT
 
 GIT
   remote: https://github.com/ideacrew/edi_codec.git
-  revision: 6d1e67f170c329fcf953a93064d72f1b7ab147e1
+  revision: 3700d8374710527b646284979a7741a353df0377
   branch: trunk
   specs:
     edi_codec (0.1.2)
@@ -19,7 +19,7 @@ GIT
 
 GIT
   remote: https://github.com/ideacrew/openhbx_cv2.git
-  revision: 6567dd46112982e6a9c90001b617caf313271fc9
+  revision: 41f3152d127b141f0c6a8351dc8bd057e758b976
   branch: trunk
   specs:
     openhbx_cv2 (0.0.1)

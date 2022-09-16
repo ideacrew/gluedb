@@ -116,3 +116,68 @@ describe Handlers::EnrollmentEventXmlHelper do
     end
   end
 end
+
+describe Handlers::EnrollmentEventXmlHelper, "#is_osse?" do
+  subject { Class.new { extend Handlers::EnrollmentEventXmlHelper } }
+  let(:policy_enrollment) do
+    instance_double(
+      ::Openhbx::Cv2::PolicyEnrollment,
+      :premium_credits => premium_credits
+    )
+  end
+  let(:policy_cv) { double(:policy_enrollment => policy_enrollment)}
+
+  describe "given a policy cv with an osse credit" do
+    let(:premium_credits) { [aptc_premium_credit, osse_premium_credit] }
+    let(:aptc_premium_credit) do
+      instance_double(
+        ::Openhbx::Cv2::PremiumCredit,
+        :kind => "urn:openhbx:terms:v1:premium_credit_kind#aptc",
+        :value => "0.00"
+      )
+    end
+
+    let(:osse_premium_credit) do
+      instance_double(
+        ::Openhbx::Cv2::PremiumCredit,
+        :kind => "urn:dc0:terms:v1:premium_credit_kind#osse",
+        :value => "0.00"
+      )
+    end
+
+    it "is truthy" do
+      expect(subject.is_osse?(policy_cv)).to be_truthy
+    end
+  end
+
+  describe "given a policy cv that has no premium credits" do
+    let(:premium_credits) { nil }
+
+    it "#is_osse? is falsey" do
+      expect(subject.is_osse?(policy_cv)).to be_falsey
+    end
+  end
+
+  describe "given a policy cv that has empty premium credits" do
+    let(:premium_credits) { [] }
+
+    it "#is_osse? is falsey" do
+      expect(subject.is_osse?(policy_cv)).to be_falsey
+    end
+  end
+
+  describe "given a policy cv that has only aptc premium credits" do
+    let(:premium_credits) { [aptc_premium_credit] }
+    let(:aptc_premium_credit) do
+      instance_double(
+        ::Openhbx::Cv2::PremiumCredit,
+        :kind => "urn:openhbx:terms:v1:premium_credit_kind#aptc",
+        :value => "0.00"
+      )
+    end
+
+    it "#is_osse? is falsey" do
+      expect(subject.is_osse?(policy_cv)).to be_falsey
+    end
+  end
+end
