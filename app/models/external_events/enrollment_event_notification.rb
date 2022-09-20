@@ -323,7 +323,12 @@ module ExternalEvents
     end
 
     def enrollment_event_xml
-      @enrollment_event_xml ||= enrollment_event_cv_for(event_xml)
+      @enrollment_event_xml ||= begin
+        clean_xml = EdiSafe.transform(event_xml)
+        enrollment_event_cv_for(
+          clean_xml
+        )
+      end
     end
 
     def policy_cv
