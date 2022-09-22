@@ -1,7 +1,7 @@
 #Usage
 #rails r script/queries/glue_enrollment_report.rb BEGIN-DATE -e production
 #BEGIN-DATE, format = MMDDYYYY
-#E.g. rails r script/queries/glue_enrollment_report.rb "11012021" -e production
+#E.g. rails r script/queries/glue_enrollment_report.rb "09102022" -e production
 
 require 'csv'
 timey = Time.now
@@ -46,14 +46,16 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
 
   CSV.open("glue_enrollment_report_#{timestamp}.csv", 'w') do |csv|
     csv << ["Subscriber ID", "Member ID" , "Policy ID", "Enrollment Group ID", "Status", "NPT Flag",
-            "First Name", "Last Name","SSN", "DOB", "Gender", "Relationship", "Responsible Party ID",
+            "First Name", "Last Name","SSN", "DOB", "Gender", "Relationship",
+            "Rating Area", "Plan Name", "HIOS ID", "Plan Metal Level", "Carrier Member ID",
+            "Carrier Policy ID", "Carrier Name", "Premium Amount", "Premium Total", "Policy APTC",
+            "Policy Employer Contribution", "Coverage Start", "Coverage End", "Benefit Status",
+            "Employer Name", "Employer DBA", "Employer FEIN", "Employer HBX ID", "Home Address",
+            "Mailing Address", "Email", "Phone Number", "Broker", "Broker NPN", "Enrollment Chain IDs",
+            "aptc_0", "aptc_1", "aptc_2", "aptc_3", "aptc_4", "aptc_5", "aptc_6", "aptc_7", "Responsible Party ID",
             "RP hbx_id", "RP First Name", "RP Middle Name", "RP Last Name", "RP Full Name", "RP SSN", "RP DOB",
             "RP Gender", "RP Address Type", "RP Full Address", "RP Address Count", "RP Phone Type",
-            "RP Phone Number", "RP Phone Count", "Rating Area", "Plan Name", "HIOS ID", "Plan Metal Level",
-            "Carrier ID", "Carrier Name", "Premium Amount", "Premium Total", "Policy APTC",
-            "Policy Employer Contribution", "Coverage Start", "Coverage End", "Benefit Status",
-            "Employer Name", "Employer DBA", "Employer FEIN", "Employer HBX ID",
-            "Home Address", "Mailing Address","Email","Phone Number","Broker"]
+            "RP Phone Number", "RP Phone Count"]
     policies.each do |pol|
       count += 1
       puts "#{count}/#{total_count} done at #{Time.now}" if count % 10000 == 0
@@ -83,8 +85,14 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
               pol.employer
             }
             end
+
             if !pol.broker.blank?
-              broker = pol.broker.full_name
+              broker = pol.broker
+              broker_name = broker.full_name
+              broker_npn = broker.npn
+            else
+              broker_name = nil
+              broker_npn = nil
             end
             pol.enrollees.each do |en|
               #if !en.canceled?
@@ -100,6 +108,27 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                   en.member.gender,
                   en.rel_code]
 
+                data += [
+                  Settings.site.short_name == "DC HealthLink" ? 'R-DC001' : pol.rating_area,
+                  plan.name, plan.hios_plan_id, plan.metal_level, en.c_id, en.cp_id, carrier.name,
+                  en.pre_amt, pol.pre_amt_tot,pol.applied_aptc, pol.tot_emp_res_amt,
+                  en.coverage_start.blank? ? nil : en.coverage_start.strftime("%Y%m%d"),
+                  en.coverage_end.blank? ? nil : en.coverage_end.strftime("%Y%m%d"),
+                  en.ben_stat == "cobra" ? en.ben_stat : nil,
+                  pol.employer_id.blank? ? nil : employer.name,
+                  pol.employer_id.blank? ? nil : employer.dba,
+                  pol.employer_id.blank? ? nil : employer.fein,
+                  pol.employer_id.blank? ? nil : employer.hbx_id,
+                  per.home_address.try(:full_address) || pol.subscriber.person.home_address.try(:full_address),
+                  per.mailing_address.try(:full_address) || pol.subscriber.person.mailing_address.try(:full_address),
+                  per.emails.first.try(:email_address), per.phones.first.try(:phone_number), broker_name, broker_npn]
+
+                aptc_credits = pol.aptc_credits.sort_by(&:start_on).map do |i|
+                  "start_on: #{i.start_on} -- end_on: #{i.end_on} -- aptc: #{i.aptc} -- pre_amt_tot: #{i.pre_amt_tot} -- tot_res_amt: #{i.tot_res_amt}"
+                end
+
+                data += [pol.hbx_enrollment_ids, aptc_credits[0], aptc_credits[1], aptc_credits[2], aptc_credits[3], aptc_credits[4],
+                         aptc_credits[5], aptc_credits[6], aptc_credits[7]]
                 if pol.responsible_party_id.present?
                   person = Person.where("responsible_parties._id" => pol.responsible_party_id).first
                   unless person.nil?
@@ -147,22 +176,6 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                 else
                   data += [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
                 end
-
-                data += [
-                    Settings.site.short_name == "DC HealthLink" ? 'R-DC001' : pol.rating_area,
-                    plan.name, plan.hios_plan_id, plan.metal_level, en.c_id, carrier.name,
-                    en.pre_amt, pol.pre_amt_tot,pol.applied_aptc, pol.tot_emp_res_amt,
-                    en.coverage_start.blank? ? nil : en.coverage_start.strftime("%Y%m%d"),
-                    en.coverage_end.blank? ? nil : en.coverage_end.strftime("%Y%m%d"),
-                    en.ben_stat == "cobra" ? en.ben_stat : nil,
-                    pol.employer_id.blank? ? nil : employer.name,
-                    pol.employer_id.blank? ? nil : employer.dba,
-                    pol.employer_id.blank? ? nil : employer.fein,
-                    pol.employer_id.blank? ? nil : employer.hbx_id,
-                    per.home_address.try(:full_address) || pol.subscriber.person.home_address.try(:full_address),
-                    per.mailing_address.try(:full_address) || pol.subscriber.person.mailing_address.try(:full_address),
-                    per.emails.first.try(:email_address), per.phones.first.try(:phone_number), broker
-                  ]
                csv << data
               #end
             end
