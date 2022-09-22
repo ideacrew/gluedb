@@ -49,7 +49,8 @@ module Listeners
 
     def get_employer_properties(employer_id, new_employer)
       xml_string = request_resource(employer_id)
-      xml = Nokogiri::XML(xml_string)
+      clean_xml = EdiSafe.transform(xml_string)
+      xml = Nokogiri::XML(clean_xml)
       {
         :name => Maybe.new(xml.at_xpath("//v:organization/v:name", VOCAB_NS)).content.value,
         :dba => Maybe.new(xml.at_xpath("//v:organization/v:dba", VOCAB_NS)).content.value,

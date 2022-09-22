@@ -40,7 +40,8 @@ module Listeners
         r_headers = (rprops.headers || {}).to_hash.stringify_keys
         r_code = r_headers['return_status'].to_s
         if r_code == "200"
-          [r_code, resp_body]
+          clean_xml = EdiSafe.transform(resp_body)
+          [r_code, clean_xml]
         else
           [r_code, resp_body.to_s]
         end
