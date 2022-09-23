@@ -1,5 +1,7 @@
 module Listeners
   class EmployerEventReducerListener < Amqp::RetryClient
+    include SafeEdiTransformer
+
     def self.queue_name
       ec = ExchangeInformation
       "#{ec.hbx_id}.#{ec.environment}.q.glue.employer_event_reducer"
@@ -40,7 +42,8 @@ module Listeners
         r_headers = (rprops.headers || {}).to_hash.stringify_keys
         r_code = r_headers['return_status'].to_s
         if r_code == "200"
-          [r_code, resp_body]
+          clean_xml = safe_transform(resp_body)
+          [r_code, clean_xml]
         else
           [r_code, resp_body.to_s]
         end

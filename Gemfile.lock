@@ -18,6 +18,14 @@ GIT
       nokogiri (~> 1.6)
 
 GIT
+  remote: https://github.com/ideacrew/edi_safe
+  revision: 4e5212699888d436007a8d592086c61c0f4659cb
+  branch: trunk
+  specs:
+    edi_safe (0.1.0)
+      i18n
+
+GIT
   remote: https://github.com/ideacrew/openhbx_cv2.git
   revision: d774b23f5f5f431142eb2ed7c782f86cc5d0ad36
   branch: trunk
@@ -428,6 +436,7 @@ DEPENDENCIES
   designmodo-flatuipro-rails!
   devise (= 3.3.0)
   edi_codec!
+  edi_safe!
   eye (= 0.6.4)
   factory_girl (= 4.5.0)
   factory_girl_rails (= 4.5.0)

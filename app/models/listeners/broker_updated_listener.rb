@@ -1,5 +1,7 @@
 module Listeners
   class BrokerUpdatedListener < ::Amqp::Client
+    include SafeEdiTransformer
+
     VOCAB_NS = {:v => "http://openhbx.org/api/terms/1.0"}
     FailAction = Struct.new(:ack, :requeue, :event_name, :message)
 
@@ -49,7 +51,8 @@ module Listeners
 
     def get_broker_properties(broker_id, new_broker)
       xml_string = request_resource(broker_id)
-      xml = Nokogiri::XML(xml_string)
+      clean_xml = safe_transform(xml_string)
+      xml = Nokogiri::XML(clean_xml)
       {
         :name_first => Maybe.new(xml.at_xpath("//v:person/v:person_name/v:person_given_name", VOCAB_NS)).content.value,
         :name_last => Maybe.new(xml.at_xpath("//v:person/v:person_name/v:person_surname", VOCAB_NS)).content.value,

@@ -1,6 +1,8 @@
 module RemoteResources
   class IndividualResource
     include HappyMapper
+    extend SafeEdiTransformer
+    include SafeEdiTransformer
 
     register_namespace "cv", "http://openhbx.org/api/terms/1.0"
     tag 'individual'
@@ -82,7 +84,8 @@ module RemoteResources
         r_headers = (rprops.headers || {}).to_hash.stringify_keys
         r_code = r_headers['return_status'].to_s
         if r_code == "200"
-          [r_code, self.parse(resp_body, :single => true)]
+          clean_body = safe_transform(resp_body)
+          [r_code, self.parse(clean_body, :single => true)]
         else
           [r_code, resp_body.to_s]
         end
