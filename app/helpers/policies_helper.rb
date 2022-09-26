@@ -25,7 +25,19 @@ module PoliciesHelper
     if policy.employer_id.present?
       as_dollars(total_premium_amount - employer_contribution - total_responsible_amount).to_f
     else
-      as_dollars(total_premium_amount - aptc_amount - total_responsible_amount).to_f
+      as_dollars(total_premium_amount - aptc_amount).to_f
+    end
+  end
+
+  def is_carrier_to_bill?(policy)
+    policy.is_osse ? boolean_to_human(false) : boolean_to_human(policy.carrier_to_bill)
+  end
+
+  def total_responsible_amount(policy)
+    if policy.employer_id.present?
+      number_to_currency(policy.tot_res_amt)
+    else
+      policy.is_osse ? number_to_currency(0.00) : number_to_currency(policy.tot_res_amt)
     end
   end
 end
