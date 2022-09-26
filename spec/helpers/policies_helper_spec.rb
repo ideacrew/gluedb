@@ -47,13 +47,21 @@ RSpec.describe PoliciesHelper, :type => :helper do
     end
   end
 
-  describe "osse_amt" do
+  describe "osse policies" do
     let(:ivl_policy) { FactoryGirl.create(:policy, is_osse: true)}
     let(:shop_policy) {FactoryGirl.create :shop_policy, is_osse: true}
 
     context "individual policy" do
       it "returns osse ivl amount" do
-        expect(helper.osse_amt(ivl_policy)).to eq 552.22
+        expect(helper.osse_amt(ivl_policy)).to eq 663.33
+      end
+
+      it "returns the total responsible amount" do
+        expect(helper.total_responsible_amount(ivl_policy)).to eq "$0.00"
+      end
+
+      it "is not carrier to bill" do
+        expect(helper.is_carrier_to_bill?(ivl_policy)).to eq "No"
       end
     end
 
