@@ -11,6 +11,7 @@ module ExternalEvents
     attr_reader :business_process_history
 
     include Handlers::EnrollmentEventXmlHelper
+    include SafeEdiTransformer
 
     COVERAGE_START_EVENTS = [
       "urn:openhbx:terms:v1:enrollment#initial",
@@ -324,7 +325,7 @@ module ExternalEvents
 
     def enrollment_event_xml
       @enrollment_event_xml ||= begin
-        clean_xml = EdiSafe.transform(event_xml)
+        clean_xml = safe_transform(event_xml)
         enrollment_event_cv_for(
           clean_xml
         )

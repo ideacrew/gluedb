@@ -19,7 +19,7 @@ GIT
 
 GIT
   remote: https://github.com/ideacrew/edi_safe
-  revision: 2e9ee3357799b4774fe8c5898bb2592c71c5d843
+  revision: 4e5212699888d436007a8d592086c61c0f4659cb
   branch: trunk
   specs:
     edi_safe (0.1.0)

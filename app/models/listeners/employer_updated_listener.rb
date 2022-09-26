@@ -1,5 +1,7 @@
 module Listeners
   class EmployerUpdatedListener < ::Amqp::Client
+    include SafeEdiTransformer
+
     VOCAB_NS = {:v => "http://openhbx.org/api/terms/1.0"}
     FailAction = Struct.new(:ack, :requeue, :event_name, :message)
 
@@ -49,7 +51,7 @@ module Listeners
 
     def get_employer_properties(employer_id, new_employer)
       xml_string = request_resource(employer_id)
-      clean_xml = EdiSafe.transform(xml_string)
+      clean_xml = safe_transform(xml_string)
       xml = Nokogiri::XML(clean_xml)
       {
         :name => Maybe.new(xml.at_xpath("//v:organization/v:name", VOCAB_NS)).content.value,
