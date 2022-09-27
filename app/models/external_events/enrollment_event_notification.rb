@@ -30,7 +30,7 @@ module ExternalEvents
       @bogus_renewal_termination = false
       @event_responder = e_responder
       @message_tag = m_tag
-      @event_xml = e_xml
+      @event_xml = safe_transform(e_xml)
     end
 
     def hash
@@ -325,9 +325,8 @@ module ExternalEvents
 
     def enrollment_event_xml
       @enrollment_event_xml ||= begin
-        clean_xml = safe_transform(event_xml)
         enrollment_event_cv_for(
-          clean_xml
+          event_xml
         )
       end
     end
