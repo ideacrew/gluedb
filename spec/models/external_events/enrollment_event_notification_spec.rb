@@ -3,11 +3,15 @@ require "rails_helper"
 describe ::ExternalEvents::EnrollmentEventNotification, :dbclean => :after_each do
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: "UTF-8") }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
   let :enrollment_event_notification do
     ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, e_xml, headers
+  end
+
+  before :each do
+    allow(EdiSafe).to receive(:transform).with(e_xml).and_return(e_xml)
   end
 
   describe "#drop_if_bogus_plan_year!" do
@@ -473,7 +477,7 @@ end
 describe ExternalEvents::EnrollmentEventNotification, "that is not a term" do
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: 'UTF-8') }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
 
@@ -482,6 +486,7 @@ describe ExternalEvents::EnrollmentEventNotification, "that is not a term" do
   end
 
   before :each do
+    allow(EdiSafe).to receive(:transform).with(e_xml).and_return(e_xml)
     allow(subject).to receive(:is_termination?).and_return(false)
   end
 
@@ -493,7 +498,7 @@ end
 describe ExternalEvents::EnrollmentEventNotification, "that is a term with no existing enrollment" do
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: 'UTF-8') }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
 
@@ -502,6 +507,7 @@ describe ExternalEvents::EnrollmentEventNotification, "that is a term with no ex
   end
 
   before :each do
+    allow(EdiSafe).to receive(:transform).with(e_xml).and_return(e_xml)
     allow(subject).to receive(:is_termination?).and_return(true)
     allow(subject).to receive(:existing_policy).and_return(nil)
   end
@@ -514,7 +520,7 @@ end
 describe ExternalEvents::EnrollmentEventNotification, "that is cancel with a canceled enrollment" do
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: 'UTF-8') }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
   let(:existing_policy) { instance_double(Policy, :canceled? => true, :terminated? => true) }
@@ -524,6 +530,7 @@ describe ExternalEvents::EnrollmentEventNotification, "that is cancel with a can
   end
 
   before :each do
+    allow(EdiSafe).to receive(:transform).with(e_xml).and_return(e_xml)
     allow(subject).to receive(:is_termination?).and_return(true)
     allow(subject).to receive(:is_cancel?).and_return(true)
     allow(subject).to receive(:existing_policy).and_return(existing_policy)
@@ -537,7 +544,7 @@ end
 describe ExternalEvents::EnrollmentEventNotification, "that is termination with a terminated enrollment" do
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: 'UTF-8') }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
   let(:existing_policy) { instance_double(Policy, :canceled? => false, :terminated? => true) }
@@ -547,6 +554,7 @@ describe ExternalEvents::EnrollmentEventNotification, "that is termination with 
   end
 
   before :each do
+    allow(EdiSafe).to receive(:transform).with(e_xml).and_return(e_xml)
     allow(subject).to receive(:is_termination?).and_return(true)
     allow(subject).to receive(:is_cancel?).and_return(false)
     allow(subject).to receive(:existing_policy).and_return(existing_policy)
@@ -561,7 +569,7 @@ end
 describe ExternalEvents::EnrollmentEventNotification, "that is a cancel with a terminated enrollment" do
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: 'UTF-8') }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
   let(:existing_policy) { instance_double(Policy, :canceled? => false, :terminated? => true) }
@@ -571,6 +579,7 @@ describe ExternalEvents::EnrollmentEventNotification, "that is a cancel with a t
   end
 
   before :each do
+    allow(EdiSafe).to receive(:transform).with(e_xml).and_return(e_xml)
     allow(subject).to receive(:is_termination?).and_return(true)
     allow(subject).to receive(:is_reterm_with_earlier_date?).and_return(false)
     allow(subject).to receive(:is_cancel?).and_return(true)
@@ -585,7 +594,7 @@ end
 describe ExternalEvents::EnrollmentEventNotification, "that is a term with an active enrollment" do
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: 'UTF-8') }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
   let(:existing_policy) { instance_double(Policy, :canceled? => false, :terminated? => false) }
@@ -595,6 +604,7 @@ describe ExternalEvents::EnrollmentEventNotification, "that is a term with an ac
   end
 
   before :each do
+    allow(EdiSafe).to receive(:transform).with(e_xml).and_return(e_xml)
     allow(subject).to receive(:is_termination?).and_return(true)
     allow(subject).to receive(:is_cancel?).and_return(false)
     allow(subject).to receive(:existing_policy).and_return(existing_policy)
@@ -610,13 +620,17 @@ end
 describe ExternalEvents::EnrollmentEventNotification, "that is termination with a terminated enrollment with earlier end date" do
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: 'UTF-8') }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
   let(:existing_policy) { instance_double(Policy, :canceled? => false, :terminated? => true) }
 
   subject do
     ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, e_xml, headers
+  end
+
+  before :each do
+    allow(EdiSafe).to receive(:transform).with(e_xml).and_return(e_xml)
   end
 
   before :each do
@@ -637,12 +651,16 @@ describe "#is_reterm_with_earlier_date?" do
 
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: 'UTF-8') }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
 
   let :subject do
     ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, e_xml, headers
+  end
+
+  before :each do
+    allow(EdiSafe).to receive(:transform).with(e_xml).and_return(e_xml)
   end
 
   context "with new past end date" do
@@ -787,7 +805,7 @@ describe "#is_retro_term_event_of_active_policy?", :dbclean => :after_each do
 
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: 'UTF-8') }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
   let!(:enrollment_action_issue) do
@@ -840,7 +858,7 @@ describe "#drop_if_already_processed" do
 
   let(:m_tag) { double('m_tag') }
   let(:t_stamp) { double('t_stamp') }
-  let(:e_xml) { double('e_xml') }
+  let(:e_xml) { double('e_xml', encoding: 'UTF-8') }
   let(:headers) { double('headers') }
   let(:responder) { instance_double('::ExternalEvents::EventResponder') }
   let(:policy) { FactoryGirl.create(:policy) }
@@ -857,6 +875,10 @@ describe "#drop_if_already_processed" do
   
   let :subject do
     ::ExternalEvents::EnrollmentEventNotification.new responder, m_tag, t_stamp, e_xml, headers
+  end
+
+  before :each do
+    allow(EdiSafe).to receive(:transform).with(e_xml).and_return(e_xml)
   end
 
   context "termination event received for already terminated policy and eligible for re-termination" do
