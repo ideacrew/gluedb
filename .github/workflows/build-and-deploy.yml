@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "me_carrier_boarding"
+      - "preaudit_changes"
   pull_request:
     branches:
-      - "me_carrier_boarding"
+      - "preaudit_changes"
 
 concurrency:
   group: docker-${{ github.ref }}
