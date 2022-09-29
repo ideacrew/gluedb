@@ -3,6 +3,9 @@ module Listeners
     BatchHandler = "info.events.enrollment_batch.handler"
     BatchCut = "info.events.enrollment_batch.cut"
     BatchProcess = "info.events.enrollment_batch.process"
+
+    include SafeEdiTransformer
+
     def self.queue_name
       ec = ExchangeInformation
       "#{ec.hbx_id}.#{ec.environment}.q.glue.enrollment_event_batch_handler"
@@ -71,7 +74,8 @@ module Listeners
       m_headers = properties.headers || {}
       routing_key = delivery_info.routing_key
       event_time = extract_timestamp(properties)
-      parsed_event = ExternalEvents::EnrollmentEventNotification.new(nil, delivery_info, event_time, body, m_headers)
+      clean_body = safe_transform(body)
+      parsed_event = ExternalEvents::EnrollmentEventNotification.new(nil, delivery_info, event_time, clean_body, m_headers)
       if routing_key == BatchCut
         resource_event_broadcast("info", "batch_cut", "200")
         process_enrollment_batch
@@ -79,13 +83,13 @@ module Listeners
       else
         begin
           unless EnrollmentEvents::Batch.new_batch?(parsed_event)
-            create_enrollment_batch(delivery_info,parsed_event, body, event_time)
-            create_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
+            create_enrollment_batch(delivery_info,parsed_event, clean_body, event_time)
+            create_batch_transaction(delivery_info, parsed_event, clean_body, m_headers, event_time)
           else
-            create_batch_transaction(delivery_info, parsed_event, body, m_headers, event_time)
+            create_batch_transaction(delivery_info, parsed_event, clean_body, m_headers, event_time)
           end
         rescue => e
-          resource_error_broadcast("unknown_error", "500", {:event => body, error: e.class.name, message: e.message , backtrace: e.backtrace.join("\n")}.to_json, m_headers)
+          resource_error_broadcast("unknown_error", "500", {:event => clean_body, error: e.class.name, message: e.message , backtrace: e.backtrace.join("\n")}.to_json, m_headers)
           channel.ack(delivery_info.delivery_tag, false)
         end
       end
