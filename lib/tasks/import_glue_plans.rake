@@ -31,7 +31,7 @@ namespace :import do
         plan.save!
       else
         new_data = pd.dup
-        new_data.delete('id')
+#        new_data.delete('id')
         plan.update_attributes(new_data)
       end
 
