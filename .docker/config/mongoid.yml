@@ -21,6 +21,8 @@ production:
           j: true
 
         skip_version_check: true
+        consistency: :strong
+
       # Change whether the session persists in safe mode by default.
       # (default: false)
       # safe: false
