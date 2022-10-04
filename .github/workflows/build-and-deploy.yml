@@ -4,9 +4,11 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - "trunk"
       - "me_carrier_boarding"
   pull_request:
     branches:
+      - "trunk"
       - "me_carrier_boarding"
 
 concurrency:
@@ -138,9 +140,6 @@ jobs:
           build-args: |
             HOSTNAME=172.17.0.1
             GEM_OAUTH_TOKEN=${{ secrets.GH_PAT }}
-
-      - name: Check Console access
-        run: docker run --network="host" ${{ needs.prep.outputs.taggedImage }} /bin/bash .docker/check-console.sh
 
       - name: Scan Docker image
         if: github.event_name != 'pull_request'
