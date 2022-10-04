@@ -115,6 +115,9 @@ FROM builder as prod_gems_and_assets
 ARG GEM_OAUTH_TOKEN
 ARG BUNDLE_GITHUB__COM=$GEM_OAUTH_TOKEN
 
+COPY --chown=$USERNAME:$USERNAME ./project_gems/devise-3.5.10/devise.gemspec $HOME/project_gems/devise-3.5.10/devise.gemspec
+COPY --chown=$USERNAME:$USERNAME ./project_gems/devise-3.5.10/lib/devise/version.rb $HOME/project_gems/devise-3.5.10/lib/devise/version.rb
+COPY --chown=$USERNAME:$USERNAME ./project_gems/mongoid-3.2.0 $HOME/project_gems/mongoid-3.2.0
 COPY --chown=$USERNAME:$USERNAME ./Gemfile $HOME/Gemfile
 COPY --chown=$USERNAME:$USERNAME ./Gemfile.lock $HOME/Gemfile.lock
 
