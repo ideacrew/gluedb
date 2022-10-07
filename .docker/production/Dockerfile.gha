@@ -112,7 +112,7 @@ RUN apt-get update -qq \
 FROM builder as prod_gems_and_assets
 
 ARG GEM_OAUTH_TOKEN
-ARG BUNDLE_GITHUB__COM=$GEM_OAUTH_TOKEN
+ENV BUNDLE_GITHUB__COM=x-access-token:"$GEM_OAUTH_TOKEN"
 
 COPY --chown=$USERNAME:$USERNAME ./Gemfile $HOME/Gemfile
 COPY --chown=$USERNAME:$USERNAME ./Gemfile.lock $HOME/Gemfile.lock
