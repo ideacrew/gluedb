@@ -35,6 +35,11 @@ module Parsers
         fs = FileString.new(bgn[2] + "_" + @file_name, l834["RAW_CONTENT"])
         etf = Etf::EtfLoop.new(l834)
         @progress_bar.refresh
+        transaction_kind =  if error_list && error_list.include?(::Parsers::Edi::IncomingTransaction::INBOUND_REINSTATEMENT_ERROR)
+          "reinstatement"
+        else
+          transaction_set_kind(etf)
+        end
         Protocols::X12::TransactionSetEnrollment.create!(
           :st01 => st[1],
           :st02 => st[2],
@@ -52,7 +57,7 @@ module Parsers
           :policy_id => policy_id,
           :error_list => error_list,
           :transmission => edi_transmission,
-          :transaction_kind => transaction_set_kind(etf),
+          :transaction_kind => transaction_kind,
           :body => fs
         )
       end

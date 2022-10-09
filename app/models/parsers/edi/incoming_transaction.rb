@@ -3,6 +3,8 @@ module Parsers
     class IncomingTransaction
       attr_reader :errors
 
+      INBOUND_REINSTATEMENT_ERROR = "inbound reinstatements are blocked for legacy imports"
+
       def self.from_etf(etf, i_cache)
         incoming_transaction = new(etf)
 
@@ -238,7 +240,7 @@ module Parsers
       end
 
       def inbound_reinstate_blocked
-        @errors << "inbound reinstatements are blocked for legacy imports"
+        @errors << INBOUND_REINSTATEMENT_ERROR
       end
 
       def policy_id
