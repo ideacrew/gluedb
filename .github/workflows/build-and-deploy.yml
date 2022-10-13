@@ -162,8 +162,8 @@ jobs:
           build-args: |
             HOSTNAME=172.17.0.1
             GEM_OAUTH_TOKEN=${{ secrets.GH_PAT }}
-            BRANCH=${{ needs.prep.outputs.branch_name }}
-            COMMIT_SHA=${{ needs.prep.outputs.short_sha }}
+            BRANCH=${{ needs.prep.outputs.branchName }}
+            COMMIT_SHA=${{ needs.prep.outputs.shortSha }}
 
 
       - name: Check Console access
