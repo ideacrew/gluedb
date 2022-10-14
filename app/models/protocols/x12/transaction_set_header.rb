@@ -36,7 +36,7 @@ class Protocols::X12::TransactionSetHeader
   mount_uploader :body, EdiBody
 
   validates_presence_of :ts_id, :ts_control_number, :ts_implementation_convention_reference, :transaction_kind
-  validates_inclusion_of :transaction_kind, in: ["initial_enrollment", "maintenance", "effectuation", "remittance"]
+  validates_inclusion_of :transaction_kind, in: ["initial_enrollment", "maintenance", "effectuation", "remittance", "reinstatement"]
  
   aasm do
     state :transmitted, initial: true
