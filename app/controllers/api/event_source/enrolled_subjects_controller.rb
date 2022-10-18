@@ -16,7 +16,7 @@ module Api
       end
 
       def show
-        member_id = params[:id]
+        member_id = params[:subscriber_id] || params[:id]
         person = Person.find_for_member_id(member_id)
         if person.blank?
           render :status => 404, :nothing => true
