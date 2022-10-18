@@ -45,17 +45,17 @@ timestamp = Time.now.strftime('%Y%m%d%H%M')
 Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
 
   CSV.open("glue_enrollment_report_#{timestamp}.csv", 'w') do |csv|
-    csv << ["Subscriber ID", "Member ID" , "Policy ID", "Enrollment Group ID", "Status", "NPT Flag",
-            "First Name", "Last Name","SSN", "DOB", "Gender", "Relationship",
+    csv << ["Subscriber ID", "Member ID", "Policy ID", "Enrollment Group ID", "Status",
+            "NPT Flag", "First Name", "Middle Name", "Last Name","SSN", "DOB", "Gender", "Relationship",
             "Rating Area", "Plan Name", "HIOS ID", "Plan Metal Level", "Carrier Member ID",
             "Carrier Policy ID", "Carrier Name", "Premium Amount", "Premium Total", "Policy APTC",
-            "Policy Employer Contribution", "Coverage Start", "Coverage End", "Benefit Status",
-            "Employer Name", "Employer DBA", "Employer FEIN", "Employer HBX ID", "Home Address",
-            "Mailing Address", "Email", "Phone Number", "Broker", "Broker NPN", "Enrollment Chain IDs",
-            "aptc_0", "aptc_1", "aptc_2", "aptc_3", "aptc_4", "aptc_5", "aptc_6", "aptc_7", "Responsible Party ID",
-            "RP hbx_id", "RP First Name", "RP Middle Name", "RP Last Name", "RP Full Name", "RP SSN", "RP DOB",
-            "RP Gender", "RP Address Type", "RP Full Address", "RP Address Count", "RP Phone Type",
-            "RP Phone Number", "RP Phone Count"]
+            "Policy Employer Contribution", "Total Responsible Amount", "Coverage Start", "Coverage End",
+            "Benefit Status", "Employer Name", "Employer DBA", "Employer FEIN", "Employer HBX ID",
+            "Home Address", "Mailing Address", "Home Email", "Work Email", "Home Phone No", "Work Phone No",
+            "Mobile Number","Fax Number", "Broker", "Broker NPN", "Enrollment Chain IDs", "aptc_credits",
+            "RP hbx_id", "RP First Name", "RP Middle Name", "RP Last Name", "RP Full Name", "RP SSN",
+            "RP DOB", "RP Gender", "RP Address Type", "RP Full Address", "RP Address Count",
+            "RP Phone Type", "RP Phone Number", "RP Phone Count"]
     policies.each do |pol|
       count += 1
       puts "#{count}/#{total_count} done at #{Time.now}" if count % 10000 == 0
@@ -102,16 +102,23 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                   subscriber_id, en.m_id, pol._id, pol.eg_id, pol.aasm_state,
                   pol.term_for_np,
                   per.name_first,
+                  per.name_middle,
                   per.name_last,
                   en.member.ssn,
                   en.member.dob.strftime("%Y%m%d"),
                   en.member.gender,
                   en.rel_code]
+                home_email = per.emails.where(email_type: 'home').first
+                work_email = per.emails.where(email_type: 'work').first
+                home_phone = per.phones.where(phone_type: 'home').first
+                work_phone = per.phones.where(phone_type: 'work').first
+                mobile_phone = per.phones.where(phone_type: 'mobile').first
+                fax_phone = per.phones.where(phone_type: 'fax').first
 
                 data += [
                   Settings.site.short_name == "DC HealthLink" ? 'R-DC001' : pol.rating_area,
                   plan.name, plan.hios_plan_id, plan.metal_level, en.c_id, en.cp_id, carrier.name,
-                  en.pre_amt, pol.pre_amt_tot,pol.applied_aptc, pol.tot_emp_res_amt,
+                  en.pre_amt, pol.pre_amt_tot,pol.applied_aptc, pol.tot_emp_res_amt, pol.tot_res_amt,
                   en.coverage_start.blank? ? nil : en.coverage_start.strftime("%Y%m%d"),
                   en.coverage_end.blank? ? nil : en.coverage_end.strftime("%Y%m%d"),
                   en.ben_stat == "cobra" ? en.ben_stat : nil,
@@ -121,14 +128,15 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                   pol.employer_id.blank? ? nil : employer.hbx_id,
                   per.home_address.try(:full_address) || pol.subscriber.person.home_address.try(:full_address),
                   per.mailing_address.try(:full_address) || pol.subscriber.person.mailing_address.try(:full_address),
-                  per.emails.first.try(:email_address), per.phones.first.try(:phone_number), broker_name, broker_npn]
+                  home_email.try(:email_address), work_email.try(:email_address), home_phone.try(:phone_number),
+                  work_phone.try(:phone_number), mobile_phone.try(:phone_number), fax_phone.try(:phone_number),
+                  broker_name, broker_npn]
 
                 aptc_credits = pol.aptc_credits.sort_by(&:start_on).map do |i|
-                  "start_on: #{i.start_on} -- end_on: #{i.end_on} -- aptc: #{i.aptc} -- pre_amt_tot: #{i.pre_amt_tot} -- tot_res_amt: #{i.tot_res_amt}"
+                  "start_on: #{i.start_on}, end_on: #{i.end_on}, aptc: #{i.aptc}, pre_amt_tot: #{i.pre_amt_tot}, tot_res_amt: #{i.tot_res_amt} \n"
                 end
 
-                data += [pol.hbx_enrollment_ids, aptc_credits[0], aptc_credits[1], aptc_credits[2], aptc_credits[3], aptc_credits[4],
-                         aptc_credits[5], aptc_credits[6], aptc_credits[7]]
+                data += [pol.hbx_enrollment_ids, aptc_credits]
                 if pol.responsible_party_id.present?
                   person = Person.where("responsible_parties._id" => pol.responsible_party_id).first
                   unless person.nil?
@@ -169,12 +177,15 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                       res_phone_type = nil
                       res_phone_number = nil
                     end
-                    data += [responsible_party_id, res_hbx_id, res_first_name, res_middle_name, res_last_name, res_full_name, res_ssn, res_dob, res_gender, res_address_type, res_full_address, res_addresses_count, res_phone_type, res_phone_number, res_phone_count]
+                    data += [res_hbx_id, res_first_name, res_middle_name,
+                            res_last_name, res_full_name, res_ssn, res_dob, res_gender, res_address_type,
+                            res_full_address, res_addresses_count, res_phone_type, res_phone_number,
+                            res_phone_count]
                   else
-                    data += [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+                    data += [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
                   end
                 else
-                  data += [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+                  data += [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
                 end
                csv << data
               #end
