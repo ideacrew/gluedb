@@ -1,5 +1,7 @@
 name: Build Update Image
 
+run-name: Build Update Image from ${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}
+
 on:
   workflow_dispatch:
     inputs:
@@ -12,7 +14,7 @@ on:
         required: true
 
 concurrency:
-  group: docker-${{ github.ref }}
+  group: update-${{ github.ref }}
   cancel-in-progress: true
 
 env:
