@@ -14,6 +14,7 @@ module Parsers
         @inbound = (t_kind == "effectuation")
         @bgn_blacklist = blist
         @import_cache = i_cache
+        @logger = Logger.new("#{Rails.root}/log/glue_update_errors.log")
       end
 
       def transaction_set_kind(etf)
@@ -258,7 +259,7 @@ module Parsers
       end
 
       def run_import(l834, inbound, edi_transmission)
-          #puts l834["BGN"][2]
+        begin
           if !l834["ST"][3].to_s.strip.blank?
             etf_l = Etf::EtfLoop.new(l834)
             carrier = @import_cache.lookup_carrier_fein(etf_l.carrier_fein)
@@ -292,7 +293,10 @@ module Parsers
               persist_834(l834, edi_transmission)
             end
           end
+        rescue => e
+          @logger.info("Unable to process transmission #{l834} due to #{e}")
         end
+      end
 
         def self.init_imports
           @@run_records = []
