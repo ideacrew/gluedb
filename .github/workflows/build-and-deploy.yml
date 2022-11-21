@@ -41,13 +41,13 @@ jobs:
           REPO=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
           TAG=${{ env.GIT_BRANCH_NAME }}-$(echo $GITHUB_SHA | head -c7)
           IMAGE=public.ecr.aws/ideacrew/$REPO
-          echo ::set-output name=tagged_image::${IMAGE}:${TAG}
-          echo ::set-output name=tag::${TAG}
-          echo ::set-output name=registry::public.ecr.aws
-          echo ::set-output name=short_sha::$SHORT_SHA
-          echo ::set-output name=branch_name::${{ env.GIT_BRANCH_NAME }}
-          echo ::set-output name=repository_name::$REPO
-          echo ::set-output name=latest_tag::${IMAGE}:latest
+          echo "tagged_image=${IMAGE}:${TAG}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "registry=public.ecr.aws" >> $GITHUB_OUTPUT
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "branch_name=${{ env.GIT_BRANCH_NAME }}" >> $GITHUB_OUTPUT
+          echo "repository_name=$REPO" >> $GITHUB_OUTPUT
+          echo "latest_tag=${IMAGE}:latest" >> $GITHUB_OUTPUT
 
   # Uses buildx to build and push the image
   build-and-upload-image:
@@ -76,7 +76,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Add git HEAD info to docker image
         run: git show --quiet HEAD > release.txt
@@ -87,7 +87,7 @@ jobs:
           install: true
 
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
           # Key is named differently to avoid collision
@@ -118,7 +118,7 @@ jobs:
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Build Image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           builder: ${{ steps.buildx.outputs.name }}
