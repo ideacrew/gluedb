@@ -157,7 +157,7 @@ jobs:
     steps:
       - name: Post to a Slack channel
         id: slack
-        uses: slackapi/slack-github-action@v1.16.0
+        uses: slackapi/slack-github-action@v1.23.0
         with:
           channel-id: "docker-images-${{ needs.prep.outputs.repositoryName }}"
           slack-message: "New image pushed: ${{ needs.prep.outputs.taggedImage }}-glue-update built from <https://github.com/ideacrew/${{ needs.prep.outputs.repositoryName }}/commit/${{ github.event.inputs.commit_sha }}|${{ github.event.inputs.commit_sha }}> on `${{ github.event.inputs.branch }}`"
