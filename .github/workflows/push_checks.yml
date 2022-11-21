@@ -1,6 +1,9 @@
 name: RSpec
 on: push
 
+env:
+  BUNDLE_GITHUB__COM: ${{ secrets.GH_PAT }}:x-oauth-basic
+
 jobs:
   rspec:
     runs-on: ubuntu-18.04
@@ -24,9 +27,9 @@ jobs:
         with:
           # Version Spec of the version to use.  Examples: 10.x, 10.15.1, >=10.15.0, lts
           node-version: 9.11.1
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Cache Gems
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: vendor/bundle
           key: ${{ runner.os }}-gluedb-gems-${{ hashFiles('**/Gemfile.lock') }}
@@ -35,7 +38,6 @@ jobs:
       - name: bundle install
         run: |
           sudo gem install bundler -v '1.17.3'
-          export BUNDLE_GITHUB__COM=${{ secrets.dchbx_deployments_token }}:x-oauth-basic
           bundle config path vendor/bundle
           bundle install
       - name: run tests
