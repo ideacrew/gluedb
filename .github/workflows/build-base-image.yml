@@ -1,4 +1,4 @@
-name: Build Image and Deploy
+name: Build Base Image
 
 on:
   push:
@@ -45,6 +45,7 @@ jobs:
           context: .
           builder: ${{ steps.buildx.outputs.name }}
           file: .docker/production/Dockerfile.base
+          push: "true"
           tags: ghcr.io/ideacrew/gluedb:base
           cache-from: type=local,src=/tmp/.buildx-cache
           # Note the mode=max here
