@@ -44,7 +44,7 @@ jobs:
         with:
           context: .
           builder: ${{ steps.buildx.outputs.name }}
-          file: .docker/production/Dockerfile.base
+          file: .docker/base/Dockerfile.base
           push: "true"
           tags: ghcr.io/ideacrew/gluedb:base
           cache-from: type=local,src=/tmp/.buildx-cache
