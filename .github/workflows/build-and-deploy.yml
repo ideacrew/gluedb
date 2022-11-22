@@ -111,7 +111,7 @@ jobs:
 
       # Must use docker login in order to specify public registry
       - name: Login to Public ECR
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ${{ needs.prep.outputs.registry }}
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
