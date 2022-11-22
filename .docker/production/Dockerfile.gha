@@ -5,7 +5,7 @@ ARG BRANCH=trunk
 ### Base image ###
 ############################################
 
-FROM ruby:2.1.7-slim as base
+FROM ghcr.io/ideacrew/gluedb:base as base
 LABEL author="IdeaCrew"
 
 ENV USERNAME=gluedb
@@ -26,7 +26,7 @@ RUN apt-get update -qq \
       libxext6 \
       libxml2 \
       libxrender1 \
-      libyaml-cpp0.5 \
+      libyaml-cpp0.5v5 \
       nano \
       openssl \
       p7zip-full \
@@ -83,19 +83,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 ARG NODE_MAJOR=12
 ENV NODE_MAJOR=$NODE_MAJOR
-
-RUN apt-get update -qq \
-    && apt-get install -yq --no-install-recommends \
-      curl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && truncate -s 0 /var/log/*log
-
-# Add NodeJS to sources list
-# Need to add gpg key first re: https://gist.github.com/opi/1dce5be10717183ccc03
-# Seems to be related to the version of Debian (jessie)
-RUN curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
-  && curl -fsSL https://deb.nodesource.com/setup_$NODE_MAJOR.x | bash -
 
 RUN apt-get update -qq \
   && apt-get install -yq --no-install-recommends \
