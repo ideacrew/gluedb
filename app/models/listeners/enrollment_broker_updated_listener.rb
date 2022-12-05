@@ -24,28 +24,31 @@ module Listeners
       hbx_enrollment_id = m_headers["hbx_enrollment_id"].to_s
       npn = m_headers["new_broker_npn"].to_s
       policy = Policy.where(hbx_enrollment_ids: hbx_enrollment_id).first
-      broker_id = Broker.find_by_npn(npn).try(:id)
+      broker_id = nil
+      unless npn.blank?
+        broker_id = Broker.find_by_npn(npn).try(:id)
+      end
       begin
-        if policy.present? && !policy.terminated? && broker_id.present?
-          update_broker_on_policy(broker_id, policy)
-          resource_event_broadcast("info", "broker_policy_processed", "200", body, properties.headers)
+        if broker_id.nil? && !npn.blank?
+          resource_event_broadcast("error", "broker_not_found", "404", body, properties.headers)
         elsif policy.present? && policy.terminated?
           resource_event_broadcast("info", "broker_policy_terminated", "404", body, properties.headers)
-        elsif broker_id.nil?
-          resource_event_broadcast("info", "broker_not_found", "404", body, properties.headers)
+        elsif policy.present? && !policy.terminated?
+          update_broker_on_policy(broker_id, policy)
+          resource_event_broadcast("info", "broker_policy_processed", "200", body, properties.headers)
         else
-          resource_event_broadcast("info", "policy_not_found", "404", body, properties.headers)
+          resource_event_broadcast("error", "policy_not_found", "404", body, properties.headers)
         end
+        channel.ack(delivery_info.delivery_tag, false)
       rescue => error
         resource_error_broadcast("exception", "500", error.backtrace, properties.headers)
-        channel.ack(delivery_info.delivery_tag, false)
+        channel.reject(delivery_info.delivery_tag, false)
       end
-      channel.ack(delivery_info.delivery_tag, false)
     end
 
     def update_broker_on_policy(broker_id, policy)
       policy.broker_id = broker_id
-      policy.save
+      policy.save!
       publish_to_edi(policy)
     end
 

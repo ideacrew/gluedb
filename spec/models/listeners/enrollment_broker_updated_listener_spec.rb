@@ -146,7 +146,7 @@ describe Listeners::EnrollmentBrokerUpdatedListener, :dbclean => :after_each do
       @time_now = Time.now
       allow(Time).to receive(:now).and_return(@time_now)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                              :routing_key => "info.application.glue.enrollment_broker_updated_listener.broker_not_found",
+                                                              :routing_key => "error.application.glue.enrollment_broker_updated_listener.broker_not_found",
                                                               :headers=> {
                                                                 :hbx_enrollment_id => policy.eg_id,
                                                                 :new_broker_npn => "random npn",
@@ -163,7 +163,7 @@ describe Listeners::EnrollmentBrokerUpdatedListener, :dbclean => :after_each do
 
     it "should broadcast broker is not found message" do
       expect(event_broadcaster).to receive(:broadcast).with({
-                                                              :routing_key => "info.application.glue.enrollment_broker_updated_listener.broker_not_found",
+                                                              :routing_key => "error.application.glue.enrollment_broker_updated_listener.broker_not_found",
                                                               :headers=> {
                                                                 :hbx_enrollment_id => policy.eg_id,
                                                                 :new_broker_npn => "random npn",
@@ -188,7 +188,7 @@ describe Listeners::EnrollmentBrokerUpdatedListener, :dbclean => :after_each do
       @time_now = Time.now
       allow(Time).to receive(:now).and_return(@time_now)
       allow(event_broadcaster).to receive(:broadcast).with({
-                                                              :routing_key => "info.application.glue.enrollment_broker_updated_listener.policy_not_found",
+                                                              :routing_key => "error.application.glue.enrollment_broker_updated_listener.policy_not_found",
                                                               :headers=> {
                                                                 :hbx_enrollment_id => "random id",
                                                                 :new_broker_npn => broker.npn,
@@ -203,9 +203,9 @@ describe Listeners::EnrollmentBrokerUpdatedListener, :dbclean => :after_each do
       subject.on_message(delivery_info, properties, "")
     end
 
-    it "should broadcast batch not found message" do
+    it "should broadcast policy not found message" do
       expect(event_broadcaster).to receive(:broadcast).with({
-                                                              :routing_key => "info.application.glue.enrollment_broker_updated_listener.policy_not_found",
+                                                              :routing_key => "error.application.glue.enrollment_broker_updated_listener.policy_not_found",
                                                               :headers=> {
                                                                 :hbx_enrollment_id => "random id",
                                                                 :new_broker_npn => broker.npn,
@@ -225,7 +225,7 @@ describe Listeners::EnrollmentBrokerUpdatedListener, :dbclean => :after_each do
     end
 
     before(:each) do
-      allow(channel).to receive(:ack).with(delivery_tag, false)
+      allow(channel).to receive(:reject).with(delivery_tag, false)
       allow(subject).to receive(:publish_to_edi).with(policy).and_raise(exception)
       allow(exception).to receive(:backtrace).and_return(body)
       allow(Amqp::EventBroadcaster).to receive(:new).with(connection).and_return(event_broadcaster)
@@ -243,7 +243,7 @@ describe Listeners::EnrollmentBrokerUpdatedListener, :dbclean => :after_each do
     end
 
     it "acknowledges the message" do
-      expect(channel).to receive(:ack).with(delivery_tag, false)
+      expect(channel).to receive(:reject).with(delivery_tag, false)
       subject.on_message(delivery_info, properties, "")
     end
 
