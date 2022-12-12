@@ -243,6 +243,16 @@ module ExternalEvents
       end
     end
 
+    def extract_broker_details
+      return {} if is_shop?
+      return {} if @policy_node.broker_link.nil?
+      npn = @policy_node.broker_link.npn_from_id
+      return {} if npn.blank?
+      broker = Broker.where(:npn => npn).first
+      return {} if broker.blank?
+      { :broker_id => broker.id }
+    end
+
     def persist
       return true if policy_exists?
 
@@ -260,7 +270,7 @@ module ExternalEvents
         :tot_res_amt => extract_tot_res_amt,
         :kind => @kind,
         :cobra_eligibility_date => @cobra ? extract_cobra_eligibility_date : nil
-      }.merge(extract_other_financials).merge(extract_rating_details).merge(responsible_party_attributes))
+      }.merge(extract_other_financials).merge(extract_rating_details).merge(responsible_party_attributes).merge(extract_broker_details))
 
       # reinstated policy aasm state need to be resubmitted
       if @policy_node.previous_policy_id.present? && @policy_reinstate
