@@ -155,7 +155,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
   let(:plan) { instance_double(Plan, :id => 1) }
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
   let(:policy) do
-    instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, plan: instance_double(Plan, id: 1), carrier: carrier)
+    instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, plan: instance_double(Plan, id: 1), carrier: carrier, broker: nil, is_shop?: false)
   end
 
   let(:termination_event) { instance_double(
@@ -213,6 +213,7 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
     allow(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
     allow(subject).to receive(:same_carrier_renewal_candidates).with(action_event).and_return([])
     allow(action_event).to receive(:is_shop?).and_return(true)
+    allow(termination_publish_helper).to receive(:assign_policy_broker).with(nil)
   end
 
   it "publishes an event of enrollment termination" do
@@ -257,6 +258,11 @@ describe EnrollmentAction::CarrierSwitch, "given a qualified enrollment set for 
 
   it "corrects the qualifying event type on the termination" do
     expect(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
+    subject.publish
+  end
+
+  it "sets the broker" do
+    expect(termination_publish_helper).to receive(:assign_policy_broker).with(nil)
     subject.publish
   end
 

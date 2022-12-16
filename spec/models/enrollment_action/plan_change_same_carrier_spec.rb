@@ -212,7 +212,7 @@ describe EnrollmentAction::PlanChangeSameCarrier, "given a qualified enrollment 
 
   let(:plan) { instance_double(Plan, :id => 1) }
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, plan: instance_double(Plan, id: 1), carrier: carrier) }
+  let(:policy) { instance_double(Policy, :enrollees => [enrollee_primary, enrollee_new], :eg_id => 1, plan: instance_double(Plan, id: 1), carrier: carrier, broker: nil, is_shop?: false) }
 
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
@@ -271,6 +271,7 @@ describe EnrollmentAction::PlanChangeSameCarrier, "given a qualified enrollment 
     allow(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
     allow(subject).to receive(:same_carrier_renewal_candidates).with(action_event).and_return([])
     allow(action_event).to receive(:is_shop?).and_return(true)
+    allow(termination_publish_helper).to receive(:assign_policy_broker).with(nil)
   end
 
   it "publishes an event of enrollment termination" do
@@ -315,6 +316,11 @@ describe EnrollmentAction::PlanChangeSameCarrier, "given a qualified enrollment 
 
   it "corrects the qualifying event type on the termination" do
     expect(termination_publish_helper).to receive(:swap_qualifying_event).with(event_xml)
+    subject.publish
+  end
+
+  it "assigns the broker to the EDI" do
+    expect(termination_publish_helper).to receive(:assign_policy_broker).with(nil)
     subject.publish
   end
 

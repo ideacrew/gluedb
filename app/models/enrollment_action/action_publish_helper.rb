@@ -315,7 +315,48 @@ module EnrollmentAction
       event_xml_doc
     end
 
+    def assign_policy_broker(broker)
+      broker_node = event_xml_doc.at_xpath("//cv:policy/cv:broker", XML_NS)
+      if broker_node
+        if broker.blank?
+          broker_node.remove
+        else
+          id_node = broker_node.at_xpath("cv:id/cv:id", XML_NS)
+          if id_node
+            id_node_content = id_node.content
+            npn = id_node_content.blank? ? "" : id_node_content.strip.split("#").last
+            if npn != broker.npn
+              broker_node.remove
+              populate_broker_node(broker)
+            end
+          else
+            broker_node.remove
+            populate_broker_node(broker)
+          end
+        end
+      elsif !broker.blank?
+        populate_broker_node(broker)
+      end
+    end
+
     private
+
+    def populate_broker_node(broker)
+      enrollees_node = event_xml_doc.at_xpath("//cv:policy/cv:enrollees", XML_NS)
+      if enrollees_node
+        enrollees_node.parent.add_namespace_definition("cv", XML_NS[:cv])
+        new_node = Nokogiri::XML::Element.new("cv:broker", event_xml_doc)
+        broker_node = enrollees_node.add_previous_sibling(new_node)
+        id_node = Nokogiri::XML::Element.new("cv:id", event_xml_doc)
+        id_container_node = new_node.add_child(id_node)
+        id_value_node = Nokogiri::XML::Element.new("cv:id", event_xml_doc)
+        id_value_node.content = broker.npn
+        id_container_node.add_child(id_value_node)
+        name_node = Nokogiri::XML::Element.new("cv:name", event_xml_doc)
+        name_node.content = broker.full_name
+        id_container_node.add_next_sibling(name_node)
+      end
+    end
 
     def add_employer_contacts_and_office_locations
       employer_id_node = event_xml_doc.at_xpath("//cv:enrollment/cv:shop_market/cv:employer_link/cv:id/cv:id", XML_NS)
