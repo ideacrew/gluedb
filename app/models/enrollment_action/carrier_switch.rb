@@ -57,6 +57,7 @@ module EnrollmentAction
         termination_helper.set_member_starts(member_date_map)
         termination_helper.set_member_end_date(member_end_date_map)
         termination_helper.swap_qualifying_event(action.event_xml)
+        termination_helper.assign_policy_broker(existing_policy.broker) if !existing_policy.is_shop?
         publish_result, publish_errors = publish_edi(amqp_connection, termination_helper.to_xml, existing_policy.eg_id, termination.employer_hbx_id)
         unless publish_result
           return [publish_result, publish_errors]

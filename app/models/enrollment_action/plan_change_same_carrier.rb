@@ -55,6 +55,7 @@ module EnrollmentAction
       termination_helper.set_member_starts(member_date_map)
       termination_helper.set_member_end_date(member_end_date_map)
       termination_helper.swap_qualifying_event(action.event_xml)
+      termination_helper.assign_policy_broker(existing_policy.broker) if !existing_policy.is_shop?
       existing_policy.enrollees.each do |en|
         termination_helper.set_carrier_assigned_ids(en)
         action_helper.set_carrier_assigned_ids(en, false)

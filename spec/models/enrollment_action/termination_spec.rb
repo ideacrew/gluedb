@@ -185,7 +185,7 @@ describe EnrollmentAction::Termination, "given a valid enrollment" do
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, connection: amqp_connection) }
   let(:enrollee) { double(m_id: 1, coverage_start: :one_month_ago, :c_id => nil, :cp_id => nil, coverage_end: :one_month_ago) }
   let(:carrier) { instance_double(Carrier, :termination_cancels_renewal => false) }
-  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, aasm_state: "submitted", employer_id: '', carrier: carrier, reload: true, canceled?: false) }
+  let(:policy) { instance_double(Policy, id: 1, enrollees: [enrollee], eg_id: 1, aasm_state: "submitted", employer_id: '', carrier: carrier, reload: true, canceled?: false, broker: nil, is_shop?: false) }
   let(:termination_event) { instance_double(
     ::ExternalEvents::EnrollmentEventNotification,
     event_xml: event_xml,
@@ -207,6 +207,7 @@ describe EnrollmentAction::Termination, "given a valid enrollment" do
     allow(action_publish_helper).to receive(:set_policy_id).with(policy.id)
     allow(action_publish_helper).to receive(:set_member_starts).with({1 => enrollee.coverage_start})
     allow(action_publish_helper).to receive(:set_member_end_date).with({ 1 => enrollee.coverage_end })
+    allow(action_publish_helper).to receive(:assign_policy_broker).with(nil)
     allow(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, termination_event.hbx_enrollment_id, termination_event.employer_hbx_id)
   end
 
@@ -236,6 +237,11 @@ describe EnrollmentAction::Termination, "given a valid enrollment" do
 
   it "publishes resulting xml to edi" do
     expect(subject).to receive(:publish_edi).with(amqp_connection, action_helper_result_xml, termination_event.hbx_enrollment_id, termination_event.employer_hbx_id)
+    subject.publish
+  end
+
+  it "assigns the broker in the xml" do
+    expect(action_publish_helper).to receive(:assign_policy_broker).with(nil)
     subject.publish
   end
 end

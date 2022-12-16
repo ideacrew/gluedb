@@ -867,3 +867,117 @@ describe EnrollmentAction::ActionPublishHelper, "told to remove enrolles, when u
     expect(transformed_target_xml.xpath("//cv:enrollment_event_body/cv:enrollment/cv:policy/cv:enrollees/cv:enrollee", xml_namespace).detect {|node| node.xpath("cv:member/cv:id/cv:id", xml_namespace).text == "2" }.present?).to eq false
   end
 end
+
+describe EnrollmentAction::ActionPublishHelper, "told to set the broker" do
+  XML_NS = { :cv => "http://openhbx.org/api/terms/1.0" }
+
+  let(:event_xml) do
+    <<-EVENTXML
+      <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+        <policy>
+        <broker>
+          <id>
+            <id></id>
+          </id>
+          <name></name>
+        </broker>
+        <enrollees></enrollees>
+        <enrollment>
+        </enrollment>
+      </policy>
+    </enrollment>
+    EVENTXML
+  end
+
+  let(:action_publish_helper) { ::EnrollmentAction::ActionPublishHelper.new(event_xml) }
+
+  context "when the xml has one but the policy doesn't" do
+    it "should remove the broker tag" do
+      action_publish_helper.assign_policy_broker(nil)
+      xml = action_publish_helper.to_xml
+      xml_doc = Nokogiri::XML(xml)
+      broker_node = xml_doc.at_xpath("//cv:broker", XML_NS)
+      expect(broker_node.blank?).to be_truthy
+    end
+  end
+
+  context "when the xml has one and the policy has a different one" do
+    let(:broker_npn) { "NEW BROKER NPN" }
+    let(:broker_name) { "NEW BROKER NAME" }
+
+    let(:broker) do
+      instance_double(
+        Broker,
+        npn: broker_npn,
+        full_name: broker_name
+      )
+    end
+
+    let(:event_xml) do
+      <<-EVENTXML
+      <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+        <policy>
+        <broker>
+          <id>
+            <id>other NPN</id>
+          </id>
+          <name></name>
+        </broker>
+        <enrollees>
+        </enrollees>
+        <enrollment>
+        </enrollment>
+        </policy>
+      </enrollment>
+      EVENTXML
+    end
+
+    it "should replace the broker tag values" do
+      action_publish_helper.assign_policy_broker(broker)
+      xml = action_publish_helper.to_xml
+      xml_doc = Nokogiri::XML(xml)
+      broker_node = xml_doc.at_xpath("//cv:policy/cv:broker", XML_NS)
+      npn_node_content = broker_node.at_xpath("cv:id/cv:id",XML_NS).content
+      name_node_content = broker_node.at_xpath("cv:name",XML_NS).content
+      expect(npn_node_content).to eq broker_npn
+      expect(name_node_content).to eq broker_name
+    end
+  end
+
+  context "when the xml has none and the policy has one" do
+    let(:broker_npn) { "NEW BROKER NPN" }
+    let(:broker_name) { "NEW BROKER NAME" }
+
+    let(:broker) do
+      instance_double(
+        Broker,
+        npn: broker_npn,
+        full_name: broker_name
+      )
+    end
+
+    let(:event_xml) do
+      <<-EVENTXML
+      <enrollment xmlns="http://openhbx.org/api/terms/1.0">
+        <policy>
+        <enrollees>
+        </enrollees>
+        <enrollment>
+        </enrollment>
+        </policy>
+      </enrollment>
+      EVENTXML
+    end
+
+    it "should replace the broker tag values" do
+      action_publish_helper.assign_policy_broker(broker)
+      xml = action_publish_helper.to_xml
+      xml_doc = Nokogiri::XML(xml)
+      broker_node = xml_doc.at_xpath("//cv:policy/cv:broker", XML_NS)
+      npn_node_content = broker_node.at_xpath("cv:id/cv:id",XML_NS).content
+      name_node_content = broker_node.at_xpath("cv:name",XML_NS).content
+      expect(npn_node_content).to eq broker_npn
+      expect(name_node_content).to eq broker_name
+    end
+  end
+end
