@@ -209,7 +209,7 @@ FROM public.ecr.aws/ideacrew/gluedb:${BRANCH}-${COMMIT_SHA} as update
 # Switch back to root to install system libraries
 USER root
 
-RUN apt-get install wget -y
+RUN apt-get update && apt-get install wget -y
 # Install mongodb shell
 #RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
 RUN wget -qO - https://pgp.mongodb.com/server-3.4.asc | apt-key add -
