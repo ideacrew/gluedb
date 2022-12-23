@@ -209,16 +209,16 @@ FROM public.ecr.aws/ideacrew/gluedb:${BRANCH}-${COMMIT_SHA} as update
 # Switch back to root to install system libraries
 USER root
 
-RUN apt-get update && apt-get install wget gnupg -y
+RUN apt-get update && apt-get install wget gnupg software-properties-common dirmngr -y
 # Install mongodb shell
-#RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
-RUN wget -qO - https://pgp.mongodb.com/server-3.4.asc | apt-key add -
-RUN echo "deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/3.4 main" | tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+RUN wget -qO - https://pgp.mongodb.com/server-3.6.asc | apt-key add -
+RUN add-apt-repository 'deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/3.6 main'
 
 # Install required packages/libraries
 RUN apt-get update \
     && apt-get -yq dist-upgrade \
     && apt-get install -y \
+       curl \
        jq \ 
        mongodb-org-shell \
        default-jdk \
