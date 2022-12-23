@@ -1,9 +1,6 @@
 name: RSpec
 on: push
 
-env:
-  BUNDLE_GITHUB__COM: ${{ secrets.GH_PAT }}:x-oauth-basic
-
 jobs:
   rspec:
     runs-on: ubuntu-18.04
@@ -39,6 +36,7 @@ jobs:
         run: |
           sudo gem install bundler -v '1.17.3'
           bundle config path vendor/bundle
+          export BUNDLE_GITHUB__COM=${{ secrets.dchbx_deployments_token }}:x-oauth-basic
           bundle install
       - name: run tests
         run: |
