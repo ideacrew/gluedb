@@ -141,7 +141,7 @@ jobs:
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
           build-args: |
             HOSTNAME=172.17.0.1
-            GEM_OAUTH_TOKEN=${{ secrets.GH_PAT }}
+            GEM_OAUTH_TOKEN=${{ secrets.dchbx_deployments_token }}
             COMMIT_SHA=${{ github.event.inputs.commit_sha }}
             BRANCH=${{ github.event.inputs.branch }}
 
