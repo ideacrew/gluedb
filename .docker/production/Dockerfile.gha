@@ -29,6 +29,7 @@ RUN apt-get update -qq \
       libyaml-cpp0.5v5 \
       nano \
       openssl \
+      p7zip-full \
       sshpass \
       unzip \
       vim \
@@ -99,7 +100,7 @@ RUN apt-get update -qq \
 FROM builder as prod_gems_and_assets
 
 ARG GEM_OAUTH_TOKEN
-ENV BUNDLE_GITHUB__COM=x-access-token:"$GEM_OAUTH_TOKEN"
+ARG BUNDLE_GITHUB__COM=$GEM_OAUTH_TOKEN
 
 COPY --chown=$USERNAME:$USERNAME ./Gemfile $HOME/Gemfile
 COPY --chown=$USERNAME:$USERNAME ./Gemfile.lock $HOME/Gemfile.lock
@@ -176,8 +177,7 @@ RUN apt-get update \
     && apt-get -yq dist-upgrade \
     && apt-get install -y \
        wget \
-       default-jdk \
-       p7zip-full
+       default-jdk 
 
 ARG GEM_OAUTH_TOKEN
 ENV BUNDLE_GITHUB__COM=x-access-token:"$GEM_OAUTH_TOKEN"
@@ -209,14 +209,16 @@ FROM public.ecr.aws/ideacrew/gluedb:${BRANCH}-${COMMIT_SHA} as update
 # Switch back to root to install system libraries
 USER root
 
+RUN apt-get update && apt-get install wget gnupg software-properties-common dirmngr -y
 # Install mongodb shell
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
-RUN echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/3.4 main" | tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+RUN wget -qO - https://pgp.mongodb.com/server-3.6.asc | apt-key add -
+RUN add-apt-repository 'deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/3.6 main'
 
 # Install required packages/libraries
 RUN apt-get update \
     && apt-get -yq dist-upgrade \
     && apt-get install -y \
+       curl \
        jq \ 
        mongodb-org-shell \
        default-jdk \
@@ -225,12 +227,12 @@ RUN apt-get update \
        build-essential \
        git \
        libgmp-dev \
-       python \
-       p7zip-full
+       python
 
 RUN cd /root && curl -O https://downloads.haskell.org/~ghc/8.0.2/ghc-8.0.2-x86_64-deb8-linux.tar.xz && tar xf ghc-8.0.2-x86_64-deb8-linux.tar.xz && cd ghc-8.0.2 && ./configure && make install
 RUN cd /root && git clone https://github.com/haskell/cabal.git && cd /root/cabal && git checkout Cabal-v1.24.2.0 && cd cabal-install && ./bootstrap.sh 
 ENV PATH=$PATH:$HOME/.cabal/bin
+ENV PATH=$HOME/jruby-1.7.27/bin:$PATH
 RUN cabal update
 
 RUN echo '\ngem "rubycritic"' >> Gemfile
