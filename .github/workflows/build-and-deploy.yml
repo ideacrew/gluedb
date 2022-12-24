@@ -137,7 +137,7 @@ jobs:
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
           build-args: |
             HOSTNAME=172.17.0.1
-            GEM_OAUTH_TOKEN=${{ secrets.GH_PAT }}
+            GEM_OAUTH_TOKEN=${{ secrets.dchbx_deployments_token }}
 
       - name: Check Console access
         run: docker run --network="host" ${{ needs.prep.outputs.taggedImage }} /bin/bash .docker/check-console.sh
