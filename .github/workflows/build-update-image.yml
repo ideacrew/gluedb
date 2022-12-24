@@ -40,7 +40,7 @@ jobs:
         run: |
           SHORT_SHA=$(echo '${{ github.event.inputs.commit_sha }}' | head -c7)
           REPO=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
-          TAG=${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}-glue-update
+          TAG=${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}
           IMAGE=public.ecr.aws/ideacrew/$REPO
           echo "tagged_image=${IMAGE}:${TAG}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
