@@ -261,3 +261,53 @@ describe Listeners::EnrollmentBrokerUpdatedListener, :dbclean => :after_each do
     end
   end
 end
+
+
+describe Listeners::EnrollmentBrokerUpdatedListener, "given a valid enrollment ID and new broker id, but it isn't a change", :dbclean => :after_each do
+
+  let(:connection) { double }
+  let(:queue) { double }
+  let(:channel) { double(:connection => connection, fanout: fanout, :default_exchange => default_exchange) }
+  let(:default_exchange) { double }
+  let(:fanout) { double }
+  let(:event_broadcaster) { instance_double(Amqp::EventBroadcaster) }
+  let(:policy) { double(eg_id: eg_id, terminated?: false, broker_id: new_broker_id) }
+
+  let(:delivery_tag) { double }
+  let(:delivery_info) { double(delivery_tag: delivery_tag, routing_key: nil) }
+
+  let(:body) { "" }
+
+  let(:new_npn) { "the NEW NPN" }
+  let(:eg_id) { "the EG ID" }
+  let(:broker) { double(:id => new_broker_id) }
+  let(:new_broker_id) { "THE NEW BROKER ID" }
+
+  let(:properties) do
+    double(
+        headers: { hbx_enrollment_id: policy.eg_id, new_broker_npn: new_npn }
+    )
+  end
+
+  before :each do
+    allow(Policy).to receive(:where).with({hbx_enrollment_ids: eg_id}).and_return([policy])
+    allow(Broker).to receive(:where).with({npn: new_npn}).and_return([broker])
+    allow(Amqp::EventBroadcaster).to receive(:new).with(connection).and_return(event_broadcaster)
+    @time_now = Time.now
+    allow(Time).to receive(:now).and_return(@time_now)
+    allow(event_broadcaster).to receive(:broadcast).with({:routing_key=>"info.application.glue.enrollment_broker_updated_listener.broker_policy_processed", :headers=>{:hbx_enrollment_id=>"the EG ID", :new_broker_npn=>"the NEW NPN", :return_status=>"200", :submitted_timestamp=>@time_now}}, "")
+    allow(channel).to receive(:ack).with(delivery_tag, false)
+  end
+
+  subject { Listeners::EnrollmentBrokerUpdatedListener.new(channel, queue) }
+
+  it "doesn't update the policy" do
+    expect(policy).not_to receive(:broker_id=)
+    subject.on_message(delivery_info, properties, body)
+  end
+
+  it "doesn't send edi" do
+    expect(subject).not_to receive(:publish_to_edi)
+    subject.on_message(delivery_info, properties, body)
+  end
+end
