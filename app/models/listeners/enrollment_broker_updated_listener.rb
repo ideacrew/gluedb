@@ -47,9 +47,11 @@ module Listeners
     end
 
     def update_broker_on_policy(broker_id, policy)
-      policy.broker_id = broker_id
-      policy.save!
-      publish_to_edi(policy)
+      if policy.broker_id != broker_id
+        policy.broker_id = broker_id
+        policy.save!
+        publish_to_edi(policy)
+      end
     end
 
     def publish_to_edi(policy)
