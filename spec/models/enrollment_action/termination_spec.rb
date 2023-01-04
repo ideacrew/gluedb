@@ -276,7 +276,7 @@ describe "Given IVL Policy CV with term", :dbclean => :after_each do
                              tot_res_amt: total_responsible_amount,
                              applied_aptc: applied_aptc_amount,
                              hbx_enrollment_ids: ["123"])
-    policy.aptc_credits.create!(start_on: Date.today.beginning_of_year, end_on: Date.new(2022,12,31), pre_amt_tot: premium_total_amount, tot_res_amt: total_responsible_amount, aptc: applied_aptc_amount)
+    policy.aptc_credits.create!(start_on: Date.today.beginning_of_year, end_on: Date.today.end_of_year, pre_amt_tot: premium_total_amount, tot_res_amt: total_responsible_amount, aptc: applied_aptc_amount)
     policy.save
     policy
   }
@@ -368,7 +368,7 @@ describe "Given IVL Policy CV with term", :dbclean => :after_each do
 
   it "should terminate policy with correct date and update APTC credits end date" do
     expect(active_policy.aasm_state).to eq "submitted"
-    expect(active_policy.aptc_credits.where(start_on: coverage_start, end_on: Date.new(2022,12,31)).count).to eq 1
+    expect(active_policy.aptc_credits.where(start_on: coverage_start, end_on: Date.new(Date.today.year,12,31)).count).to eq 1
     expect(subject.persist).to be_truthy
     active_policy.reload
     expect(active_policy.aasm_state).to eq "terminated"

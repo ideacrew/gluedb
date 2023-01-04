@@ -119,6 +119,7 @@ describe ExternalEvents::ExternalPolicyMemberDrop, "given:
       let!(:credit) {policy.aptc_credits.create!(start_on:"1/1/2022", end_on:"12/31/2022", pre_amt_tot:"300", tot_res_amt:"100", aptc:"200")}
 
       it "updates aptc credits & policy with latest values" do
+        expect(Observers::PolicyUpdated).to receive(:notify).with(policy)
         policy.enrollees.update_all(coverage_start: Date.new(2022), coverage_end: nil)
         subject  = ExternalEvents::ExternalPolicyMemberDrop.new(policy, policy_cv, dropped_member_ids)
         subject.subscriber_start(Date.new(2022))
@@ -260,7 +261,7 @@ describe ExternalEvents::ExternalPolicyMemberDrop, "given:
   end
 end
 
-describe "Given IVL Policy CV with dependent drop", :dbclean => :after_each do
+describe "Given IVL Policy CV with dependent drop", :dbclean => :around_each do
   let(:amqp_connection) { double }
   let(:event_xml) { double }
   let(:event_responder) { instance_double(::ExternalEvents::EventResponder, :connection => amqp_connection) }
@@ -300,11 +301,13 @@ describe "Given IVL Policy CV with dependent drop", :dbclean => :after_each do
                              tot_res_amt: old_total_responsible_amount,
                              applied_aptc: old_applied_aptc_amount,
                              hbx_enrollment_ids: ["123"])
-    policy.aptc_credits.create!(start_on: Date.today.beginning_of_year, end_on: Date.new(2022,12,31), pre_amt_tot: old_premium_total_amount, tot_res_amt: old_total_responsible_amount, aptc: old_applied_aptc_amount)
+    policy.aptc_credits.create!(start_on: Date.today.beginning_of_year, end_on: Date.today.end_of_year, pre_amt_tot: old_premium_total_amount, tot_res_amt: old_total_responsible_amount, aptc: old_applied_aptc_amount)
 
     policy.save
     policy
   }
+
+  let(:prim_coverage_end) { Date.today.beginning_of_year + 2.month - 1.day }
 
   let(:xml_after_dependent_drop) { <<-EVENTXML
    <enrollment_event xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://openhbx.org/api/terms/1.0'>
@@ -495,13 +498,13 @@ describe "Given IVL Policy CV with dependent drop", :dbclean => :after_each do
     termination_event.existing_policy.reload
     expect(termination_event.existing_policy.enrollees.count).to eq 2
     expect(termination_event.existing_policy.aptc_credits.count).to eq 1
-    expect(termination_event.existing_policy.aptc_credits.where(start_on: prim_coverage_start, end_on: Date.new(2022,12,31)).count).to eq 1
+    expect(termination_event.existing_policy.aptc_credits.where(start_on: prim_coverage_start, end_on: Date.today.end_of_year).count).to eq 1
 
     subject.persist
     termination_event.existing_policy.reload
     expect(termination_event.existing_policy.enrollees.where(coverage_end: nil).count).to eq 1
     expect(termination_event.existing_policy.aptc_credits.count).to eq 2
-    expect(termination_event.existing_policy.aptc_credits.where(start_on: prim_coverage_start, end_on: Date.today.beginning_of_year + 2.month - 1.day).count).to eq 1
-    expect(termination_event.existing_policy.aptc_credits.where(start_on: dep_coverage_drop_date, end_on: Date.new(2022,12,31)).count).to eq 1
+    expect(termination_event.existing_policy.aptc_credits.where(start_on: prim_coverage_start, end_on: prim_coverage_end).count).to eq 1
+    expect(termination_event.existing_policy.aptc_credits.where(start_on: dep_coverage_drop_date, end_on: Date.today.end_of_year).count).to eq 1
   end
 end

@@ -7,7 +7,7 @@ module Generators::Reports
     let(:policy)     { double(id: 24, subscriber: subscriber, enrollees: [subscriber, dependent1, dependent2], policy_start: policy_start, policy_end: policy_end, plan: plan, eg_id: 212131212, applied_aptc: 0, term_for_np: true, responsible_party_id: nil, coverage_period: (policy_start..policy_end), aptc_credits: aptc_credits) }
     let(:plan)       { double(carrier: carrier, hios_plan_id: '123121') }
     let(:carrier)    { double(name: 'Care First')}
-    let(:current_year) {Date.today.year - 1}
+    let(:current_year) { 2021 }
     let(:policy_start) { Date.new(current_year, 1, 1) }
     let(:policy_end)   { Date.new(current_year, 12, 31) } 
     let(:subscriber) { double(person: person, relationship_status_code: 'Self', coverage_start: policy_start, coverage_end: policy_end, m_id: authority_member.id) }
@@ -15,7 +15,7 @@ module Generators::Reports
     let(:dependent2) { double(person: person, relationship_status_code: 'Child', coverage_start: policy_start, coverage_end: policy_end) }
 
     let(:person)           { double(full_name: 'Ann B Mcc', addresses: [address], authority_member: authority_member, name_first: 'Ann', name_middle: 'B', name_last: 'Mcc', name_sfx: '', mailing_address: address) }
-    let(:authority_member) { double(ssn: '342321212', dob: (Date.today - 20.years), id: '252342323') }
+    let(:authority_member) { double(ssn: '342321212', dob: (Date.new(current_year, Date.today.month, Date.today.day) - 20.years), id: '252342323') }
     let(:address)          { double(address_1: 'Wilson Building', address_2: 'Suite 100', city: 'Washington DC', state: 'DC', zip: '20002') }
 
     let(:address_hash) { 

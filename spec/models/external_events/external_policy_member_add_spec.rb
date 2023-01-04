@@ -42,7 +42,7 @@ describe ExternalEvents::ExternalPolicyMemberAdd,  "given:
                              tot_res_amt: old_total_responsible_amount,
                              applied_aptc: old_applied_aptc_amount,
                              hbx_enrollment_ids: ["123"])
-    policy.aptc_credits.create!(start_on: Date.today.beginning_of_year, end_on: Date.new(2022,12,31), pre_amt_tot: old_premium_total_amount, tot_res_amt: old_total_responsible_amount, aptc: old_applied_aptc_amount)
+    policy.aptc_credits.create!(start_on: Date.today.beginning_of_year, end_on: Date.today.end_of_year, pre_amt_tot: old_premium_total_amount, tot_res_amt: old_total_responsible_amount, aptc: old_applied_aptc_amount)
     policy.save
     policy
   }
@@ -221,14 +221,14 @@ describe ExternalEvents::ExternalPolicyMemberAdd,  "given:
     termination_event.existing_policy.reload
     expect(termination_event.existing_policy.enrollees.count).to eq 1
     expect(termination_event.existing_policy.aptc_credits.count).to eq 1
-    expect(termination_event.existing_policy.aptc_credits.where(start_on: prim_coverage_start, end_on: Date.new(2022,12,31)).count).to eq 1
+    expect(termination_event.existing_policy.aptc_credits.where(start_on: prim_coverage_start, end_on: Date.today.end_of_year).count).to eq 1
 
     subject.persist
     termination_event.existing_policy.reload
     expect(termination_event.existing_policy.enrollees.count).to eq 2
     expect(termination_event.existing_policy.aptc_credits.count).to eq 2
     expect(termination_event.existing_policy.aptc_credits.where(start_on: prim_coverage_start, end_on: dep_coverage_start - 1.day).count).to eq 1
-    expect(termination_event.existing_policy.aptc_credits.where(start_on: dep_coverage_start, end_on: Date.new(2022,12,31)).count).to eq 1
+    expect(termination_event.existing_policy.aptc_credits.where(start_on: dep_coverage_start, end_on: Date.today.end_of_year).count).to eq 1
   end
 end
 

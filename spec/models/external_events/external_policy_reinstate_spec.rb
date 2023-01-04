@@ -211,6 +211,6 @@ context "Given a new IVL policy CV with APTC", :dbclean => :after_each do
     # creates aptc credits
     expect(action.existing_policy.aptc_credits.count).to eq 1
     # extends aptc credits end date on reinstate
-    expect(action.existing_policy.aptc_credits.where(start_on: coverage_start, end_on: Date.new(2022,12,31)).count).to eq 1
+    expect(action.existing_policy.aptc_credits.where(start_on: coverage_start, end_on: Date.today.end_of_year).count).to eq 1
   end
 end
