@@ -17,7 +17,7 @@ jobs:
           cd ruby-2.1.10 && ./configure && make -j 2
           sudo make install
       - name: Setup Node.js for use with actions
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@v3.6.0
         with:
           # Version Spec of the version to use.  Examples: 10.x, 10.15.1, >=10.15.0, lts
           node-version: '12'
