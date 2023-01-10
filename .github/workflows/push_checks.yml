@@ -37,6 +37,7 @@ jobs:
           sudo gem install bundler -v '1.17.3'
           export BUNDLE_GITHUB__COM=${{ secrets.dchbx_deployments_token }}:x-oauth-basic
           bundle config path vendor/bundle
+          export BUNDLE_GITHUB__COM=${{ secrets.dchbx_deployments_token }}:x-oauth-basic
           bundle install
       - name: run tests
         run: |

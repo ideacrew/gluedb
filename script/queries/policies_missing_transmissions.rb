@@ -2,13 +2,16 @@ ct_cache = Caches::Mongoid::SinglePropertyLookup.new(Plan, "coverage_type")
 
 all_pol_ids = Protocols::X12::TransactionSetHeader.collection.aggregate([
   {"$match" => {
-    "policy_id" => { "$ne" => nil }
+    "policy_id" => { "$ne" => nil },
+    "created_at" => { "$gte" => (Date.today - 3.years).to_time}
   }},
   { "$group" => { "_id" => "$policy_id" }}
 ]).map { |val| val["_id"] }
 
 # No cancels/terms in this batch!
-pols_2015 = Policy.all.no_timeout
+pols_2015 = Policy.where(
+  "created_at" => { "$gte" => (Date.today - 2.years).to_time}
+).no_timeout
 
 puts pols_2015.length
 
