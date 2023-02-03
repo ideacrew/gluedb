@@ -50,11 +50,11 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
             "Rating Area", "Plan Name", "HIOS ID", "Plan Metal Level", "Carrier Member ID",
             "Carrier Policy ID", "Carrier Name", "Premium Amount", "Premium Total", "Policy APTC",
             "Policy Employer Contribution", "Coverage Start", "Coverage End", "Benefit Status",
-            "Employer Name", "Employer DBA", "Employer FEIN", "Employer HBX ID", "Home Address",
-            "Mailing Address", "Email", "Phone Number", "Broker", "Broker NPN", "Enrollment Chain IDs",
+            "Employer Name", "Employer DBA", "Employer FEIN", "Employer HBX ID", "Home Address", "Home county code",
+            "Mailing Address", "Mailing county code", "Email", "Phone Number", "Broker", "Broker NPN", "Enrollment Chain IDs",
             "aptc_0", "aptc_1", "aptc_2", "aptc_3", "aptc_4", "aptc_5", "aptc_6", "aptc_7", "Responsible Party ID",
             "RP hbx_id", "RP First Name", "RP Middle Name", "RP Last Name", "RP Full Name", "RP SSN", "RP DOB",
-            "RP Gender", "RP Address Type", "RP Full Address", "RP Address Count", "RP Phone Type",
+            "RP Gender", "RP Address Type", "RP Full Address", "RP Address Count", "RP location county code", "RP Phone Type",
             "RP Phone Number", "RP Phone Count"]
     policies.each do |pol|
       count += 1
@@ -120,7 +120,9 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                   pol.employer_id.blank? ? nil : employer.fein,
                   pol.employer_id.blank? ? nil : employer.hbx_id,
                   per.home_address.try(:full_address) || pol.subscriber.person.home_address.try(:full_address),
+                  per.home_address.try(:location_county_code) || pol.subscriber.person.home_address.try(:location_county_code),
                   per.mailing_address.try(:full_address) || pol.subscriber.person.mailing_address.try(:full_address),
+                  per.mailing_address.try(:location_county_code) || pol.subscriber.person.mailing_address.try(:location_county_code),
                   per.emails.first.try(:email_address), per.phones.first.try(:phone_number), broker_name, broker_npn]
 
                 aptc_credits = pol.aptc_credits.sort_by(&:start_on).map do |i|
@@ -154,10 +156,12 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                       res_address = person.addresses.first
                       res_full_address = res_address.try(:full_address)
                       res_address_type = res_address.try(:address_type)
+                      res_location_county_code = res_address.try(:location_county_code)
                     else
                       res_addresses_count = '0'
                       res_full_address = nil
                       res_address_type = nil
+                      res_location_county_code = nil
                     end
                     if person.phones.count > 0
                       res_phone_count = person.phones.count
@@ -169,7 +173,8 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
                       res_phone_type = nil
                       res_phone_number = nil
                     end
-                    data += [responsible_party_id, res_hbx_id, res_first_name, res_middle_name, res_last_name, res_full_name, res_ssn, res_dob, res_gender, res_address_type, res_full_address, res_addresses_count, res_phone_type, res_phone_number, res_phone_count]
+                    data += [responsible_party_id, res_hbx_id, res_first_name, res_middle_name, res_last_name, res_full_name, res_ssn, res_dob, res_gender,
+                             res_address_type, res_full_address, res_addresses_count, res_location_county_code, res_phone_type, res_phone_number, res_phone_count]
                   else
                     data += [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
                   end
