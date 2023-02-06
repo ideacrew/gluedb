@@ -406,11 +406,21 @@ class Policy
       found_enrollment.employer_contribution = m_enrollment.employer_contribution
       # Carrier to bill is always set to true for individual. Only Displays on _policy_detail.html.erb for IVL
       found_enrollment.carrier_to_bill = true
-      found_enrollment.save!
+      begin
+        found_enrollment.save!
+      rescue Exception => x
+        STDERR.puts("Error on save with EG ID #{found_enrollment.eg_id}: #{x.inspect}")
+        raise x
+      end
       return found_enrollment
     end
     # Observers::PolicyUpdated.notify(m_enrollment) notified in calling method before save transmission_file.rb/persist_policy
-    m_enrollment.save!
+    begin
+      m_enrollment.save!
+    rescue Exception => x
+      STDERR.puts("Error on save with EG ID #{m_enrollment.eg_id}: #{x.inspect}")
+      raise x
+    end
     #  m_enrollment.unsafe_save!
     m_enrollment
   end
