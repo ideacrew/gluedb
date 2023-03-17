@@ -62,13 +62,13 @@ module Parsers
                   policy_end_date = enrollee.coverage_end
                   enrollee.policy.aasm_state = "canceled"
                   enrollee.policy.term_for_np = is_non_payment
-                  enrollee.policy.save
+                  enrollee.policy.save!
                 else
                   is_policy_term = true
                   policy_end_date = enrollee.coverage_end
                   enrollee.policy.aasm_state = "terminated"
                   enrollee.policy.term_for_np = is_non_payment
-                  enrollee.policy.save
+                  enrollee.policy.save!
                 end
               end
             end
@@ -83,44 +83,50 @@ module Parsers
         unless exempt_from_notification?(@policy, is_policy_cancel, is_policy_term, old_npt_flag == is_non_payment)
           Observers::PolicyUpdated.notify(@policy)
         end
-        if is_policy_term
-          # Broadcast the term
-          reason_headers = if is_non_payment
-                             {:qualifying_reason => "urn:openhbx:terms:v1:benefit_maintenance#non_payment"}
-                           else
-                             {}
-                           end
-          Amqp::EventBroadcaster.with_broadcaster do |eb|
-            eb.broadcast(
-              {
-                :routing_key => "info.events.policy.terminated",
-                :headers => {
-                  :resource_instance_uri => @policy.eg_id,
-                  :event_effective_date => @policy.policy_end.strftime("%Y%m%d"),
-                  :hbx_enrollment_ids => JSON.dump(@policy.hbx_enrollment_ids)
-                }.merge(reason_headers)
-              },
-              "")
+        begin
+          if is_policy_term
+            # Broadcast the term
+            reason_headers = if is_non_payment
+                              {:qualifying_reason => "urn:openhbx:terms:v1:benefit_maintenance#non_payment"}
+                            else
+                              {}
+                            end
+            Amqp::EventBroadcaster.with_broadcaster do |eb|
+              eb.broadcast(
+                {
+                  :routing_key => "info.events.policy.terminated",
+                  :headers => {
+                    :resource_instance_uri => @policy.eg_id,
+                    :event_effective_date => @policy.policy_end.strftime("%Y%m%d"),
+                    :hbx_enrollment_ids => JSON.dump(@policy.hbx_enrollment_ids)
+                  }.merge(reason_headers)
+                },
+                "")
+            end
+          elsif is_policy_cancel
+            # Broadcast the cancel
+            reason_headers = if is_non_payment
+                              {:qualifying_reason => "urn:openhbx:terms:v1:benefit_maintenance#non_payment"}
+                            else
+                              {}
+                            end
+            Amqp::EventBroadcaster.with_broadcaster do |eb|
+              eb.broadcast(
+                {
+                  :routing_key => "info.events.policy.canceled",
+                  :headers => {
+                    :resource_instance_uri => @policy.eg_id,
+                    :event_effective_date => @policy.policy_end.strftime("%Y%m%d"),
+                    :hbx_enrollment_ids => JSON.dump(@policy.hbx_enrollment_ids)
+                  }.merge(reason_headers)
+                },
+                "")
+            end
           end
-        elsif is_policy_cancel
-          # Broadcast the cancel
-          reason_headers = if is_non_payment
-                             {:qualifying_reason => "urn:openhbx:terms:v1:benefit_maintenance#non_payment"}
-                           else
-                             {}
-                           end
-          Amqp::EventBroadcaster.with_broadcaster do |eb|
-            eb.broadcast(
-              {
-                :routing_key => "info.events.policy.canceled",
-                :headers => {
-                  :resource_instance_uri => @policy.eg_id,
-                  :event_effective_date => @policy.policy_end.strftime("%Y%m%d"),
-                  :hbx_enrollment_ids => JSON.dump(@policy.hbx_enrollment_ids)
-                }.merge(reason_headers)
-              },
-              "")
-          end
+        rescue Exception
+          puts @policy.eg_id
+          puts @policy.inspect
+          raise $!
         end
         save_val
       end
