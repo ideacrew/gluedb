@@ -3,7 +3,7 @@ on: push
 
 jobs:
   rspec:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Get Packages for Ruby Prerequisites
         run: |
@@ -44,7 +44,8 @@ jobs:
           export BUNDLE_GITHUB__COM=${{ secrets.dchbx_deployments_token }}:x-oauth-basic
           bundle config path vendor/bundle
           export BUNDLE_GITHUB__COM=${{ secrets.dchbx_deployments_token }}:x-oauth-basic
-          bundle install
+          bundle config --local build.sigar '--with-cppflags="-fgnu89-inline"'
+          bundle install --verbose
       - name: run tests
         run: |
           cp config/exchange.yml.example config/exchange.yml
