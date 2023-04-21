@@ -8,7 +8,7 @@ jobs:
       - name: Get Packages for Ruby Prerequisites
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install git libntirpc-dev curl libreadline-dev zlib1g-dev autoconf bison build-essential libyaml-dev libreadline-dev libncurses5-dev libffi-dev libgdbm-dev
+          sudo apt-get -y install git libntirpc-dev libxml2 libxml2-dev curl libreadline-dev zlib1g-dev autoconf bison build-essential libyaml-dev libreadline-dev libncurses5-dev libffi-dev libgdbm-dev
       - name: Install libssl1.0-dev from bionic sources
         run: |
           echo 'deb http://security.ubuntu.com/ubuntu bionic-security main' | sudo tee -a /etc/apt/sources.list.d/bionic-security.list
@@ -44,7 +44,6 @@ jobs:
           export BUNDLE_GITHUB__COM=${{ secrets.dchbx_deployments_token }}:x-oauth-basic
           bundle config path vendor/bundle
           export BUNDLE_GITHUB__COM=${{ secrets.dchbx_deployments_token }}:x-oauth-basic
-          bundle update eye --conservative
           bundle install 
       - name: run tests
         run: |
