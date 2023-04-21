@@ -65,6 +65,7 @@ end
 
 group :production do
   gem 'unicorn', '4.8.2'
+  #updated to avoid https://github.com/hyperic/sigar/issues/128
   gem 'eye', '0.10.0'
   gem 'celluloid', '0.17.3'
   gem 'nio4r', '1.1.1'
