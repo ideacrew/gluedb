@@ -44,7 +44,7 @@ jobs:
           export BUNDLE_GITHUB__COM=${{ secrets.dchbx_deployments_token }}:x-oauth-basic
           bundle config path vendor/bundle
           export BUNDLE_GITHUB__COM=${{ secrets.dchbx_deployments_token }}:x-oauth-basic
-          bundle update eye
+          bundle update eye --conservative
           bundle install 
       - name: run tests
         run: |
