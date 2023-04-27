@@ -82,7 +82,7 @@ GEM
       descendants_tracker (~> 0.0.4)
       ice_nine (~> 0.11.0)
       thread_safe (~> 0.3, >= 0.3.1)
-    bcrypt (3.1.11)
+    bcrypt (3.1.12)
     bh (1.3.6)
       actionpack
       activesupport
@@ -116,9 +116,6 @@ GEM
       mongoid-grid_fs (>= 1.3, < 3.0)
     celluloid (0.15.2)
       timers (~> 1.1.0)
-    celluloid-io (0.15.0)
-      celluloid (>= 0.15.0)
-      nio4r (>= 0.5.0)
     ci_reporter (2.0.0)
       builder (>= 2.1.2)
     code_analyzer (0.4.7)
@@ -152,12 +149,6 @@ GEM
     equalizer (0.0.11)
     erubis (2.7.0)
     execjs (2.7.0)
-    eye (0.6.4)
-      celluloid (~> 0.15.0)
-      celluloid-io (~> 0.15.0)
-      sigar (~> 0.7.2)
-      state_machine
-      thor
     factory_girl (4.5.0)
       activesupport (>= 3.0.0)
     factory_girl_rails (4.5.0)
@@ -353,7 +344,6 @@ GEM
       uuid (~> 2.3.7)
       wasabi (~> 3.3.0)
     sexp_processor (4.7.0)
-    sigar (0.7.3)
     simplecov (0.12.0)
       docile (~> 1.1.0)
       json (>= 1.8, < 3)
@@ -366,7 +356,6 @@ GEM
       multi_json (~> 1.0)
       rack (~> 1.0)
       tilt (~> 1.1, != 1.3.0)
-    state_machine (1.2.0)
     stream (0.5)
     systemu (2.6.5)
     test-unit (3.2.3)
@@ -428,7 +417,6 @@ DEPENDENCIES
   designmodo-flatuipro-rails!
   devise (= 3.3.0)
   edi_codec!
-  eye (= 0.6.4)
   factory_girl (= 4.5.0)
   factory_girl_rails (= 4.5.0)
   font-awesome-rails (= 4.2.0.0)
