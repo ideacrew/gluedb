@@ -3,12 +3,18 @@ on: push
 
 jobs:
   rspec:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Get Packages for Ruby Prerequisites
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install git curl libssl1.0-dev libreadline-dev zlib1g-dev autoconf bison build-essential libyaml-dev libreadline-dev libncurses5-dev libffi-dev libgdbm-dev
+          sudo apt-get -y install git libntirpc-dev libxml2 libxml2-dev curl libreadline-dev zlib1g-dev autoconf bison build-essential libyaml-dev libreadline-dev libncurses5-dev libffi-dev libgdbm-dev
+      - name: Install libssl1.0-dev from bionic sources
+        run: |
+          echo 'deb http://security.ubuntu.com/ubuntu bionic-security main' | sudo tee -a /etc/apt/sources.list.d/bionic-security.list
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
+          sudo apt update && apt-cache policy libssl1.0-dev
+          sudo apt-get -y install libssl1.0-dev
       - name: Install Ruby
         run: |
           curl -O https://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.10.tar.bz2
