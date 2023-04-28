@@ -31,7 +31,7 @@ def find_carrier_name_by_filename(filename)
 	elsif /AHI/.match(filename) != nil
 		return "Aetna"
 	elsif /KFMASI/.match(filename) != nil
-		return "Kaiser"
+		return "Kaiser Permanente"
 	elsif /UHIC/.match(filename) != nil
 		return "United"
 	elsif /BLHI/.match(filename) != nil
@@ -93,7 +93,7 @@ transaction_errors.each do |error|
 			carefirst_ivl_errors.push(error)
 		elsif carrier_name == "Aetna"
 			aetna_ivl_errors.push(error)
-		elsif carrier_name == "Kaiser"
+		elsif ["Kaiser", "Kaiser Permanente"].include?(carrier_name)
 			kaiser_ivl_errors.push(error)
 		elsif carrier_name == "United Health Care"
 			united_ivl_errors.push(error)
@@ -119,7 +119,7 @@ transaction_errors.each do |error|
 			carefirst_shp_errors.push(error)
 		elsif carrier_name == "Aetna"
 			aetna_shp_errors.push(error)
-		elsif carrier_name == "Kaiser"
+		elsif ["Kaiser", "Kaiser Permanente"].include?(carrier_name)
 			kaiser_shp_errors.push(error)
 		elsif carrier_name == "United Health Care"
 			united_shp_errors.push(error)

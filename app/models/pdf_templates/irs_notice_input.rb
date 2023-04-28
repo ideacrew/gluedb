@@ -49,6 +49,7 @@ module PdfTemplates
         "Aetna" => "Aetna Life Insurance Company",
         "CareFirst" => "Group Hospitalization and Medical Services, Inc.",
         "Kaiser" => "Kaiser Foundation Health Plan of the Mid-Atlantic States, Inc.",
+        "Kaiser Permanente" => "Kaiser Foundation Health Plan of the Mid-Atlantic States, Inc.",
         "United Health Care" => "United Healthcare Insurance Company",
         "CareFirst BlueChoice" => "CareFirst BlueChoice, Inc."
       }
