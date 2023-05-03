@@ -16,10 +16,11 @@ ARG BUNDLER_VERSION=1.17.3
 # Must be set as ENV variable to overrride the default
 ENV BUNDLER_VERSION=$BUNDLER_VERSION
 
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list 
 # Only add packages that aren't already in the base image
 # https://github.com/docker-library/ruby/blob/99def14400fcd612782367830836dfcbc10c8c50/2.1/slim/Dockerfile
 RUN apt-get update -qq \
-    && apt-get -yq dist-upgrade \
+    # && apt-get -yq dist-upgrade \
     && apt-get install -y \
       fontconfig \
       libffi6 \
@@ -84,6 +85,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG NODE_MAJOR=12
 ENV NODE_MAJOR=$NODE_MAJOR
 
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list 
+RUN echo "deb http://archive.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list 
 RUN apt-get update -qq \
   && apt-get install -yq --no-install-recommends \
     build-essential \
@@ -173,8 +176,9 @@ USER $USERNAME
 
 FROM builder as update_builder
 
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list 
 RUN apt-get update \
-    && apt-get -yq dist-upgrade \
+    # && apt-get -yq dist-upgrade \
     && apt-get install -y \
        wget \
        default-jdk 
@@ -209,6 +213,8 @@ FROM public.ecr.aws/ideacrew/gluedb:${BRANCH}-${COMMIT_SHA} as update
 # Switch back to root to install system libraries
 USER root
 
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list 
+RUN echo  "deb http://archive.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list 
 RUN apt-get update && apt-get install wget gnupg software-properties-common dirmngr -y
 # Install mongodb shell
 RUN wget -qO - https://pgp.mongodb.com/server-3.6.asc | apt-key add -
@@ -216,7 +222,7 @@ RUN add-apt-repository 'deb http://repo.mongodb.org/apt/debian stretch/mongodb-o
 
 # Install required packages/libraries
 RUN apt-get update \
-    && apt-get -yq dist-upgrade \
+    # && apt-get -yq dist-upgrade \
     && apt-get install -y \
        curl \
        jq \ 
