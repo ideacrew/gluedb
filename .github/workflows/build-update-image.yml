@@ -43,8 +43,8 @@ jobs:
             echo ::set-output name=client::${{ github.event.client_payload.client }}
             echo ::set-output name=branch::${{ github.event.client_payload.branch }}
             echo ::set-output name=commit_sha::${{ github.event.client_payload.commit_sha }}
-            echo ::set-output name=tagged_image::${repo}:${{ steps.prep.outputs.branch }}-${{ steps.prep.outputs.commit_sha }}
-            echo ::set-output name=tagged_images::${repo}:${{ steps.prep.outputs.branch }}-${{ steps.prep.outputs.commit_sha }},latest-prod-update-${{ github.event.client_payload.client }}
+            echo ::set-output name=tagged_image::${repo}:${{ github.event.client_payload.branch }}-${{ github.event.client_payload.commit_sha }}
+            echo ::set-output name=tagged_images::${repo}:${{ github.event.client_payload.branch }}-${{ github.event.client_payload.commit_sha }},latest-prod-glue-update-${{ github.event.client_payload.client }}
           else
             echo ::set-output name=client::${{ github.event.inputs.client }}
             echo ::set-output name=branch::${{ github.event.inputs.branch }}
