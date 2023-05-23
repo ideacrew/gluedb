@@ -1,6 +1,6 @@
 name: Build Update Image
 
-run-name: Build Update Image from ${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}
+run-name: Build Update Image 
 
 on:
   workflow_dispatch:
@@ -12,6 +12,10 @@ on:
       commit_sha:
         description: "Commit sha to build"
         required: true
+
+  repository_dispatch:
+    types:
+      - build-update-image
 
 concurrency:
   group: update-${{ github.ref }}
@@ -25,29 +29,23 @@ jobs:
   prep:
     runs-on: ubuntu-latest
     outputs:
-      taggedImage: ${{ steps.prep.outputs.tagged_image }}
-      tag: ${{ steps.prep.outputs.tag }}
-      registry: ${{ steps.prep.outputs.registry }}
-      shortSha: ${{ steps.prep.outputs.short_sha}}
-      branchName: ${{ steps.prep.outputs.branch_name }}
-      repositoryName: ${{ steps.prep.outputs.repository_name }}
+      tagged_image: public.ecr.aws/ideacrew/gluedb:${{ steps.prep.outputs.branch }}-${{ steps.prep.outputs.commit_sha }}
+      branch: ${{ steps.prep.outputs.branch }}
+      commit_sha: ${{ steps.prep.outputs.commit_sha }}
+      repository_name: gluedb
     steps:
-      - name: Git branch name
-        id: git-branch-name
-        uses: EthanSK/git-branch-name-action@v1
-      - name: Prepare info
+      - name: Set variables from workflow dispatch
         id: prep
         run: |
-          SHORT_SHA=$(echo '${{ github.event.inputs.commit_sha }}' | head -c7)
-          REPO=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
-          TAG=${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}
-          IMAGE=public.ecr.aws/ideacrew/$REPO
-          echo "tagged_image=${IMAGE}:${TAG}" >> $GITHUB_OUTPUT
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "registry=public.ecr.aws" >> $GITHUB_OUTPUT
-          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
-          echo "branch_name=${{ github.event.inputs.branch }}" >> $GITHUB_OUTPUT
-          echo "repository_name=$REPO" >> $GITHUB_OUTPUT
+          if [[ "${{github.event_name}}" == "repository_dispatch" ]]; then 
+            echo ::set-output name=client::${{ github.event.client_payload.client }}
+            echo ::set-output name=branch::${{ github.event.client_payload.branch }}
+            echo ::set-output name=commit_sha::${{ github.event.client_payload.commit_sha }}
+          else
+            echo ::set-output name=client::${{ github.event.inputs.client }}
+            echo ::set-output name=branch::${{ github.event.inputs.branch }}
+            echo ::set-output name=commit_sha::${{ github.event.inputs.commit_sha }}       
+          fi 
 
   # Uses buildx to build and push the image
   build-and-upload-image:
@@ -113,7 +111,7 @@ jobs:
       - name: Login to Public ECR
         uses: docker/login-action@v2
         with:
-          registry: ${{ needs.prep.outputs.registry }}
+          registry: public.ecr.aws
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -131,7 +129,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           # create local image (for scanning) if it is a pull request
           load: ${{ github.event_name == 'pull_request' }}
-          tags: ${{ needs.prep.outputs.taggedImage }}-glue-update
+          tags: ${{ needs.prep.outputs.tagged_image }}-glue-update
           cache-from: type=local,src=/tmp/.buildx-cache
           # Note the mode=max here
           # More: https://github.com/moby/buildkit#--export-cache-options
@@ -140,8 +138,8 @@ jobs:
           build-args: |
             HOSTNAME=172.17.0.1
             GEM_OAUTH_TOKEN=${{ secrets.dchbx_deployments_token }}
-            COMMIT_SHA=${{ github.event.inputs.commit_sha }}
-            BRANCH=${{ github.event.inputs.branch }}
+            COMMIT_SHA=${{ needs.prep.outputs.commit_sha }}
+            BRANCH=${{ needs.prep.outputs.branch }}
 
       - name: Move cache
         run: |
@@ -157,7 +155,7 @@ jobs:
         id: slack
         uses: slackapi/slack-github-action@v1.16.0
         with:
-          channel-id: "docker-images-${{ needs.prep.outputs.repositoryName }}"
-          slack-message: "New image pushed: ${{ needs.prep.outputs.taggedImage }}-glue-update built from <https://github.com/ideacrew/${{ needs.prep.outputs.repositoryName }}/commit/${{ github.event.inputs.commit_sha }}|${{ github.event.inputs.commit_sha }}> on `${{ github.event.inputs.branch }}`"
+          channel-id: "docker-images-${{ needs.prep.outputs.repository_name }}"
+          slack-message: "New image pushed: ${{ needs.prep.outputs.tagged_image }}-glue-update built from <https://github.com/ideacrew/${{ needs.prep.outputs.repository_name }}/commit/${{ needs.prep.outputs.commit_sha }}|${{ needs.prep.outputs.commit_sha }}> on `${{ needs.prep.outputs.branch }}`"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.YELLR_BOT_TOKEN }}

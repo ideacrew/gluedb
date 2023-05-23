@@ -207,8 +207,6 @@ RUN unset BUNDLE_APP_CONFIG && \
 ################################################################
 
 FROM public.ecr.aws/ideacrew/gluedb:${BRANCH}-${COMMIT_SHA} as update
-#FROM public.ecr.aws/ideacrew/gluedb:dc_k8_deployment-d2f55f6 as update 
-# ARG CLIENT -${CLIENT}
 
 # Switch back to root to install system libraries
 USER root
@@ -268,3 +266,48 @@ RUN curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o "awscliv2.z
 RUN npm install -g secure-spreadsheet
 RUN chown -R $USERNAME:$USERNAME $HOME
 
+################################################################
+# Glue reports image builder
+################################################################
+
+FROM public.ecr.aws/ideacrew/gluedb:${BRANCH}-${COMMIT_SHA} as reports
+
+# Switch back to root to install system libraries
+USER root 
+
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
+RUN echo  "deb http://archive.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list
+RUN apt-get update && apt-get install wget gnupg software-properties-common dirmngr -y
+# Install mongodb shell
+RUN wget -qO - https://pgp.mongodb.com/server-3.6.asc | apt-key add -
+RUN add-apt-repository 'deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/3.6 main'
+  
+# Install required packages/libraries
+RUN apt-get update \ 
+    # && apt-get upgrade \
+    # && apt-get -yq dist-upgrade \
+    && apt-get install -y \
+       curl \
+       jq \
+       mongodb-org-shell \
+       default-jdk \
+       xz-utils \
+       gcc \
+       build-essential \
+       git \
+       libgmp-dev \
+       python \
+       lftp
+
+RUN curl -fsSL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt-get install -y nodejs
+
+RUN echo '\ngem "rubycritic"' >> Gemfile
+RUN bundle install --jobs 20 --retry 5 --without development test
+
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.14/bin/linux/amd64/kubectl
+RUN chmod 744 ./kubectl
+RUN mv ./kubectl /usr/local/bin/kubectl
+RUN curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install && rm awscliv2.zip
+RUN npm install -g secure-spreadsheet
+RUN chown -R $USERNAME:$USERNAME $HOME
