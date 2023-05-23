@@ -26,7 +26,7 @@ jobs:
       - name: Prepare info
         id: prep
         run: |
-          repo=ideacrew/${{ github.event.client_payload.app }}
+          repo=ideacrew/gluedb
           image_tag=${repo}:${{ github.event.client_payload.image }}
           echo ::set-output name=repo::${repo}
           echo ::set-output name=image_tag::${image_tag}
