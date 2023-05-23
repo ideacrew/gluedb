@@ -29,7 +29,8 @@ jobs:
   prep:
     runs-on: ubuntu-latest
     outputs:
-      tagged_image: public.ecr.aws/ideacrew/gluedb:${{ steps.prep.outputs.branch }}-${{ steps.prep.outputs.commit_sha }}
+      tagged_image: ${{ steps.prep.outputs.tagged_image }}
+      tagged_images: ${{ steps.prep.outputs.tagged_images }}
       branch: ${{ steps.prep.outputs.branch }}
       commit_sha: ${{ steps.prep.outputs.commit_sha }}
       repository_name: gluedb
@@ -37,14 +38,19 @@ jobs:
       - name: Set variables from workflow dispatch
         id: prep
         run: |
+          repo="public.ecr.aws/ideacrew/gluedb"
           if [[ "${{github.event_name}}" == "repository_dispatch" ]]; then 
             echo ::set-output name=client::${{ github.event.client_payload.client }}
             echo ::set-output name=branch::${{ github.event.client_payload.branch }}
             echo ::set-output name=commit_sha::${{ github.event.client_payload.commit_sha }}
+            echo ::set-output name=tagged_image::${repo}:${{ steps.prep.outputs.branch }}-${{ steps.prep.outputs.commit_sha }}
+            echo ::set-output name=tagged_images::${repo}:${{ steps.prep.outputs.branch }}-${{ steps.prep.outputs.commit_sha }},latest-prod-update-${{ github.event.client_payload.client }}
           else
             echo ::set-output name=client::${{ github.event.inputs.client }}
             echo ::set-output name=branch::${{ github.event.inputs.branch }}
             echo ::set-output name=commit_sha::${{ github.event.inputs.commit_sha }}       
+            echo ::set-output name=tagged_image::${repo}:${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}
+            echo ::set-output name=tagged_images::${repo}:${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}
           fi 
 
   # Uses buildx to build and push the image
@@ -129,7 +135,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           # create local image (for scanning) if it is a pull request
           load: ${{ github.event_name == 'pull_request' }}
-          tags: ${{ needs.prep.outputs.tagged_image }}-glue-update
+          tags: ${{ needs.prep.outputs.tagged_images }}
           cache-from: type=local,src=/tmp/.buildx-cache
           # Note the mode=max here
           # More: https://github.com/moby/buildkit#--export-cache-options
