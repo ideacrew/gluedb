@@ -43,14 +43,14 @@ jobs:
             echo ::set-output name=client::${{ github.event.client_payload.client }}
             echo ::set-output name=branch::${{ github.event.client_payload.branch }}
             echo ::set-output name=commit_sha::${{ github.event.client_payload.commit_sha }}
-            echo ::set-output name=tagged_image::${repo}:${{ github.event.client_payload.branch }}-${{ github.event.client_payload.commit_sha }}
-            echo ::set-output name=tagged_images::${repo}:${{ github.event.client_payload.branch }}-${{ github.event.client_payload.commit_sha }},${repo}:latest-prod-glue-update-${{ github.event.client_payload.client }}
+            echo ::set-output name=tagged_image::${repo}:${{ github.event.client_payload.branch }}-${{ github.event.client_payload.commit_sha }}-glue-update
+            echo ::set-output name=tagged_images::${repo}:${{ github.event.client_payload.branch }}-${{ github.event.client_payload.commit_sha }}-glue-update,${repo}:latest-prod-glue-update-${{ github.event.client_payload.client }}
           else
             echo ::set-output name=client::${{ github.event.inputs.client }}
             echo ::set-output name=branch::${{ github.event.inputs.branch }}
             echo ::set-output name=commit_sha::${{ github.event.inputs.commit_sha }}       
-            echo ::set-output name=tagged_image::${repo}:${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}
-            echo ::set-output name=tagged_images::${repo}:${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}
+            echo ::set-output name=tagged_image::${repo}:${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}-glue-update
+            echo ::set-output name=tagged_images::${repo}:${{ github.event.inputs.branch }}-${{ github.event.inputs.commit_sha }}-glue-update
           fi 
 
   # Uses buildx to build and push the image
@@ -164,6 +164,6 @@ jobs:
         uses: slackapi/slack-github-action@v1.16.0
         with:
           channel-id: "docker-images-${{ needs.prep.outputs.repository_name }}"
-          slack-message: "New image pushed: ${{ needs.prep.outputs.tagged_image }}-glue-update built from <https://github.com/ideacrew/${{ needs.prep.outputs.repository_name }}/commit/${{ needs.prep.outputs.commit_sha }}|${{ needs.prep.outputs.commit_sha }}> on `${{ needs.prep.outputs.branch }}`"
+          slack-message: "New image pushed: ${{ needs.prep.outputs.tagged_image }} built from <https://github.com/ideacrew/${{ needs.prep.outputs.repository_name }}/commit/${{ needs.prep.outputs.commit_sha }}|${{ needs.prep.outputs.commit_sha }}> on `${{ needs.prep.outputs.branch }}`"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.YELLR_BOT_TOKEN }}
