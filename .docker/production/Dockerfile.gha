@@ -207,8 +207,6 @@ RUN unset BUNDLE_APP_CONFIG && \
 ################################################################
 
 FROM public.ecr.aws/ideacrew/gluedb:${BRANCH}-${COMMIT_SHA} as update
-#FROM public.ecr.aws/ideacrew/gluedb:dc_k8_deployment-d2f55f6 as update 
-# ARG CLIENT -${CLIENT}
 
 # Switch back to root to install system libraries
 USER root
