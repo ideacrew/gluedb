@@ -81,6 +81,8 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.prep.outputs.branch }}
 
       - name: Add git HEAD info to docker image
         run: git show --quiet HEAD > release.txt
