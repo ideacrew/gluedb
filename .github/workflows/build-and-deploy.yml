@@ -25,7 +25,8 @@ jobs:
     outputs:
       taggedImage: ${{ steps.prep.outputs.tagged_image }}
       tag: ${{ steps.prep.outputs.tag }}
-      registry: ${{ steps.prep.outputs.registry }}
+      registry_ecr: ${{ steps.prep.outputs.registry_ecr }}
+      registry_ghcr: ${{ steps.prep.outputs.registry_ghcr }}
       shortSha: ${{ steps.prep.outputs.short_sha}}
       branchName: ${{ steps.prep.outputs.branch_name }}
       latestTag: ${{ steps.prep.outputs.latest_tag }}
@@ -40,10 +41,11 @@ jobs:
           SHORT_SHA=$(echo $GITHUB_SHA | head -c7)
           REPO=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
           TAG=${{ env.GIT_BRANCH_NAME }}-$(echo $GITHUB_SHA | head -c7)
-          IMAGE=public.ecr.aws/ideacrew/$REPO
+          IMAGE=ideacrew/$REPO
           echo "tagged_image=${IMAGE}:${TAG}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "registry=public.ecr.aws" >> $GITHUB_OUTPUT
+          echo "registry_ecr=public.ecr.aws" >> $GITHUB_OUTPUT
+          echo "registry_ghcr=ghcr.io" >> $GITHUB_OUTPUT
           echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
           echo "branch_name=${{ env.GIT_BRANCH_NAME }}" >> $GITHUB_OUTPUT
           echo "repository_name=$REPO" >> $GITHUB_OUTPUT
@@ -113,9 +115,16 @@ jobs:
       - name: Login to Public ECR
         uses: docker/login-action@v1
         with:
-          registry: ${{ needs.prep.outputs.registry }}
+          registry: ${{ needs.prep.outputs.registry_ecr }}
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ needs.prep.outputs.registry_ghcr }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Image
         uses: docker/build-push-action@v3
@@ -131,7 +140,13 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           # create local image (for scanning) if it is a pull request
           load: ${{ github.event_name == 'pull_request' }}
-          tags: ${{ needs.prep.outputs.taggedImage }}, ${{ needs.prep.outputs.latestTag }}
+          tags: |
+            ${{ format('{0}/{1}', needs.prep.outputs.registry_ecr, needs.prep.outputs.taggedImage) }}
+            ${{ format('{0}/{1}', needs.prep.outputs.registry_ecr, needs.prep.outputs.latestTag) }}
+            ${{ format('{0}/{1}', needs.prep.outputs.registry_ghcr, needs.prep.outputs.taggedImage) }}
+            ${{ format('{0}/{1}', needs.prep.outputs.registry_ghcr, needs.prep.outputs.latestTag) }}
+
+${{ needs.prep.outputs.taggedImage }}, ${{ needs.prep.outputs.latestTag }}
           cache-from: type=local,src=/tmp/.buildx-cache
           # Note the mode=max here
           # More: https://github.com/moby/buildkit#--export-cache-options
@@ -146,7 +161,7 @@ jobs:
         id: scan
         uses: anchore/scan-action@main
         with:
-          image: ${{ needs.prep.outputs.taggedImage }}
+          image: ${{ format('{0}/{1}-{2}', needs.prep.outputs.registry_ecr, needs.prep.outputs.taggedImage) }}
           acs-report-enable: true
           fail-build: false
           severity-cutoff: critical
@@ -166,12 +181,29 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: [prep, build-and-upload-image]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        registry: ['public.ecr.aws', 'ghcr.io']
     steps:
       - name: Post to a Slack channel
         id: slack
         uses: slackapi/slack-github-action@v1.16.0
         with:
           channel-id: "docker-images-${{ needs.prep.outputs.repositoryName }}"
-          slack-message: "New image pushed: ${{ needs.prep.outputs.taggedImage }} built from <https://github.com/ideacrew/${{ needs.prep.outputs.repositoryName }}/commit/${{ needs.prep.outputs.shortSha }}|${{ needs.prep.outputs.shortSha }}> on `${{ needs.prep.outputs.branchName }}`"
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*${{ format('{0} image*:\n`{1}/{2}`', matrix.registry, matrix.registry, needs.prep.outputs.taggedImage) }}"
+                  }
+                },
+                {
+                  "type": "divider"
+                }
+              ]
+            }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.YELLR_BOT_TOKEN }}
