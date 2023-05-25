@@ -159,7 +159,7 @@ jobs:
         id: scan
         uses: anchore/scan-action@main
         with:
-          image: ${{ format('{0}/{1}-{2}', needs.prep.outputs.registry_ecr, needs.prep.outputs.taggedImage) }}
+          image: ${{ format('{0}/{1}', needs.prep.outputs.registry_ecr, needs.prep.outputs.taggedImage) }}
           acs-report-enable: true
           fail-build: false
           severity-cutoff: critical
