@@ -66,7 +66,6 @@ end
 
 group :production do
   gem 'unicorn', '4.8.2'
-  gem 'eye', '0.6.4'
   gem 'celluloid', '0.15.2'
   gem 'nio4r', '1.1.1'
 end
