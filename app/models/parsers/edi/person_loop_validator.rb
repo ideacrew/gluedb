@@ -11,7 +11,8 @@ module Parsers
         when "030"
           valid = (person_loop.change_reason == "XN")
         when "024"
-          valid = true
+          allowed_values = ["59", "33"]
+          valid = allowed_values.include?(person_loop.change_reason)
         when "025"
           allowed_values = ["EC", "41"]
           valid = allowed_values.include?(person_loop.change_reason)
