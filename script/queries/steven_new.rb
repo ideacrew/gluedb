@@ -123,8 +123,8 @@ Caches::MongoidCache.with_cache_for(Carrier, Plan, Employer) do
           STDERR.puts("Kind: #{e.class}")
           STDERR.puts("Message: #{e.message}")
           STDERR.puts("Backtrace:")
-          STDERR.puts(e.backtrack.join("\n"))
-          e_csv << [pol.eg_id.to_s, pol.id.to_s, e.class, e.message, e.backtrack.join("\n")]
+          STDERR.puts(e.backtrace.join("\n"))
+          e_csv << [pol.eg_id.to_s, pol.id.to_s, e.class, e.message, e.backtrace.join("\n")]
         end
       end
     end
