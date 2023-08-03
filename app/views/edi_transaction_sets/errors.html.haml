@@ -2,7 +2,7 @@
   .col-md-offset-1.col-md-10
     = render 'shared/search', url: errors_edi_transaction_sets_path, q: @q, range_search: true, carriers: @carriers, carrier: @carrier, from_date: @from_date, to_date: @to_date, placeholder: "Error List, Policy ID"
 
-    %input#erroCheckbox{:onclick => "errorMessage()", :type => "checkbox"}Reinstate error messages
+    %input#erroCheckbox{:onclick => "errorMessage()", :type => "checkbox"}Show Reinstate error messages
 
 %table.table.margin-top-error.table-condensed
   %thead
