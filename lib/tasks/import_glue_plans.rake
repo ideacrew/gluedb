@@ -31,7 +31,7 @@ namespace :import do
       end
 
       if plan.carrier.blank?
-        raise "carrier_ids are not correct for plans: #{plan.hios_id}"
+        raise "carrier_ids are not correct for plans: #{plan.hios_plan_id}"
       end
 
     end
