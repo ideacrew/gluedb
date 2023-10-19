@@ -10,6 +10,10 @@ on:
       commit_sha:
         description: 'Commit sha to build'
         required: true
+      client:
+        default: 'me'
+        description: 'Client'
+        required: true
   repository_dispatch:
     types:
       - build-reports-image
