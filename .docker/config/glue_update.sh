@@ -160,22 +160,9 @@ sleep 60
 
 if [ "$update_status" -eq 1 ]; then
 
-  curl -X POST --data-urlencode 'payload={"channel": "#'$SLACK_CHANNEL'", "username": "EDI Database Bot", "text": "'\`' ### GlueDB Update Completed :: Running Reports Before Starting Listeners ### '\`'", "icon_emoji": ":gear:"}' https://hooks.slack.com/services/$SLACK_TOKEN
-
   kubectl patch cronjobs edidb-mongodb-backup -p "{\"spec\" : {\"suspend\" : false }}"
   sleep 60
 
-  cp /etc/reports/glue_enrollment_report.sh /edidb/glue_enrollment_report.sh && chmod 744 /edidb/glue_enrollment_report.sh
-  cp /etc/reports/glue_enrollment_report.json.template /edidb/glue_enrollment_report.json.template
-  /edidb/glue_enrollment_report.sh > glue_enrollment_report.log
-  tail -30 glue_enrollment_report.log
-
-  cp /etc/reports/policies_missing_transmissions.sh /edidb/policies_missing_transmissions.sh && chmod 744 /edidb/policies_missing_transmissions.sh
-  cp /etc/reports/policies_missing_transmissions.json.template /edidb/policies_missing_transmissions.json.template
-  /edidb/policies_missing_transmissions.sh > policies_missing_transmissions.log
-  tail -10 policies_missing_transmissions.log
-
-  sleep 2
   kubectl get job edidb-v4-mongodb-data-refresh -o json | jq -r '.metadata.annotations."kubectl.kubernetes.io/last-applied-configuration"' > restore.json
   kubectl delete -f restore.json
   sleep 5
@@ -238,4 +225,16 @@ else
   exit 1  
 fi
 
+curl -X POST --data-urlencode 'payload={"channel": "#'$SLACK_CHANNEL'", "username": "EDI Database Bot", "text": "'\`' ### GlueDB Update Completed :: Starting Reports ### '\`'", "icon_emoji": ":gear:"}' https://hooks.slack.com/services/$SLACK_TOKEN
 
+cp /etc/reports/glue_enrollment_report.sh /edidb/glue_enrollment_report.sh && chmod 744 /edidb/glue_enrollment_report.sh
+cp /etc/reports/glue_enrollment_report.json.template /edidb/glue_enrollment_report.json.template
+/edidb/glue_enrollment_report.sh > glue_enrollment_report.log
+tail -30 glue_enrollment_report.log
+
+cp /etc/reports/policies_missing_transmissions.sh /edidb/policies_missing_transmissions.sh && chmod 744 /edidb/policies_missing_transmissions.sh
+cp /etc/reports/policies_missing_transmissions.json.template /edidb/policies_missing_transmissions.json.template
+/edidb/policies_missing_transmissions.sh > policies_missing_transmissions.log
+tail -10 policies_missing_transmissions.log
+
+curl -X POST --data-urlencode 'payload={"channel": "#'$SLACK_CHANNEL'", "username": "EDI Database Bot", "text": "'\`' ### GlueDB Update Completed :: Reports Finished ### '\`'", "icon_emoji": ":gear:"}' https://hooks.slack.com/services/$SLACK_TOKEN
