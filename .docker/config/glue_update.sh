@@ -208,7 +208,6 @@ then
   then 
     curl -X POST --data-urlencode 'payload={"channel": "#'$SLACK_CHANNEL'", "username": "EDI Database Bot", "text": "'\`' ### GlueDB Update Completed :: Listeners Are Up ### '\`'", "icon_emoji": ":gear:"}' https://hooks.slack.com/services/$SLACK_TOKEN
     send_sms_notification Success
-    exit 0
   else
     curl -X POST --data-urlencode 'payload={"channel": "#'$SLACK_CHANNEL'", "username": "EDI Database Bot", "text": "'\`' ### GlueDB Update Completed :: But Restart Failed ### '\`'", "icon_emoji": ":gear:"}' https://hooks.slack.com/services/$SLACK_TOKEN
     send_sms_notification "Restart Failed"
