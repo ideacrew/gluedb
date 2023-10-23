@@ -162,11 +162,6 @@ if [ "$update_status" -eq 1 ]; then
 
   kubectl patch cronjobs edidb-mongodb-backup -p "{\"spec\" : {\"suspend\" : false }}"
   sleep 60
-
-  kubectl get job edidb-v4-mongodb-data-refresh -o json | jq -r '.metadata.annotations."kubectl.kubernetes.io/last-applied-configuration"' > restore.json
-  kubectl delete -f restore.json
-  sleep 5
-  kubectl apply -f restore.json
    
   kubectl scale --replicas=1 deployment/edidb-legacy-listeners
   messages=1
@@ -237,3 +232,8 @@ cp /etc/reports/policies_missing_transmissions.json.template /edidb/policies_mis
 tail -10 policies_missing_transmissions.log
 
 curl -X POST --data-urlencode 'payload={"channel": "#'$SLACK_CHANNEL'", "username": "EDI Database Bot", "text": "'\`' ### GlueDB Update Completed :: Reports Finished ### '\`'", "icon_emoji": ":gear:"}' https://hooks.slack.com/services/$SLACK_TOKEN
+
+kubectl get job edidb-v4-mongodb-data-refresh -o json | jq -r '.metadata.annotations."kubectl.kubernetes.io/last-applied-configuration"' > restore.json
+kubectl delete -f restore.json
+sleep 5
+kubectl apply -f restore.json
