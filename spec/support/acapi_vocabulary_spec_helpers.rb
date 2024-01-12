@@ -13,6 +13,7 @@ edi_process.xsd
 individual.xsd
 links.xsd
 organization.xsd
+paynow.xsd
 plan.xsd
 policy.xsd
 premium.xsd
