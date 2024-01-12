@@ -5,6 +5,7 @@ module AcapiVocabularySpecHelpers
 assistance.xsd
 common.xsd
 config.xsd
+credits.xsd
 dms.xsd
 document_storage.xsd
 edi.xsd
