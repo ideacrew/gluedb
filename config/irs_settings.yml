@@ -95,5 +95,16 @@ tax_document:
         active_false: '2022-1095A-VOID-ACTIVE-FALSE.pdf'
         active_true: '2022-1095A-VOID-ACTIVE-TRUE.pdf'
     coverage_page_no: 3
+  2023:
+    slcsp: "94506DC0390006-01"
+    new:
+      template:
+        unassisted: '2023-1095A-NEW-UQHP.pdf'
+        assisted: '2023-1095A-NEW-AQHP.pdf'
+    void:
+      template:
+        active_false: '2023-1095A-VOID-ACTIVE-FALSE.pdf'
+        active_true: '2023-1095A-VOID-ACTIVE-TRUE.pdf'
+    coverage_page_no: 3
   documents_root_path: '/tmp/'
   documents_folder: 'irs_notices'
