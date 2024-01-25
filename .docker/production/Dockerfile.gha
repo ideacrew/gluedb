@@ -236,7 +236,7 @@ RUN apt-get --allow-unauthenticated update \
        lftp 
 
 ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
-RUN curl -fsSL https://deb.nodesource.com/setup_14.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt-get install -y nodejs
 RUN cd /root && curl -O https://downloads.haskell.org/~ghc/8.0.2/ghc-8.0.2-x86_64-deb8-linux.tar.xz && tar xf ghc-8.0.2-x86_64-deb8-linux.tar.xz && cd ghc-8.0.2 && ./configure && make install
 RUN cd /root && git clone https://github.com/haskell/cabal.git && cd /root/cabal && git checkout Cabal-v1.24.2.0 && cd cabal-install && ./bootstrap.sh 
