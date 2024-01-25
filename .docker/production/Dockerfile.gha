@@ -216,7 +216,7 @@ RUN echo  "deb http://archive.debian.org/debian-security stretch/updates main" >
 RUN apt-get update && apt-get install wget gnupg software-properties-common dirmngr -y
 # Install mongodb shell
 RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
-RUN "deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/4.2 main" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list
+RUN echo "deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/4.2 main" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list
 
 # Install required packages/libraries
 RUN apt-get update \
