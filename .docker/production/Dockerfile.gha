@@ -283,7 +283,7 @@ RUN wget -qO - https://pgp.mongodb.com/server-3.6.asc | apt-key add -
 RUN add-apt-repository 'deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/3.6 main'
   
 # Install required packages/libraries
-RUN apt-get update \ 
+RUN apt-get update --allow-unauthenticated \
     # && apt-get upgrade \
     # && apt-get -yq dist-upgrade \
     && apt-get install -y \
@@ -298,8 +298,6 @@ RUN apt-get update \
        libgmp-dev \
        python \
        lftp
-
-RUN apt-get install -y --allow-unauthenticated mongodb-org-shell
 
 RUN curl -fsSL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt-get install -y nodejs
