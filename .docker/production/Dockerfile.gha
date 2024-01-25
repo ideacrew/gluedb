@@ -219,10 +219,10 @@ RUN wget -qO - https://pgp.mongodb.com/server-3.6.asc | apt-key add -
 RUN add-apt-repository 'deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/3.6 main'
 
 # Install required packages/libraries
-RUN apt-get update --allow-unauthenticated \
+RUN apt-get --allow-unauthenticated update \
     # && apt-get upgrade \
     # && apt-get -yq dist-upgrade \
-    && apt-get install -y \
+    && apt-get install --allow-unauthenticated -y \
        curl \
        jq \ 
        mongodb-org-shell \
