@@ -50,4 +50,4 @@ class UpdateNptIndicator < MongoidMigrationTask
       puts "Policy not found for eg_id:#{eg_id}" unless Rails.env.test?
     end
   end
-end 
+end

@@ -1,0 +1,1 @@
+RAILS_ENV=production rails r script/migrations/family_from_policy_subscriber_script.rb 01012023 06302023

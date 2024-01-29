@@ -35,10 +35,10 @@ module Generators::Reports
     def build_policy(pol)
       builder = Generators::Reports::IrsInputBuilder.new(pol)
       builder.carrier_hash = @carrier_hash
-      if @npt_policies.include?(pol.id.to_s)
-        builder.npt_policy = true
-        puts "found NPT policy ---- #{pol.id}"
-      end
+      #if pol.term_for_np#@npt_policies.include?(pol.id.to_s)
+      #  builder.npt_policy = true
+      #  puts "found NPT policy ---- #{pol.id}"
+      #end
       builder.settings = settings
       builder.process
       

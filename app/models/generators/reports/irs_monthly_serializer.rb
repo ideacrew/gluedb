@@ -3,7 +3,7 @@ require 'csv'
 module Generators::Reports  
   class IrsMonthlySerializer
 
-    CALENDER_YEAR = 2019
+    CALENDER_YEAR = 2023
 
     def initialize
       @logger = Logger.new("#{Rails.root}/log/h36_exceptions.log")
@@ -84,7 +84,6 @@ module Generators::Reports
               false
             end
           end
-
           next if active_enrollments.compact.empty?
           next if family.irs_groups.empty?
 
@@ -196,8 +195,8 @@ module Generators::Reports
           end
 
         rescue Exception => e
-         puts "Failed #{family.e_case_id}--#{e.to_s}"
-      end
+          puts "Failed family_e_case_id: #{family.e_case_id}--#{e.to_s}, error: #{e.inspect}, backtrace_message; #{e.backtrace.inspect}"
+        end
       end
 
       # print_families_with_samepolicy
@@ -225,7 +224,7 @@ module Generators::Reports
     def build_irs_group(family)
       builder = Generators::Reports::IrsGroupBuilder.new(family)
       builder.carrier_hash = @carriers
-      builder.npt_policies = @npt_policies
+      #builder.npt_policies = @npt_policies
       builder.calender_year = CALENDER_YEAR
       builder.settings = @settings
       builder.process
@@ -266,7 +265,7 @@ module Generators::Reports
     private
 
     def policies_to_skip
-      ["208128","208671","212304","214429","214807","208674","246907","263444","263496","296902","300021"]
+      ["208128","208671","212304","214429","214807","208674","246907","263444","263496","296902","300021", "163608"]
     end
 
     def create_new_irs_folder(folder_count)

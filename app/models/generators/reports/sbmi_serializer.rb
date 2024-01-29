@@ -1,9 +1,10 @@
+require 'benchmark'
 require 'spreadsheet'
 require 'csv'
 module Generators::Reports  
   class SbmiSerializer
 
-    CALENDER_YEAR = 2019
+    CALENDER_YEAR = 2023
     # CANCELED_DATE = Date.new(2017,12,8)
 
     attr_accessor :pbp_final
@@ -21,8 +22,9 @@ module Generators::Reports
       # %w(86052 78079 94506).each do |hios_prefix|
       # %w(86052).each do |hios_prefix|
 
-      %w(86052 78079 94506 81334 92479 95051).each do |hios_prefix|
-# %w(86052).each do |hios_prefix|
+     %w(78079 86052 94506 81334 92479 95051).each do |hios_prefix|
+        # %w(81334 92479 95051).each do |hios_prefix|
+        # %w(86052).each do |hios_prefix|
         plan_ids = Plan.where(hios_plan_id: /^#{hios_prefix}/, year: CALENDER_YEAR).pluck(:_id)
         puts "Processing #{hios_prefix}"
 
@@ -35,11 +37,13 @@ module Generators::Reports
         create_sbmi_folder(hios_prefix)
 
         count = 0
-        Policy.where(:plan_id.in => plan_ids).each do |pol|
-
-        # Policy.where(:id.in => %w(182528)).each do |pol|
-          next if pol.is_shop? || pol.rejected? # || pol.has_responsible_person?
-
+       Policy.where(:plan_id.in => plan_ids).no_timeout.each do |pol|
+        # Policy.where(:id.in => %w(374580)).each do |pol|
+          next if pol.is_shop? # || pol.rejected? # || pol.has_responsible_person?
+          # if pol.rejected?
+          #   puts "skipping rejected policy #{pol.id}"
+          #   next
+          # end
           # * re-enable for post first report in a calender year
           # if pol.canceled?
           #   next if pol.updated_at < Date.new(CALENDER_YEAR,5,1)
@@ -54,23 +58,41 @@ module Generators::Reports
           # next if pol.has_no_enrollees?
           next if pol.policy_start < Date.new(CALENDER_YEAR, 1, 1)
           next if pol.policy_start > Date.new(CALENDER_YEAR, 12, 31)
+          
           if pol.subscriber.person.blank?
-            puts "subscriber person record missing #{pol.id}"
+            puts "subscriber person record missing #{pol.id} #{pol.eg_id}"
             next
           end
-          next if !pol.belong_to_authority_member?
-          next if policies_to_skip.include?(pol.id.to_s)
-          next if pol.kind == 'coverall'
+
+          if !pol.belong_to_authority_member?
+            puts "skipping non authority member policy #{pol.id} #{pol.eg_id}"
+            next
+          end
+          
+          if policies_to_skip.include?(pol.id.to_s)
+            puts "skipping policies_to_skip policy #{pol.id} #{pol.eg_id}"
+            next
+          end
+
+          if pol.kind == 'coverall'
+            puts "skipping coverall policy #{pol.id} #{pol.eg_id}"
+            next
+          end
+
           count +=1 
           if count % 100 == 0
             puts "processing #{count}"
           end
           
           begin
-            builder = Generators::Reports::SbmiPolicyBuilder.new(pol)
-            builder.process
+           #Benchmark.bm do |x| 
+            # x.report do
+               builder = Generators::Reports::SbmiPolicyBuilder.new(pol)
+               builder.process
+             #end
+           #end
           rescue Exception => e
-            puts "Exception: #{pol.id}"
+            puts "Exception: #{pol.id} #{pol.eg_id}"
             puts e.inspect
             next
           end
