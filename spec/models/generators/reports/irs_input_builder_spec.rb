@@ -3,19 +3,25 @@ require 'rails_helper'
 module Generators::Reports
   describe IrsInputBuilder do
     subject { IrsInputBuilder.new(policy) }
-
-    let(:policy)     { double(id: 24, subscriber: subscriber, enrollees: [subscriber, dependent1, dependent2], policy_start: policy_start, policy_end: policy_end, plan: plan, eg_id: 212131212, applied_aptc: 0, responsible_party_id: nil, coverage_period: (policy_start..policy_end), aptc_credits: aptc_credits) }
+    let(:policy)     { double(id: 24, subscriber: subscriber, enrollees: [subscriber, dependent1, dependent2], policy_start: policy_start, policy_end: policy_end, plan: plan, eg_id: 212131212, applied_aptc: 0, responsible_party_id: nil, coverage_period: (policy_start..policy_end), aptc_credits: aptc_credits, term_for_np: false) }
     let(:plan)       { double(carrier: carrier, hios_plan_id: '123121') }
     let(:carrier)    { double(name: 'Care First')}
     let(:policy_start) { Date.new(2016, 1, 1) }
-    let(:policy_end)   { Date.new(2016, 12, 31) } 
-    let(:subscriber) { double(person: person, relationship_status_code: 'Self', coverage_start: policy_start, coverage_end: policy_end, m_id: authority_member.id) }
-    let(:dependent1) { double(person: person, relationship_status_code: 'Spouse', coverage_start: policy_start, coverage_end: policy_end) }
-    let(:dependent2) { double(person: person, relationship_status_code: 'Child', coverage_start: policy_start, coverage_end: policy_end) }
+    let(:policy_end)   { Date.new(2016, 12, 31) }
 
-    let(:person)           { double(full_name: 'Ann B Mcc', addresses: [address], authority_member: authority_member, name_first: 'Ann', name_middle: 'B', name_last: 'Mcc', name_sfx: '', mailing_address: address) }
-    let(:authority_member) { double(ssn: '342321212', dob: (Date.today - 20.years), id: '252342323') }
-    let(:address)          { double(address_1: 'Wilson Building', address_2: 'Suite 100', city: 'Washington DC', state: 'DC', zip: '20002') }
+    let(:subscriber) { double(person: person, rel_code: 'self', m_id: '20233767', coverage_start: policy_start, coverage_end: policy_end, m_id: authority_member.id) }
+    let(:person) { double(full_name: 'Ann B Mcc', addresses: [address], authority_member: authority_member, name_first: 'Ann', name_middle: 'B', name_last: 'Mcc', name_sfx: '', mailing_address: address) }
+    let(:authority_member) { double(ssn: '342321212', dob: (Date.today - 40.years), id: '252342323', hbx_member_id: "20233767", gender: "male") }
+
+    let(:dependent1) { double(person: person1, rel_code: 'spouse', m_id: '20233768', coverage_start: policy_start, coverage_end: policy_end) }
+    let(:person1) { double(full_name: 'Mary B Mcc', addresses: [address], authority_member: authority_member1, name_first: 'Mary', name_middle: 'B', name_last: 'Mcc', name_sfx: '', mailing_address: address) }
+    let(:authority_member1) { double(ssn: '010101010', dob: (Date.today - 30.years), id: '123456789', hbx_member_id: "20233768", gender: "female") }
+
+    let(:dependent2) { double(person: person2, rel_code: 'child', m_id: '20233769', coverage_start: policy_start, coverage_end: policy_end) }
+    let(:person2) { double(full_name: 'John B Mcc', addresses: [address], authority_member: authority_member1, name_first: 'John', name_middle: 'B', name_last: 'Mcc', name_sfx: '', mailing_address: address) }
+    let(:authority_member1) { double(ssn: '010101010', dob: (Date.today - 20.years), id: '103456789', hbx_member_id: "20233769", gender: "male") }
+
+    let(:address) { double(address_1: 'Wilson Building', address_2: 'Suite 100', city: 'Washington DC', state: 'DC', zip: '20002') }
 
     let(:address_hash) { 
       { 

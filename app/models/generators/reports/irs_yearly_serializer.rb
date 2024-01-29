@@ -14,13 +14,13 @@ module Generators::Reports
       @hbx_member_id = nil
 
       @report_names = {}
-      @xml_output = true
+      @xml_output = false
 
       @pdf_set  = 16
       @irs_set  = 0
       @record_sequence_num = 1
       @notice_params = options
-      @generate_pdf = false
+      @generate_pdf = true
 
       if options.empty?
         irs_path = "#{Rails.root.to_s}/irs/irs_EOY_#{Time.now.strftime('%m_%d_%Y_%H_%M')}"
@@ -47,7 +47,7 @@ module Generators::Reports
     end
 
     def load_responsible_party_data
-      book = Spreadsheet.open "#{Rails.root}/2022_RP_data.xls"
+      book = Spreadsheet.open "#{Rails.root}/2023_RP_data.xls"
       @responsible_party_data = book.worksheets.first.inject({}) do |data, row|
         if row[3].to_s.strip.match(/Responsible Party SSN/i) #|| (row[3].to_s.strip.blank? && row[5].to_s.strip.blank?)
         else
@@ -96,8 +96,8 @@ module Generators::Reports
       load_responsible_party_data
       @notice_params[:type] = 'new'
       workbook = create_excel_workbook
-      @generate_pdf = false
-      @xml_output = true
+      @generate_pdf = true
+      @xml_output = false
       count = 0
       @folder_count = 1
 
@@ -556,7 +556,7 @@ module Generators::Reports
         end
       end
 
-      pols = PolicyStatus::Active.between(Date.new(2021,12,31), Date.new(2022,12,31)).results.where({
+      pols = PolicyStatus::Active.between(Date.new(2022,12,31), Date.new(2023,12,31)).results.where({
         :plan_id => {"$in" => plans}, :employer_id => nil
         }).group_by { |p| p_repo[p.subscriber.m_id] }
     end

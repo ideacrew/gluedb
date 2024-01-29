@@ -3,8 +3,8 @@ module Generators::Reports
 
     include ActionView::Helpers::NumberHelper
 
-    DURATION = 6
-    CALENDER_YEAR = 2023
+    DURATION = 12
+    CALENDER_YEAR = 2018
 
     NS = { 
       "xmlns" => "urn:us:gov:treasury:irs:common",

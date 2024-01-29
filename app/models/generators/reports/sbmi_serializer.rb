@@ -126,7 +126,6 @@ module Generators::Reports
 
     #   begin
     #     set_cancel_date
-    #     binding.pry
     #     sbmi_serializer = Generators::Reports::SbmiSerializer.new
     #     sbmi_serializer.pbp_final = pbp_final
     #     sbmi_serializer.process

@@ -117,7 +117,7 @@ describe Person, :dbclean => :after_each do
         lui: @mbr_language
       )
       psn.save
-      expect(psn.authority_member_id).to eq mbr_id
+      expect(psn.authority_member.hbx_member_id).to eq mbr_id
     end
   end
 
