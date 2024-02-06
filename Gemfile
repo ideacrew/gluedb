@@ -18,6 +18,7 @@ gem 'openhbx_cv2', git: "https://github.com/ideacrew/openhbx_cv2.git", branch: "
 gem "interactor", "~> 3.1.0"
 gem 'interactor-rails', '2.0.2'
 gem "psych", "2.0.5"
+gem 'devise-security'
 
 group :development do
   gem 'capistrano', '2.15.4'
