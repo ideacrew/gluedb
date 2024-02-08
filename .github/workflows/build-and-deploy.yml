@@ -18,6 +18,7 @@ concurrency:
 env:
   RABBITMQ_DEFAULT_USER: "guest"
   RABBITMQ_DEFAULT_PASS: "guest"
+  SYSDIG_SECURE_ENDPOINT: "https://us2.app.sysdig.com"
 
 jobs:
   prep:
@@ -154,21 +155,48 @@ jobs:
             HOSTNAME=172.17.0.1
             GEM_OAUTH_TOKEN=${{ secrets.dchbx_deployments_token }}
 
-      - name: Scan Docker image
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: cache
+          key: ${{ runner.os }}-cache-${{ hashFiles('**/sysdig-cli-scanner', '**/latest_version.txt', '**/db/main.db.meta.json', '**/scanner-cache/inlineScannerCache.db') }}
+          restore-keys: ${{ runner.os }}-cache-
+
+      - name: Scan docker image
         if: github.event_name != 'pull_request'
         id: scan
         uses: anchore/scan-action@main
         with:
-          image: ${{ format('{0}/{1}', needs.prep.outputs.registry_ecr, needs.prep.outputs.taggedImage) }}
+          image: ${{ format('{0}/{1}', needs.prep.outputs.registryGhcr, needs.prep.outputs.taggedImage) }}
           acs-report-enable: true
           fail-build: false
           severity-cutoff: critical
 
-      # - name: upload Anchore scan SARIF report
-      #  if: github.event_name != 'pull_request'
-      #  uses: github/codeql-action/upload-sarif@v1
-      #  with:
-      #    sarif_file: ${{ steps.scan.outputs.sarif }}
+      - name: Download sysdig-cli-scanner if needed and scan the image with sysdig scanner
+        env:
+          SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
+        run: |
+          curl -sLO https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt
+          mkdir -p "${GITHUB_WORKSPACE}/cache/db/"
+          if [ ! -f "${GITHUB_WORKSPACE}/cache/latest_version.txt" ] || [ "$(cat ./latest_version.txt)" != "$(cat ${GITHUB_WORKSPACE}/cache/latest_version.txt)" ]; then
+            cp ./latest_version.txt "${GITHUB_WORKSPACE}/cache/latest_version.txt"
+            curl -sL -o "${GITHUB_WORKSPACE}/cache/sysdig-cli-scanner" "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/$(cat ${GITHUB_WORKSPACE}/cache/latest_version.txt)/linux/amd64/sysdig-cli-scanner"
+            chmod +x "${GITHUB_WORKSPACE}/cache/sysdig-cli-scanner"
+          else
+            echo "Latest version of sysdig cli scanner is already downloaded"
+          fi
+          ${GITHUB_WORKSPACE}/cache/sysdig-cli-scanner \
+            --apiurl "${SYSDIG_SECURE_ENDPOINT}" \
+            ${{ format('{0}/{1}', needs.prep.outputs.registryGhcr, needs.prep.outputs.taggedImage) }} \
+            --console-log \
+            --dbpath="${GITHUB_WORKSPACE}/cache/db/" \
+            --cachepath="${GITHUB_WORKSPACE}/cache/scanner-cache/"
+
+      - name: Upload anchore scan SARIF report
+        if: github.event_name != 'pull_request'
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
 
       - name: Move cache
         run: |
