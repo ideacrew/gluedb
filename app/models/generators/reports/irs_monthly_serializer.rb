@@ -3,7 +3,7 @@ require 'csv'
 module Generators::Reports  
   class IrsMonthlySerializer
 
-    CALENDER_YEAR = 2023
+    CALENDAR_YEAR = 2023
 
     def initialize
       @logger = Logger.new("#{Rails.root}/log/h36_exceptions.log")
@@ -72,7 +72,7 @@ module Generators::Reports
 
           next if family.households.count > 1 || family.active_household.nil? 
           
-          active_enrollments = family.active_household.enrollments_for_year(CALENDER_YEAR)
+          active_enrollments = family.active_household.enrollments_for_year(CALENDAR_YEAR)
           active_enrollments.reject!{|e| e.policy.subscriber.coverage_start >= Date.today.beginning_of_month }
           active_enrollments.reject!{|e| policies_to_skip.include?(e.policy.id.to_s) }
           active_enrollments.reject!{|e| e.policy.kind == "coverall" }
@@ -225,7 +225,7 @@ module Generators::Reports
       builder = Generators::Reports::IrsGroupBuilder.new(family)
       builder.carrier_hash = @carriers
       #builder.npt_policies = @npt_policies
-      builder.calender_year = CALENDER_YEAR
+      builder.calendar_year = CALENDAR_YEAR
       builder.settings = @settings
       builder.process
       builder.npt_policies = []

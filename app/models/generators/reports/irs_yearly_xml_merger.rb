@@ -10,7 +10,7 @@ module Generators::Reports
 
 
     # DURATION = 12
-    # CALENDER_YEAR = 2014
+    # CALENDAR_YEAR = 2014
 
 
     NS = {

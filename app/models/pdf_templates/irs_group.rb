@@ -2,7 +2,7 @@ module PdfTemplates
   class IrsGroup
     include Virtus.model
 
-    attribute :calender_year, Integer
+    attribute :calendar_year, Integer
     attribute :identification_num, String
     attribute :households, Array[PdfTemplates::Household]
     attribute :insurance_policies, Array[PdfTemplates::IrsNoticeInput]
@@ -49,7 +49,7 @@ module PdfTemplates
     end
 
     def policies_for_month(month)
-      end_of_month = Date.new(calender_year, month, 1).end_of_month
+      end_of_month = Date.new(calendar_year, month, 1).end_of_month
 
       pols = []
       policies.each do |pol|
@@ -60,7 +60,7 @@ module PdfTemplates
           coverage_end_month = end_date.month
           # coverage_end_month = coverage_end_month - 1 if end_date.day == 1 # Proration should work
 
-          coverage_end_month = 12 if calender_year != end_date.year
+          coverage_end_month = 12 if calendar_year != end_date.year
 
           pols << pol if (start_date.month..coverage_end_month).include?(month)
         end

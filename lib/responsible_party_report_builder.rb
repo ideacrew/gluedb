@@ -3,17 +3,17 @@ require 'csv'
 
 class ResponsiblePartyReportBuilder
 
-  attr_reader :calender_year
+  attr_reader :calendar_year
 
-  def initialize(calender_year = Date.today.year)
-  	@calender_year = calender_year
+  def initialize(calendar_year = Date.today.year)
+    @calendar_year = calendar_year
   end
 
   def generate
   	workbook = Spreadsheet::Workbook.new
     sheet = workbook.create_worksheet :name => 'Responsible Party Data'
     index = 0
-current = 0
+    current = 0
     columns = ['Policy Id', 'Enrollment Group Id', 'Responsible Party', 'Responsible Party SSN', 'Responsible Party DOB', 'Responsible Party Address']
     sheet.row(index).concat columns
 
@@ -54,7 +54,7 @@ current = 0
       end
     end
 
-    workbook.write "#{Rails.root.to_s}/RP_QHP_Policies#{calender_year}.xls"
+    workbook.write "#{Rails.root.to_s}/RP_QHP_Policies#{calendar_year}.xls"
   end
 
   private
@@ -69,7 +69,7 @@ current = 0
       end
     end
 
-    pols = PolicyStatus::Active.between(Date.new(calender_year-1,12,31), Date.new(calender_year,12,31)).results.where({
+    pols = PolicyStatus::Active.between(Date.new(calendar_year-1,12,31), Date.new(calendar_year,12,31)).results.where({
       :plan_id => {"$in" => plans}, :employer_id => nil
       }).group_by { |p| p_repo[p.subscriber.m_id] }
   end

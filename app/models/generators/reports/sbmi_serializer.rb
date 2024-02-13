@@ -4,7 +4,7 @@ require 'csv'
 module Generators::Reports  
   class SbmiSerializer
 
-    CALENDER_YEAR = 2023
+    CALENDAR_YEAR = 2023
     # CANCELED_DATE = Date.new(2017,12,8)
 
     attr_accessor :pbp_final
@@ -13,7 +13,7 @@ module Generators::Reports
       @sbmi_root_folder = "#{Rails.root}/sbmi"
       # @sbmi_folder_name = "DCHBX_SBMI_78079_17_00_01_06_2017"
       # hios_prefix = "78079"
-      # CALENDER_YEAR = 2017
+      # CALENDAR_YEAR = 2017
 
       create_directory @sbmi_root_folder
     end
@@ -25,11 +25,11 @@ module Generators::Reports
      %w(78079 86052 94506 81334 92479 95051).each do |hios_prefix|
         # %w(81334 92479 95051).each do |hios_prefix|
         # %w(86052).each do |hios_prefix|
-        plan_ids = Plan.where(hios_plan_id: /^#{hios_prefix}/, year: CALENDER_YEAR).pluck(:_id)
+        plan_ids = Plan.where(hios_plan_id: /^#{hios_prefix}/, year: CALENDAR_YEAR).pluck(:_id)
         puts "Processing #{hios_prefix}"
 
         # workbook = Spreadsheet::Workbook.new
-        # sheet = workbook.create_worksheet :name => "#{CALENDER_YEAR} SBMI Report"
+        # sheet = workbook.create_worksheet :name => "#{CALENDAR_YEAR} SBMI Report"
 
         # index = 0
         # sheet.row(index).concat headers
@@ -44,20 +44,20 @@ module Generators::Reports
           #   puts "skipping rejected policy #{pol.id}"
           #   next
           # end
-          # * re-enable for post first report in a calender year
+          # * re-enable for post first report in a calendar year
           # if pol.canceled?
-          #   next if pol.updated_at < Date.new(CALENDER_YEAR,5,1)
+          #   next if pol.updated_at < Date.new(CALENDAR_YEAR,5,1)
           # else
           #   next if pol.has_no_enrollees?
           # end
 
-          # disbale for post first report in a calender year
+          # disbale for post first report in a calendar year
           # next if pol.canceled? && pol.updated_at < CANCELED_DATE
 
           # next if pol.canceled?
           # next if pol.has_no_enrollees?
-          next if pol.policy_start < Date.new(CALENDER_YEAR, 1, 1)
-          next if pol.policy_start > Date.new(CALENDER_YEAR, 12, 31)
+          next if pol.policy_start < Date.new(CALENDAR_YEAR, 1, 1)
+          next if pol.policy_start > Date.new(CALENDAR_YEAR, 12, 31)
           
           if pol.subscriber.person.blank?
             puts "subscriber person record missing #{pol.id} #{pol.eg_id}"
@@ -108,7 +108,7 @@ module Generators::Reports
 
         merge_and_validate_xmls(hios_prefix)
 
-        # workbook.write "#{Rails.root.to_s}/#{CALENDER_YEAR}_SBMI_DATA_EXPORT_#{Time.now.strftime("%Y_%m_%d_%H_%M")}_#{hios_prefix}.xls"
+        # workbook.write "#{Rails.root.to_s}/#{CALENDAR_YEAR}_SBMI_DATA_EXPORT_#{Time.now.strftime("%Y_%m_%d_%H_%M")}_#{hios_prefix}.xls"
       end
     end
 
@@ -116,13 +116,13 @@ module Generators::Reports
       xml_merge = Generators::Reports::SbmiXmlMerger.new("#{@sbmi_root_folder}/#{@sbmi_folder_name}")
       xml_merge.sbmi_folder_path = @sbmi_root_folder
       xml_merge.hios_prefix = hios_prefix
-      xml_merge.calender_year = CALENDER_YEAR
+      xml_merge.calendar_year = CALENDAR_YEAR
       xml_merge.process
       xml_merge.validate
     end
 
     # def self.generate_sbmi(listener, coverage_year, pbp_final)
-    #   CALENDER_YEAR = coverage_year.to_i
+    #   CALENDAR_YEAR = coverage_year.to_i
 
     #   begin
     #     set_cancel_date

@@ -4,7 +4,7 @@ module Generators::Reports
     include ActionView::Helpers::NumberHelper
 
     DURATION = 12
-    CALENDER_YEAR = 2018
+    CALENDAR_YEAR = 2018
 
     NS = { 
       "xmlns" => "urn:us:gov:treasury:irs:common",
@@ -32,7 +32,7 @@ module Generators::Reports
         xml['n1'].HealthExchange(NS) do
           xml.SubmissionYr Date.today.year.to_s
           xml.SubmissionMonthNum Date.today.month.to_s
-          xml.ApplicableCoverageYr CALENDER_YEAR
+          xml.ApplicableCoverageYr CALENDAR_YEAR
           xml.IndividualExchange do |xml|
             xml.HealthExchangeId "02.DC*.SBE.001.001"
             serialize_irs_group(xml)
@@ -52,21 +52,21 @@ module Generators::Reports
     def serialize_taxhouseholds(xml)
       @irs_group.irs_households_for_duration(DURATION).each do |tax_household|
         xml.TaxHousehold do |xml|
-          (1..DURATION).each do |calender_month|
-            next if @irs_group.irs_household_coverage_as_of(tax_household, calender_month).empty?
-            serialize_taxhousehold_coverage(xml, tax_household, calender_month)
+          (1..DURATION).each do |calendar_month|
+            next if @irs_group.irs_household_coverage_as_of(tax_household, calendar_month).empty?
+            serialize_taxhousehold_coverage(xml, tax_household, calendar_month)
           end
         end
       end
     end
 
-    def serialize_taxhousehold_coverage(xml, tax_household, calender_month)
+    def serialize_taxhousehold_coverage(xml, tax_household, calendar_month)
       xml.TaxHouseholdCoverage do |xml|
-        xml.ApplicableCoverageMonthNum prepend_zeros(calender_month.to_s, 2)
+        xml.ApplicableCoverageMonthNum prepend_zeros(calendar_month.to_s, 2)
         xml.Household do |xml|
           serialize_household_members(xml, tax_household)
-          @irs_group.irs_household_coverage_as_of(tax_household, calender_month).each do |policy|
-            montly_disposition = policy.premium_rec_for(calender_month)
+          @irs_group.irs_household_coverage_as_of(tax_household, calendar_month).each do |policy|
+            montly_disposition = policy.premium_rec_for(calendar_month)
             serialize_associated_policy(xml, montly_disposition, policy)
           end
         end
@@ -164,11 +164,11 @@ module Generators::Reports
           xml.TotalQHPMonthlyPremiumAmt premium.premium_amount
           xml.APTCPaymentAmt monthly_aptc 
 
-          if policy.covered_household_as_of(premium.serial, CALENDER_YEAR).empty?
-            raise "Missing enrollees #{policy.policy_id} #{premium.serial} #{CALENDER_YEAR}"
+          if policy.covered_household_as_of(premium.serial, CALENDAR_YEAR).empty?
+            raise "Missing enrollees #{policy.policy_id} #{premium.serial} #{CALENDAR_YEAR}"
           end
 
-          policy.covered_household_as_of(premium.serial, CALENDER_YEAR).each do |individual|
+          policy.covered_household_as_of(premium.serial, CALENDAR_YEAR).each do |individual|
             serialize_covered_individual(xml, individual)
           end
         end

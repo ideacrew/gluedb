@@ -6,10 +6,10 @@ module Generators::Reports
     let(:slcsp_hios)   { {:slcsp => "94506DC0390014-01"} }
     let!(:plan)        { FactoryGirl.create(:plan) }
     let!(:silver_plan) { FactoryGirl.create(:plan, hios_plan_id: slcsp_hios[:slcsp]) }
-    let(:calender_year) { 2018 }
+    let(:calendar_year) { 2018 }
     let(:irs_settings) { 
       settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access 
-      settings['tax_document'].merge!({calender_year => slcsp_hios })
+      settings['tax_document'].merge!({calendar_year => slcsp_hios })
       settings
     }
     
@@ -37,10 +37,10 @@ module Generators::Reports
       family_member 
     }
 
-    let(:coverage_end) { Date.new(calender_year, 6, 30) }
+    let(:coverage_end) { Date.new(calendar_year, 6, 30) }
 
     let(:policy) {
-      policy = FactoryGirl.create :policy, plan_id: plan.id, coverage_start: Date.new(calender_year, 1, 1), coverage_end: coverage_end
+      policy = FactoryGirl.create :policy, plan_id: plan.id, coverage_start: Date.new(calendar_year, 1, 1), coverage_end: coverage_end
       policy.enrollees[0].m_id = primary.authority_member.hbx_member_id
       policy.enrollees[1].m_id = child.authority_member.hbx_member_id
       policy.enrollees[1].rel_code ='child'; policy.save
@@ -64,7 +64,7 @@ module Generators::Reports
 
     let(:irs_group) { 
       group_builder = Generators::Reports::IrsGroupBuilder.new(family)
-      group_builder.calender_year = calender_year
+      group_builder.calendar_year = calendar_year
       group_builder.npt_policies  = []
       group_builder.settings = irs_settings
       group_builder.process

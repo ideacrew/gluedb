@@ -1,7 +1,7 @@
 module Generators::Reports  
   class IrsYearlyManifest
 
-    CALENDER_YEAR = 2022
+    CALENDAR_YEAR = 2022
 
     NS = {
       "xmlns"  => "http://birsrep.dsh.cms.gov/exchange/1.0",
@@ -67,7 +67,7 @@ module Generators::Reports
     def serialize_service_data(xml)
       xml['ns4'].ServiceSpecificData do |xml|
         xml.ReportPeriod do |xml|
-          xml['ns5'].Year CALENDER_YEAR
+          xml['ns5'].Year CALENDAR_YEAR
         end
       end
     end

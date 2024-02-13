@@ -1,11 +1,11 @@
 module Generators::Reports  
   class IrsHousehold
 
-    attr_accessor :calender_year, :tax_households, :tax_household_objs
+    attr_accessor :calendar_year, :tax_households, :tax_household_objs
 
     def initialize(household)
       @household = household
-      @calender_year = nil
+      @calendar_year = nil
       @tax_households = []
       @tax_household_objs = []
       @taxhouseholds_policies = {}
@@ -33,7 +33,7 @@ module Generators::Reports
     end
 
     def build_taxhouseholds_policies
-      enrollments = @household.enrollments_for_year(@calender_year)
+      enrollments = @household.enrollments_for_year(@calendar_year)
       enrollments.inject({}) do |hash, enrollment|
         tax_household = select_tax_household(enrollment)
         if tax_household

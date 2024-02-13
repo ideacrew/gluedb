@@ -6,7 +6,7 @@ module Generators::Reports
     IRS_XML_PATH = "#{@irs_path}/h41/"
     IRS_PDF_PATH = "#{@irs_path}/irs1095a/"
 
-    attr_accessor :notice_params, :calender_year, :qhp_type, :notice_absolute_path, :xml_output
+    attr_accessor :notice_params, :calendar_year, :qhp_type, :notice_absolute_path, :xml_output
 
     def initialize(options = {})
       @count = 0
@@ -314,7 +314,7 @@ module Generators::Reports
 
     def process_policy(policy)
       if valid_policy?(policy)
-        @calender_year = policy.subscriber.coverage_start.year
+        @calendar_year = policy.subscriber.coverage_start.year
         @qhp_type  = ((policy.applied_aptc > 0 || policy.multi_aptc?) ? 'assisted' : 'unassisted')
         @policy_id = policy.id
         @hbx_member_id = policy.subscriber.person.authority_member.hbx_member_id
@@ -400,7 +400,7 @@ module Generators::Reports
     end
 
     def process_canceled_policy(policy, canceled_policies, active_policies)
-      @calender_year = policy.subscriber.coverage_start.year
+      @calendar_year = policy.subscriber.coverage_start.year
       @policy_id = policy.id
       @hbx_member_id = policy.subscriber.person.authority_member.hbx_member_id
 
@@ -472,7 +472,7 @@ module Generators::Reports
       name_prefix = (notice_params[:type] == 'new' ? "IRS1095A" : "IRS1095ACorrected")
      
       @report_names = {
-        pdf: "#{name_prefix}_#{calender_year}_#{Date.today.strftime('%Y%m%d')}_#{@hbx_member_id}_#{@policy_id}_#{sequential_number}",
+        pdf: "#{name_prefix}_#{calendar_year}_#{Date.today.strftime('%Y%m%d')}_#{@hbx_member_id}_#{@policy_id}_#{sequential_number}",
         # pdf: "IRS1095A_2016_#{Time.now.strftime('%Y%m%d')}_#{@hbx_member_id}_#{@policy_id}_#{sequential_number}",
         # pdf: "IRS1095A_2015_#{Time.now.strftime('%Y%m%d')}_#{@hbx_member_id}_#{@policy_id}_#{sequential_number}",
         # pdf: "#{sequential_number}_HBX_01_#{@hbx_member_id}_#{@policy_id}_IRS1095A_Corrected",
@@ -496,14 +496,14 @@ module Generators::Reports
 
     def render_pdf(notice, multiple = false, void = false)
       return unless @generate_pdf
-      options = {multiple: multiple, calender_year: calender_year, qhp_type: qhp_type, notice_type: 'new'}
+      options = {multiple: multiple, calendar_year: calendar_year, qhp_type: qhp_type, notice_type: 'new'}
 
       if void
         options.merge!({notice_type: 'void'})
       end
 
       if notice_params.present?
-        options = { multiple: multiple, calender_year: calender_year, qhp_type: qhp_type, notice_type: notice_params[:type]}
+        options = { multiple: multiple, calendar_year: calendar_year, qhp_type: qhp_type, notice_type: notice_params[:type]}
       end
 
       if notice.active_policies.blank?
