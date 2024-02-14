@@ -48,7 +48,6 @@ module Services
     end
 
     def aptc_end_date(sorted_aptc_dates, index, calender_month_end, span_start_date)
-      # binding.pry
       if sorted_aptc_dates[index + 1] == calender_month_end
         calender_month_end
       elsif (sorted_aptc_dates[index + 1] != calender_month_end) && (sorted_aptc_dates[index + 1] == @policy_disposition.policy.policy_end)
