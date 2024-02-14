@@ -108,3 +108,15 @@ tax_document:
     coverage_page_no: 3
   documents_root_path: '/tmp/'
   documents_folder: 'irs_notices'
+
+cms_pbp_generation:
+  cms_pbp_source_sbm_id: "FEP0020DC"
+  hios_prefix_ids: ["86052", "78079", "94506", "81334", "92479", "95051"]
+  subdirectory_prefix: 'DCHBX'
+
+irs_h41_generation:
+  subdirectory_prefix: 'DCHBX_H41'
+  irs_h41_source_sbm_id: 'FEP0020DC'
+
+irs_1095A:
+  subdirectory_prefix: 'DCEXCHANGE'

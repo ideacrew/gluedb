@@ -2,14 +2,14 @@ require 'csv'
 
 class OtrPolicyReportBuilder
 
-  attr_reader :calender_year
+  attr_reader :calendar_year
 
-  def initialize(calender_year)
-    @calender_year = calender_year
+  def initialize(calendar_year)
+    @calendar_year = calendar_year
   end
 
   def generate
-    file_name = "#{Rails.root.to_s}/IVL_#{calender_year}_ORT_QHP_1095A_Data_#{Time.now.strftime("%m_%d_%Y_%H_%M")}.csv"
+    file_name = "#{Rails.root.to_s}/IVL_#{calendar_year}_ORT_QHP_1095A_Data_#{Time.now.strftime("%m_%d_%Y_%H_%M")}.csv"
     CSV.open(file_name, "w", col_sep: "|") do |csv|
     
       @carriers = Carrier.all.inject({}){|hash, carrier| hash[carrier.id] = carrier.name; hash}
@@ -226,7 +226,7 @@ class OtrPolicyReportBuilder
       end
     end
 
-    pols = PolicyStatus::Active.between(Date.new(calender_year-1,12,31), Date.new(calender_year,12,31)).results.where({
+    pols = PolicyStatus::Active.between(Date.new(calendar_year-1,12,31), Date.new(calendar_year,12,31)).results.where({
       :plan_id => {"$in" => plans}, :employer_id => nil
       }).group_by { |p| p_repo[p.subscriber.m_id] }
   end

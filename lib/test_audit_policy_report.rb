@@ -2,14 +2,14 @@ require 'csv'
 
 class AduitPolicyReport
 
-  attr_reader :calender_year
+  attr_reader :calendar_year
 
-  def initialize(calender_year)
-    @calender_year = calender_year
+  def initialize(calendar_year)
+    @calendar_year = calendar_year
   end
 
   def generate
-    file_name = "#{Rails.root.to_s}/IVL_#{calender_year}_all_policies_#{Time.now.strftime("%m_%d_%Y_%H_%M")}.csv"
+    file_name = "#{Rails.root.to_s}/IVL_#{calendar_year}_all_policies_#{Time.now.strftime("%m_%d_%Y_%H_%M")}.csv"
     CSV.open(file_name, "w") do |csv|
     
       @carriers = Carrier.all.inject({}){|hash, carrier| hash[carrier.id] = carrier.name; hash}
@@ -126,7 +126,7 @@ class AduitPolicyReport
     pols = Policy.no_timeout.where({
       :enrollees => {"$elemMatch" => {
       "rel_code" => "self",
-      :coverage_start => {"$gte" => Date.new(calender_year, 10, 1), "$lte" => Date.new(calender_year, 12, 31)}
+      :coverage_start => {"$gte" => Date.new(calendar_year, 10, 1), "$lte" => Date.new(calendar_year, 12, 31)}
     }},
       :employer_id => nil, "kind" => {"$ne" => "coverall", "id" => {"$eq" => "621367"}}
     }).group_by { |p| p_repo[p.subscriber.m_id] }

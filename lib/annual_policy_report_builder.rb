@@ -4,15 +4,15 @@ require 'csv'
 class AnnualPolicyReportBuilder
 
 
-  attr_reader :calender_year 
+  attr_reader :calendar_year
 
-  def initialize(calender_year)
-    @calender_year = calender_year
+  def initialize(calendar_year)
+    @calendar_year = calendar_year
   end
 
   def generate
     workbook = Spreadsheet::Workbook.new
-    sheet = workbook.create_worksheet :name => "#{calender_year} QHP Policies"
+    sheet = workbook.create_worksheet :name => "#{calendar_year} QHP Policies"
     index = 0
     
     @carriers = Carrier.all.inject({}){|hash, carrier| hash[carrier.id] = carrier.name; hash}
@@ -86,7 +86,7 @@ class AnnualPolicyReportBuilder
       end
     end
 
-    workbook.write "#{Rails.root.to_s}/IVL_#{calender_year}_QHP_1095A_Data_#{Time.now.strftime("%m_%d_%Y_%H_%M")}.xls"
+    workbook.write "#{Rails.root.to_s}/IVL_#{calendar_year}_QHP_1095A_Data_#{Time.now.strftime("%m_%d_%Y_%H_%M")}.xls"
   end
 
   def append_covered_member(indiv)
@@ -141,7 +141,7 @@ class AnnualPolicyReportBuilder
       end
     end
 
-    pols = PolicyStatus::Active.between(Date.new(calender_year-1,12,31), Date.new(calender_year,12,31)).results.where({
+    pols = PolicyStatus::Active.between(Date.new(calendar_year-1,12,31), Date.new(calendar_year,12,31)).results.where({
       :plan_id => {"$in" => plans}, :employer_id => nil
       }).group_by { |p| p_repo[p.subscriber.m_id] }
   end

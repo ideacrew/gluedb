@@ -3,7 +3,7 @@ require 'ostruct'
 module Generators::Reports 
   class IrsGroupBuilder
 
-    attr_accessor :irs_group, :calender_year, :carrier_hash, :npt_policies, :settings
+    attr_accessor :irs_group, :calendar_year, :carrier_hash, :npt_policies, :settings
 
     def initialize(family)
       @family = family
@@ -13,7 +13,7 @@ module Generators::Reports
 
     def process
       @irs_group.identification_num = @family.irs_groups.first.hbx_assigned_id
-      @irs_group.calender_year = @calender_year
+      @irs_group.calendar_year = @calendar_year
       build_households
       build_insurance_policies
     end
@@ -33,7 +33,7 @@ module Generators::Reports
     end
 
     def build_policy(pol)
-      builder = Generators::Reports::IrsInputBuilder.new(pol)
+      builder = Generators::Reports::IrsInputBuilder.new(pol, {report_type: 'h36'})
       builder.carrier_hash = @carrier_hash
       #if pol.term_for_np#@npt_policies.include?(pol.id.to_s)
       #  builder.npt_policy = true
@@ -65,7 +65,7 @@ module Generators::Reports
       households = []
 
       @family.households.each do |household|
-        if household.has_aptc?(@calender_year)
+        if household.has_aptc?(@calendar_year)
           households << build_household_for_aptc(household)
         else
           households << build_household_for_nonaptc(household)
@@ -82,15 +82,15 @@ module Generators::Reports
         tax_households = build_taxhouseholds_from_enrollments(household)
       else
         if tax_households.count > 1
-          tax_households.reject! {|th| th.coverage_policies(@calender_year).empty? } 
+          tax_households.reject! {|th| th.coverage_policies(@calendar_year).empty? }
           tax_households = TaxHousehold.filter_duplicates(tax_households)
         end
 
         tax_pols = TaxHousehold.filter_duplicates(tax_households).inject([]) { |data, th| 
-          data += th.coverage_policies(@calender_year)
+          data += th.coverage_policies(@calendar_year)
         }
 
-        active_pols = household.enrollments_for_year(@calender_year).map(&:policy).select{|policy| policy.subscriber.coverage_start < Date.today.beginning_of_month}
+        active_pols = household.enrollments_for_year(@calendar_year).map(&:policy).select{|policy| policy.subscriber.coverage_start < Date.today.beginning_of_month}
         if tax_households.empty? || (active_pols - tax_pols.flatten).any?
           tax_households = build_taxhouseholds_from_enrollments(household)
         else
@@ -105,7 +105,7 @@ module Generators::Reports
     end
 
     def build_taxhouseholds_from_enrollments(household)
-      policies = household.enrollments_for_year(@calender_year).map(&:policy).select{|policy| policy.subscriber.coverage_start < Date.today.beginning_of_month}
+      policies = household.enrollments_for_year(@calendar_year).map(&:policy).select{|policy| policy.subscriber.coverage_start < Date.today.beginning_of_month}
 
       pols_by_subscriber = policies.inject({}) do |data, policy|
         (data[policy.subscriber.person] ||= []) << policy
@@ -140,7 +140,7 @@ module Generators::Reports
     def build_household_for_nonaptc(household)
       coverage_households = []
 
-      household.policy_coverage_households(@calender_year).each do |coverage_household|
+      household.policy_coverage_households(@calendar_year).each do |coverage_household|
 
         coverage_household[:policy_ids] = coverage_household[:policy_ids].map{|id| Policy.find(id)}.select{|policy| policy.subscriber.coverage_start < Date.today.beginning_of_month}.map(&:id)
         if coverage_household[:policy_ids].present?
@@ -158,7 +158,7 @@ module Generators::Reports
 
     def build_tax_household(tax_household)
       coverage_policy_ids = nil
-      coverage_policy_ids = tax_household.coverage_policies(@calender_year).select{|policy| policy.subscriber.coverage_start < Date.today.beginning_of_month}.map(&:id) if tax_household.class.to_s == 'TaxHousehold' 
+      coverage_policy_ids = tax_household.coverage_policies(@calendar_year).select{|policy| policy.subscriber.coverage_start < Date.today.beginning_of_month}.map(&:id) if tax_household.class.to_s == 'TaxHousehold'
 
       PdfTemplates::TaxHousehold.new({
         primary: build_tax_member(tax_household.primary, true),
@@ -230,7 +230,7 @@ module Generators::Reports
     #   tax_households = []
 
     #   @family.households.each do |household| 
-    #     if @family.has_aptc?(@calender_year)
+    #     if @family.has_aptc?(@calendar_year)
     #       tax_households << household.tax_households
     #     else
     #       tax_households << household.irs_coverage_households
@@ -255,7 +255,7 @@ module Generators::Reports
 
     # def build_household_coverage(tax_household, month)
     #   PdfTemplates::TaxHouseholdCoverage.new({
-    #     calender_month: month,
+    #     calendar_month: month,
     #     primary: build_tax_member(tax_household.primary, true),
     #     spouse: build_tax_member(tax_household.spouse), 
     #     dependents: tax_household.dependents.map{ |dependent| build_tax_member(dependent) },
@@ -274,7 +274,7 @@ module Generators::Reports
       pols = policy_ids.inject([]) {|pols, id| pols << Policy.find(id)}
       pols.reject!{|pol| pol.rejected?}
       pols.reject!{|pol| pol.has_no_enrollees?}
-      pols.reject!{|pol| !pol.belong_to_year?(@calender_year) }
+      pols.reject!{|pol| !pol.belong_to_year?(@calendar_year) }
       pols
     end
 

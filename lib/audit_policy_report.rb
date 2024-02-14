@@ -2,14 +2,14 @@ require 'csv'
 
 class AuditPolicyReport
 
-  attr_reader :calender_year
+  attr_reader :calendar_year
 
-  def initialize(calender_year)
-    @calender_year = calender_year
+  def initialize(calendar_year)
+    @calendar_year = calendar_year
   end
 
   def generate
-    file_name = "#{Rails.root.to_s}/IVL_#{calender_year}_all_policies_#{Time.now.strftime("%m_%d_%Y_%H_%M")}.csv"
+    file_name = "#{Rails.root.to_s}/IVL_#{calendar_year}_all_policies_#{Time.now.strftime("%m_%d_%Y_%H_%M")}.csv"
     CSV.open(file_name, "w") do |csv|
     
       @carriers = Carrier.all.inject({}){|hash, carrier| hash[carrier.id] = carrier.name; hash}
@@ -58,7 +58,7 @@ class AuditPolicyReport
             @data += [policy.enrollees.reject { |k| k.rel_code == 'self' }.count]
             @data += [policy.try(:plan).try(:name), policy.try(:plan).try(:id), policy.try(:plan).try(:metal_level)]
             policy_start_date = policy.policy_start.present? ? policy.policy_start.strftime("%m/%d/%Y") : ''
-            policy_end_date = policy.policy_end.present? ? policy.policy_end.strftime("%m/%d/%Y") : "12/31/#{calender_year}"
+            policy_end_date = policy.policy_end.present? ? policy.policy_end.strftime("%m/%d/%Y") : "12/31/#{calendar_year}"
             @data += [policy_start_date, policy_end_date]
             append_premiums
 
@@ -110,7 +110,7 @@ class AuditPolicyReport
   end
 
   def policies_by_subscriber_1095a
-    plans = Plan.where(year: calender_year).map(&:id)
+    plans = Plan.where(year: calendar_year).map(&:id)
 
     p_repo = {}
     Person.no_timeout.each do |person|
@@ -122,7 +122,7 @@ class AuditPolicyReport
     pols = Policy.no_timeout.where({
       :enrollees => {"$elemMatch" => {
       "rel_code" => "self",
-      :coverage_start => {"$gte" => Date.new(calender_year, 1, 1), "$lte" => Date.new(calender_year, 12, 31)}
+      :coverage_start => {"$gte" => Date.new(calendar_year, 1, 1), "$lte" => Date.new(calendar_year, 12, 31)}
     }},
       :employer_id => nil, :plan_id => {"$in" => plans}
     }).group_by { |p| p_repo[p.subscriber.m_id] }

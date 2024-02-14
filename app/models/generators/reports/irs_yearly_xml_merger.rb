@@ -8,11 +8,6 @@ module Generators::Reports
 
     attr_accessor :irs_yearly_xml_folder
 
-
-    # DURATION = 12
-    # CALENDER_YEAR = 2014
-
-
     NS = {
       "xmlns:air5.0" => "urn:us:gov:treasury:irs:ext:aca:air:ty20a",
       "xmlns:irs" => "urn:us:gov:treasury:irs:common",

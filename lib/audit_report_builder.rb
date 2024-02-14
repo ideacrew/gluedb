@@ -3,11 +3,11 @@ require 'csv'
 
 class AuditReportBuilder
 
-  CALENDER_YEAR = 2017
+  CALENDAR_YEAR = 2017
 
   def qhp_audit_report
     workbook = Spreadsheet::Workbook.new
-    sheet = workbook.create_worksheet :name => "#{CALENDER_YEAR} QHP Policies"
+    sheet = workbook.create_worksheet :name => "#{CALENDAR_YEAR} QHP Policies"
     index = 1
     @carriers = Carrier.all.inject({}){|hash, carrier| hash[carrier.id] = carrier.name; hash}
 
@@ -97,7 +97,7 @@ class AuditReportBuilder
       end
     end
 
-    workbook.write "#{Rails.root.to_s}/audit_report_#{CALENDER_YEAR}.xls"
+    workbook.write "#{Rails.root.to_s}/audit_report_#{CALENDAR_YEAR}.xls"
   end
 
   private
@@ -114,7 +114,7 @@ class AuditReportBuilder
     # end
 
     # plans = Plan.where({:metal_level => {"$not" => /catastrophic/i}, :coverage_type => /health/i, :year => 2017}).map(&:id)
-    plans = Plan.where({:year => CALENDER_YEAR}).map(&:id)
+    plans = Plan.where({:year => CALENDAR_YEAR}).map(&:id)
 
     p_repo = {}
     Person.each do |person|
@@ -123,11 +123,11 @@ class AuditReportBuilder
       end
     end
 
-    pols = PolicyStatus::Active.between(Date.new(CALENDER_YEAR,9,30), Date.new(CALENDER_YEAR,12,31)).results.where({
+    pols = PolicyStatus::Active.between(Date.new(CALENDAR_YEAR,9,30), Date.new(CALENDAR_YEAR,12,31)).results.where({
       :plan_id => {"$in" => plans}, :employer_id => nil
       }) #.group_by { |p| p_repo[p.subscriber.m_id] }
 
-    # pols = PolicyStatus::Active.between(Date.new(CALENDER_YEAR - 1,12,31), Date.new(CALENDER_YEAR,9,30)).results.where({
+    # pols = PolicyStatus::Active.between(Date.new(CALENDAR_YEAR - 1,12,31), Date.new(CALENDAR_YEAR,9,30)).results.where({
     #   :plan_id => {"$in" => plans}, :employer_id => nil
     #   })
 
