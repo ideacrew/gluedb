@@ -41,15 +41,17 @@ module Services
         next if date == max_aptc_dates[-1]
         {
           aptc_start_date: date,
-          aptc_end_date: aptc_end_date(max_aptc_dates, index, calender_month_end),
+          aptc_end_date: aptc_end_date(max_aptc_dates, index, calender_month_end, date),
           max_aptc: max_aptc_value(date)
         }
       end.compact
     end
 
-    def aptc_end_date(sorted_aptc_dates, index, calender_month_end)
+    def aptc_end_date(sorted_aptc_dates, index, calender_month_end, span_start_date)
       if sorted_aptc_dates[index + 1] == calender_month_end
         calender_month_end
+      elsif (sorted_aptc_dates[index + 1] != calender_month_end) && (sorted_aptc_dates[index + 1] == @policy_disposition.policy.policy_end)
+        sorted_aptc_dates[index + 1]
       else
         sorted_aptc_dates[index + 1].prev_day
       end
