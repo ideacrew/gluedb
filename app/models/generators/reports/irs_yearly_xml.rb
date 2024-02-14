@@ -38,9 +38,23 @@ module Generators::Reports
       xml['air5.0'].RecordSequenceNum @notice.policy_id.to_i
       xml['air5.0'].TaxYr 2022
       xml['air5.0'].CorrectedInd (corrected_record_sequence_num.present? ? 1 : 0)
-      xml['air5.0'].CorrectedRecordSequenceNum corrected_record_sequence_num if corrected_record_sequence_num.present?
+      if corrected_record_sequence_num.present?
+        ft = Policy.find(corrected_record_sequence_num.to_s).federal_transmissions.where(report_type: /original/i).first
+        if ft.present?
+          xml['air5.0'].CorrectedRecordSequenceNum "#{ft.batch_id}|#{ft.content_file}|#{corrected_record_sequence_num}"
+        else
+          xml['air5.0'].CorrectedRecordSequenceNum corrected_record_sequence_num
+        end
+      end
       xml['air5.0'].VoidInd (voided_record_sequence_num.present? ? 1 : 0)
-      xml['air5.0'].VoidedRecordSequenceNum voided_record_sequence_num if voided_record_sequence_num.present?
+      if voided_record_sequence_num.present?
+        ft = Policy.find(voided_record_sequence_num.to_s).federal_transmissions.where(report_type: /original/i).first
+        if ft.present?
+          xml['air5.0'].VoidedRecordSequenceNum "#{ft.batch_id}|#{ft.content_file}|#{voided_record_sequence_num}"
+        else
+          xml['air5.0'].VoidedRecordSequenceNum voided_record_sequence_num
+        end
+      end
       xml['air5.0'].MarketplaceId "02.DC*.SBE.001.001"  
     end
 

@@ -33,7 +33,7 @@ module Generators::Reports
     end
 
     def build_policy(pol)
-      builder = Generators::Reports::IrsInputBuilder.new(pol)
+      builder = Generators::Reports::IrsInputBuilder.new(pol, {report_type: 'h36'})
       builder.carrier_hash = @carrier_hash
       #if pol.term_for_np#@npt_policies.include?(pol.id.to_s)
       #  builder.npt_policy = true

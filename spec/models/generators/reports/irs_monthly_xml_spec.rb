@@ -72,7 +72,7 @@ module Generators::Reports
     }
 
     subject { 
-      xml = Generators::Reports::IrsMonthlyXml.new(irs_group, family.e_case_id)
+      xml = Generators::Reports::IrsMonthlyXml.new(irs_group, family.e_case_id, {calendar_year: calendar_year})
       xml.folder_path = Rails.root.to_s
       xml.serialize
     }

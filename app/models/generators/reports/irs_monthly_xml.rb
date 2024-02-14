@@ -1,10 +1,10 @@
 module Generators::Reports  
   class IrsMonthlyXml
+  # To generate irs yearly policies need to send a run time calendar_year params i.e. Generators::Reports::IrsMonthlyXml.new(irs_group, e_case_id, {calendar_year: 2024}) instead of sending hard coded year
 
     include ActionView::Helpers::NumberHelper
 
     DURATION = 12
-    CALENDAR_YEAR = 2018
 
     NS = { 
       "xmlns" => "urn:us:gov:treasury:irs:common",
@@ -13,12 +13,14 @@ module Generators::Reports
       # "xmlns:n1" => "urn:us:gov:treasury:irs:msg:sbmpolicylevelenrollment"  # CMS
     }
 
-    attr_accessor :folder_path
+    attr_accessor :folder_path, :calendar_year
 
-    def initialize(irs_group, e_case_id)
+    def initialize(irs_group, e_case_id, options = {})
       @irs_group = irs_group
       @folder_path = folder_path
       @e_case_id = e_case_id
+      @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
+      @calendar_year = options[:calendar_year]
     end
     
     def serialize
@@ -32,7 +34,7 @@ module Generators::Reports
         xml['n1'].HealthExchange(NS) do
           xml.SubmissionYr Date.today.year.to_s
           xml.SubmissionMonthNum Date.today.month.to_s
-          xml.ApplicableCoverageYr CALENDAR_YEAR
+          xml.ApplicableCoverageYr calendar_year
           xml.IndividualExchange do |xml|
             xml.HealthExchangeId "02.DC*.SBE.001.001"
             serialize_irs_group(xml)
@@ -164,11 +166,11 @@ module Generators::Reports
           xml.TotalQHPMonthlyPremiumAmt premium.premium_amount
           xml.APTCPaymentAmt monthly_aptc 
 
-          if policy.covered_household_as_of(premium.serial, CALENDAR_YEAR).empty?
-            raise "Missing enrollees #{policy.policy_id} #{premium.serial} #{CALENDAR_YEAR}"
+          if policy.covered_household_as_of(premium.serial, calendar_year).empty?
+            raise "Missing enrollees #{policy.policy_id} #{premium.serial} #{calendar_year}"
           end
 
-          policy.covered_household_as_of(premium.serial, CALENDAR_YEAR).each do |individual|
+          policy.covered_household_as_of(premium.serial, calendar_year).each do |individual|
             serialize_covered_individual(xml, individual)
           end
         end
