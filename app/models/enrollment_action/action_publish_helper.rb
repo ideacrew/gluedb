@@ -1,9 +1,10 @@
 module EnrollmentAction
   class ActionPublishHelper
+    include MoneyMath
+
     XML_NS = { :cv => "http://openhbx.org/api/terms/1.0" }
     attr_reader :event_xml_doc
-
-    include MoneyMath
+    delegate :to_xml, :to => :event_xml_doc
 
     def initialize(xml_string)
       @event_xml_doc = Nokogiri::XML(xml_string)

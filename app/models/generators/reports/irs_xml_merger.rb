@@ -10,7 +10,7 @@ module Generators::Reports
 
 
     # DURATION = 12
-    # CALENDER_YEAR = 2014
+    # CALENDAR_YEAR = 2014
 
     NS = { 
       "xmlns" => "urn:us:gov:treasury:irs:common",
@@ -114,8 +114,8 @@ module Generators::Reports
       
       ["PersonFirstName", "PersonMiddleName", "PersonLastName", "AddressLine1Txt", "AddressLine2Txt", "CityNm"].each do |ele|
         node.xpath("//#{ele}", NS).each do |xml_tag|
-          update_ele = Maybe.new(xml_tag.content).strip.gsub(/(\-{2}|\'|\#|\"|\&|\<|\>)/,"").value
-          if xml_tag.content.match(/(\-{2}|\'|\#|\"|\&|\<|\>)/)
+          update_ele = Maybe.new(xml_tag.content).strip.gsub(/(-{2}|'|‛|’|\#|"|`|&|<|>)/, "").value
+          if xml_tag.content.match(/(-{2}|'|‛|’|\#|"|`|&|<|>)/)
             puts xml_tag.content.inspect
             puts update_ele
           end

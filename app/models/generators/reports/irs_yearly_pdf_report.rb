@@ -2,7 +2,7 @@ module Generators::Reports
   class IrsYearlyPdfReport < PdfReport
     include ActionView::Helpers::NumberHelper
 
-    attr_accessor :responsible_party_data, :settings, :calender_year
+    attr_accessor :responsible_party_data, :settings, :calendar_year
 
     def initialize(notice, options={})
       @hbx_id = notice.subscriber_hbx_id
@@ -19,12 +19,12 @@ module Generators::Reports
     def get_template(options)
       notice_type = (['new', 'corrected'].include?(options[:notice_type]) ? 'new' : options[:notice_type])
 
-      template_name = if (options[:calender_year] >= 2016 && options[:notice_type] != 'void')
-        settings[:tax_document][options[:calender_year]][notice_type][:template][options[:qhp_type]]
-      elsif (options[:calender_year] >= 2017 && options[:notice_type] == 'void')
-        settings[:tax_document][options[:calender_year]][notice_type][:template][options[:void_type]]
+      template_name = if (options[:calendar_year] >= 2016 && options[:notice_type] != 'void')
+        settings[:tax_document][options[:calendar_year]][notice_type][:template][options[:qhp_type]]
+      elsif (options[:calendar_year] >= 2017 && options[:notice_type] == 'void')
+        settings[:tax_document][options[:calendar_year]][notice_type][:template][options[:void_type]]
       else
-        settings[:tax_document][options[:calender_year]][notice_type][:template]
+        settings[:tax_document][options[:calendar_year]][notice_type][:template]
       end
 
       "#{Rails.root}/lib/pdf_templates/#{template_name}"
@@ -32,7 +32,7 @@ module Generators::Reports
 
     def initialize_variables(options)
       @qhp_type = options[:qhp_type]
-      @calender_year = options[:calender_year]
+      @calendar_year = options[:calendar_year]
       @multiple = options[:multiple]
       @corrected = options[:notice_type] == 'corrected'
 
@@ -42,12 +42,12 @@ module Generators::Reports
       end
 
       if ['new', 'corrected'].include?(options[:notice_type])
-        instance_variable_set("@notice_#{options[:calender_year]}", true)
+        instance_variable_set("@notice_#{options[:calendar_year]}", true)
       end
 
       if options[:notice_type] == 'void'
         @void = true
-        instance_variable_set("@void_#{options[:calender_year]}", true)
+        instance_variable_set("@void_#{options[:calendar_year]}", true)
       end
 
       @catastrophic = false
@@ -59,13 +59,13 @@ module Generators::Reports
     def process
       fill_envelope
       fill_coverletter
-      fill_hbx_id_for_coverletter if @calender_year >= 2017
+      fill_hbx_id_for_coverletter if @calendar_year >= 2017
       return if @catastrophic_confirmation
       if @catastrophic_corrected
         go_to_page(3)
-      elsif (@notice_2016 || (@void && @calender_year >= 2016))
+      elsif (@notice_2016 || (@void && @calendar_year >= 2016))
         go_to_page(9)
-      elsif @calender_year >= 2017
+      elsif @calendar_year >= 2017
         go_to_page(11)
       else
         go_to_page(5)
@@ -76,7 +76,7 @@ module Generators::Reports
     end
 
     def fill_envelope
-      if @calender_year >= 2017
+      if @calendar_year >= 2017
         x_pos = mm2pt(14.00) - @margin[0]
         y_pos = 790.86 - mm2pt(44.00) - 65
         bounding_box([x_pos, y_pos], :width => 300) do
@@ -113,7 +113,7 @@ module Generators::Reports
     end
 
     def fill_coverletter
-      go_to_page(settings[:tax_document][calender_year][:coverage_page_no])
+      go_to_page(settings[:tax_document][calendar_year][:coverage_page_no])
 
       padding = 31
       padding = 10
@@ -121,12 +121,12 @@ module Generators::Reports
       padding = 26 if @void_2014 || @void_2016
 
       #For Printing Date on template
-      if @calender_year == 2017
+      if @calendar_year == 2017
         bounding_box([17, 445+padding], :width => 200) do
           open_sans_font
           text "#{Date.today.strftime('%m/%d/%Y')}", size: 10
         end
-      elsif @calender_year >= 2018
+      elsif @calendar_year >= 2018
         bounding_box([8.5, 508+padding], :width => 200) do
           open_sans_font
           text "#{Date.today.strftime('%m/%d/%Y')}", size: 10
@@ -138,7 +138,7 @@ module Generators::Reports
       end
 
       #For Printing Address on template
-      if @calender_year >= 2017
+      if @calendar_year >= 2017
         bounding_box([8, 590+padding], :width => 300) do
           open_sans_font
           fill_recipient_contact(10)
@@ -172,12 +172,12 @@ module Generators::Reports
       y_pos = 444 if @void_2015
 
       #For Printing Receipent Name on template for 2017
-      if @calender_year == 2017
+      if @calendar_year == 2017
         bounding_box([42, 375.75+padding], :width => 200) do
           open_sans_font
           text "#{@notice.recipient.name}:", size: 10
         end
-      elsif @calender_year >= 2018
+      elsif @calendar_year >= 2018
         bounding_box([36, 447.6+padding], :width => 200) do
           open_sans_font
           text "#{@notice.recipient.name_first}:", size: 10
@@ -190,7 +190,7 @@ module Generators::Reports
 
       padding = -20 if @void_2016
 
-      if @void && @calender_year >= 2018
+      if @void && @calendar_year >= 2018
         set_positions(340, padding)
       elsif @void_2017
         set_positions(285, padding)
@@ -228,17 +228,17 @@ module Generators::Reports
     end
 
     def fill_hbx_id_for_coverletter
-      if @calender_year >= 2018 && !@void
+      if @calendar_year >= 2018 && !@void
         pages = [4, 5]
-      elsif @qhp_type.present? && (!@void || (@void && @calender_year <= 2016))
+      elsif @qhp_type.present? && (!@void || (@void && @calendar_year <= 2016))
         pages = [4, 5, 6]
-      elsif @void && @calender_year >= 2017
+      elsif @void && @calendar_year >= 2017
         pages = [4]
       end
 
       pages.each do |page|
         go_to_page(page)
-        if @calender_year >= 2018
+        if @calendar_year >= 2018
           bounding_box([405, 753], :width => 200) do
             open_sans_font
             text "#{@hbx_id}", size: 8
@@ -273,7 +273,7 @@ module Generators::Reports
 
       x_pos_corrected = mm2pt(128.50)
       y_pos_corrected = 790.86 - mm2pt(31.80)
-      y_pos_corrected = 790.86 - mm2pt(23.80) if @void && @calender_year >= 2015
+      y_pos_corrected = 790.86 - mm2pt(23.80) if @void && @calendar_year >= 2015
 
       if @corrected || @void
         bounding_box([x_pos_corrected, y_pos_corrected], :width => 100) do
@@ -464,7 +464,7 @@ module Generators::Reports
       print_policies(canceled_policies, 18, y_position+padding)
       if @notice.active_policies.present?
         active_policies = @notice.active_policies.split(',')
-        y_ps = (@void && @calender_year >= 2019) ? 125+padding : 130+padding
+        y_ps = (@void && @calendar_year >= 2019) ? 125+padding : 130+padding
         print_policies(active_policies, 18, y_ps)
       end
     end

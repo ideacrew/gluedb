@@ -16,6 +16,7 @@ module PdfTemplates
     attribute :non_covered_subscriberInd, String, :default => 'N'
     attribute :member_start_date, String
     attribute :member_end_date, String
+    attribute :hbx_id, String
 
     def to_csv
         [
@@ -32,6 +33,7 @@ module PdfTemplates
             #non_covered_subscriberInd,
             member_start_date,
             member_end_date,
+            hbx_id,
         ]
     end
   end

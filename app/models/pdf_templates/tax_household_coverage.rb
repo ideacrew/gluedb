@@ -2,7 +2,7 @@
   class TaxHouseholdCoverage
     include Virtus.model
 
-    attribute :calender_month, Integer
+    attribute :calendar_month, Integer
     attribute :primary, PdfTemplates::Enrollee
     attribute :spouse, PdfTemplates::Enrollee
     attribute :dependents, Array[PdfTemplates::Enrollee]

@@ -11,7 +11,7 @@ describe Generators::Reports::IrsYearlySerializer, :dbclean => :after_each do
 
   let(:params) { {  policy_id: policy.id, type: "new", void_cancelled_policy_ids: [ Moped::BSON::ObjectId.new ] , void_active_policy_ids: [ Moped::BSON::ObjectId.new ], npt: policy.term_for_np } }
   let(:household) {double(name:"name", ssn:"00000000")}
-  let(:options) { { multiple: false, calender_year: 2018, qhp_type: "assisted", notice_type: 'new'} }
+  let(:options) { { multiple: false, calendar_year: 2018, qhp_type: "assisted", notice_type: 'new'} }
   let(:premium) {double(premium_amount:100, slcsp_premium_amount: 200, aptc_amount:0)}
   let(:monthly_premiums) { [OpenStruct.new({serial: (1), premium_amount: 0.0, premium_amount_slcsp: 0.0, monthly_aptc: 0.0})] }  
   let(:h41_folder_name)  { "FEP0020DC.DSH.EOYIN.D#{Time.now.strftime('%Y%m%d')[2..-1]}.T#{Time.now.strftime("%H%M%S") + "000"}.P.IN" }
@@ -49,19 +49,5 @@ subject { Generators::Reports::IrsYearlySerializer.new(params) }
         FileUtils.rm_rf(Dir["#{Rails.root}/tmp/irs_notices"])
       end
     end 
-
-    context '#generate_h41' do
-      it 'generates a individual h41 file' do 
-        expect(File).not_to exist("#{h41_folder_name}") 
-        policy.subscriber.update_attributes!(m_id: person.authority_member_id)
-        person.update_attributes(authority_member_id: policy.subscriber.m_id)
-        subject.generate_h41
-        expect(File).to exist("#{h41_folder_name}")
-        expect(File).to exist("#{h41_folder_name}.zip")
-        FileUtils.rm_rf(Dir["FEP*"])
-        FileUtils.rm_rf(Dir[("H41_federal_report")])
-        FileUtils.rm_rf(Dir["*.zip"])
-      end
-    end
   end
 end

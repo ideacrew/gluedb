@@ -13,6 +13,8 @@ module PdfTemplates
     attribute :name_last, String
     attribute :name_middle, String
     attribute :name_sfx, String
+    attribute :hbx_id, String
+    attribute :gender, String
     attribute :address, PdfTemplates::NoticeAddress
     attribute :employer, PdfTemplates::EmployerMec
 

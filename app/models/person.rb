@@ -455,7 +455,7 @@ class Person
   private
 
   def initialize_authority_member
-    self.authority_member = members.first.hbx_member_id if members.length == 1
+    self.authority_member = members.first.hbx_member_id if members.count == 1
   end
 
   def query_proxy

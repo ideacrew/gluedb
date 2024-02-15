@@ -2,8 +2,8 @@ site:
   short_name: "DC HealthLink"
   long_name: "DC HealthLink Glue DB"
   copyright_period_start: "2014"
+  source_exchange_code: DC0
 
-  
   social_media:
     facebook_url: ""
 
@@ -13,3 +13,6 @@ contact_center:
   city: "Washington"
   state_abbreviation: "DC"
   postal_code: "20090"
+
+shop_market:
+  market_enabled: true

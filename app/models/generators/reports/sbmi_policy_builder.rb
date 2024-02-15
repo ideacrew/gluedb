@@ -1,6 +1,6 @@
 require 'ostruct'
 
-module Generators::Reports 
+module Generators::Reports
   class SbmiPolicyBuilder
     include MoneyMath
 
@@ -22,7 +22,8 @@ module Generators::Reports
     def append_policy_information
       sbmi_policy.record_control_number = policy.id
       sbmi_policy.qhp_id = policy.plan.hios_plan_id.split('-').first
-      sbmi_policy.exchange_policy_id = policy.eg_id 
+      #sbmi_policy.rating_area = policy.rating_area
+      sbmi_policy.exchange_policy_id = policy.eg_id
       sbmi_policy.exchange_subscriber_id = policy.subscriber.m_id
       sbmi_policy.coverage_start = format_date(policy.policy_start)
       sbmi_policy.coverage_end = format_date(policy.policy_end)
@@ -30,7 +31,7 @@ module Generators::Reports
       sbmi_policy.effectuation_status = if policy.canceled?
         'N'
       elsif policy.aasm_state == 'resubmitted'
-        'Y'  
+        'Y'
       else
         if policy.subscriber.coverage_start > Date.new(2020, 12, 31)
           policy.effectuated? ? 'Y' : 'N'
@@ -223,7 +224,7 @@ module Generators::Reports
     def mid_month_end_date?(financial_dates)
       coverage_period_end = financial_dates[1]
       coverage_period_end.present? && (coverage_period_end.end_of_month != coverage_period_end)
-    end  
+    end
 
     def csr_variant
       if policy.plan.coverage_type =~ /health/i

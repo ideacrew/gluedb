@@ -1,10 +1,10 @@
 module Generators::Reports  
   class IrsMonthlyXml
+  # To generate irs yearly policies need to send a run time calendar_year params i.e. Generators::Reports::IrsMonthlyXml.new(irs_group, e_case_id, {calendar_year: 2024}) instead of sending hard coded year
 
     include ActionView::Helpers::NumberHelper
 
     DURATION = 12
-    CALENDER_YEAR = 2018
 
     NS = { 
       "xmlns" => "urn:us:gov:treasury:irs:common",
@@ -13,12 +13,14 @@ module Generators::Reports
       # "xmlns:n1" => "urn:us:gov:treasury:irs:msg:sbmpolicylevelenrollment"  # CMS
     }
 
-    attr_accessor :folder_path
+    attr_accessor :folder_path, :calendar_year
 
-    def initialize(irs_group, e_case_id)
+    def initialize(irs_group, e_case_id, options = {})
       @irs_group = irs_group
       @folder_path = folder_path
       @e_case_id = e_case_id
+      @settings = YAML.load(File.read("#{Rails.root}/config/irs_settings.yml")).with_indifferent_access
+      @calendar_year = options[:calendar_year]
     end
     
     def serialize
@@ -32,7 +34,7 @@ module Generators::Reports
         xml['n1'].HealthExchange(NS) do
           xml.SubmissionYr Date.today.year.to_s
           xml.SubmissionMonthNum Date.today.month.to_s
-          xml.ApplicableCoverageYr CALENDER_YEAR
+          xml.ApplicableCoverageYr calendar_year
           xml.IndividualExchange do |xml|
             xml.HealthExchangeId "02.DC*.SBE.001.001"
             serialize_irs_group(xml)
@@ -52,21 +54,21 @@ module Generators::Reports
     def serialize_taxhouseholds(xml)
       @irs_group.irs_households_for_duration(DURATION).each do |tax_household|
         xml.TaxHousehold do |xml|
-          (1..DURATION).each do |calender_month|
-            next if @irs_group.irs_household_coverage_as_of(tax_household, calender_month).empty?
-            serialize_taxhousehold_coverage(xml, tax_household, calender_month)
+          (1..DURATION).each do |calendar_month|
+            next if @irs_group.irs_household_coverage_as_of(tax_household, calendar_month).empty?
+            serialize_taxhousehold_coverage(xml, tax_household, calendar_month)
           end
         end
       end
     end
 
-    def serialize_taxhousehold_coverage(xml, tax_household, calender_month)
+    def serialize_taxhousehold_coverage(xml, tax_household, calendar_month)
       xml.TaxHouseholdCoverage do |xml|
-        xml.ApplicableCoverageMonthNum prepend_zeros(calender_month.to_s, 2)
+        xml.ApplicableCoverageMonthNum prepend_zeros(calendar_month.to_s, 2)
         xml.Household do |xml|
           serialize_household_members(xml, tax_household)
-          @irs_group.irs_household_coverage_as_of(tax_household, calender_month).each do |policy|
-            montly_disposition = policy.premium_rec_for(calender_month)
+          @irs_group.irs_household_coverage_as_of(tax_household, calendar_month).each do |policy|
+            montly_disposition = policy.premium_rec_for(calendar_month)
             serialize_associated_policy(xml, montly_disposition, policy)
           end
         end
@@ -108,15 +110,15 @@ module Generators::Reports
 
     def serialize_address(xml, address)
       xml.PersonAddressGrp do |xml|
-      xml.USAddressGrp do |xml|
-        xml.AddressLine1Txt address.street_1
-        xml.AddressLine2Txt address.street_2
-        xml.CityNm address.city.gsub(/[\.\,]/, '')
-        xml.USStateCd address.state
-        xml.USZIPCd address.zip.split('-')[0]
-        # xml.USZIPExtensionCd
+        xml.USAddressGrp do |xml|
+          xml.AddressLine1Txt address.street_1
+          xml.AddressLine2Txt address.street_2
+          xml.CityNm address.city.gsub(/[\.\,]/, '')
+          xml.USStateCd address.state
+          xml.USZIPCd address.zip.split('-')[0]
+          # xml.USZIPExtensionCd
+        end
       end
-    end
     end
 
     def serialize_associated_policy(xml, montly_disposition, policy)
@@ -164,11 +166,11 @@ module Generators::Reports
           xml.TotalQHPMonthlyPremiumAmt premium.premium_amount
           xml.APTCPaymentAmt monthly_aptc 
 
-          if policy.covered_household_as_of(premium.serial, CALENDER_YEAR).empty?
-            raise "Missing enrollees #{policy.policy_id} #{premium.serial} #{CALENDER_YEAR}"
+          if policy.covered_household_as_of(premium.serial, calendar_year).empty?
+            raise "Missing enrollees #{policy.policy_id} #{premium.serial} #{calendar_year}"
           end
 
-          policy.covered_household_as_of(premium.serial, CALENDER_YEAR).each do |individual|
+          policy.covered_household_as_of(premium.serial, calendar_year).each do |individual|
             serialize_covered_individual(xml, individual)
           end
         end

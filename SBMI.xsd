@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://sbmi.dsh.cms.gov" xmlns:sbmi="http://sbmi.dsh.cms.gov" targetNamespace="http://sbmi.dsh.cms.gov" elementFormDefault="qualified">
+	<xs:element name="Enrollment">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="FileInformation" type="FileInformationType"/>
+				<xs:element name="Policy" type="PolicyType" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="FinancialInformationType">
+		<xs:sequence>
+			<xs:element name="FinancialEffectiveStartDate" type="xs:date"/>
+			<xs:element name="FinancialEffectiveEndDate" type="xs:date"/>
+			<xs:element name="MonthlyTotalPremiumAmount" type="AmountSimpleType"/>
+			<xs:element name="MonthlyTotalIndividualResponsibilityAmount" type="AmountSimpleType"/>
+			<xs:element name="MonthlyAPTCAmount" type="AmountSimpleType" minOccurs="0"/>
+			<xs:element name="MonthlyOtherPaymentAmount1" type="AmountSimpleType" minOccurs="0"/>
+			<xs:element name="MonthlyOtherPaymentAmount2" type="AmountSimpleType" minOccurs="0"/>
+			<xs:element name="MonthlyCSRAmount" type="AmountSimpleType" minOccurs="0"/>
+			<xs:element name="CSRVariantId">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="01"/>
+						<xs:enumeration value="02"/>
+						<xs:enumeration value="03"/>
+						<xs:enumeration value="04"/>
+						<xs:enumeration value="05"/>
+						<xs:enumeration value="06"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="RatingArea" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="ProratedAmount" type="ProratedAmountType" minOccurs="0" maxOccurs="2"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="PolicyMemberType">
+		<xs:sequence>
+			<xs:element name="ExchangeAssignedMemberId">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:minLength value="1"/>
+						<xs:maxLength value="50"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="SubscriberIndicator">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:minLength value="1"/>
+						<xs:maxLength value="1"/>
+						<xs:enumeration value="Y"/>
+						<xs:enumeration value="N"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="IssuerAssignedMemberId" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="NamePrefix" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="MemberLastName">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:minLength value="1"/>
+						<xs:maxLength value="60"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="MemberFirstName" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="MemberMiddleName" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="NameSuffix" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="BirthDate" type="xs:date"/>
+			<xs:element name="SocialSecurityNumber" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="PostalCode">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:minLength value="3"/>
+						<xs:maxLength value="15"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="LanguageQualifierCode" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="LanguageCode" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="GenderCode" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="RaceEthnicityCode" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="TobaccoUseCode" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="NonCoveredSubscriberInd" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="MemberDates" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="MemberStartDate" type="xs:date"/>
+						<xs:element name="MemberEndDate" type="xs:date"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="PolicyType">
+		<xs:sequence>
+			<xs:element name="RecordControlNumber">
+				<xs:simpleType>
+					<xs:restriction base="xs:integer">
+						<xs:minInclusive value="1"/>
+						<xs:maxInclusive value="999999999"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="QHPId">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:minLength value="14"/>
+						<xs:maxLength value="14"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="ExchangeAssignedPolicyId">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:minLength value="1"/>
+						<xs:maxLength value="50"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="ExchangeAssignedSubscriberId">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:minLength value="1"/>
+						<xs:maxLength value="50"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="IssuerAssignedPolicyId" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="IssuerAssignedSubscriberId" minOccurs="0">
+				<xs:simpleType>
+					<xs:restriction base="xs:string"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="PolicyStartDate" type="xs:date"/>
+			<xs:element name="PolicyEndDate" type="xs:date"/>
+			<xs:element name="EffectuationIndicator">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="Y"/>
+						<xs:enumeration value="N"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="InsuranceLineCode">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:minLength value="3"/>
+						<xs:maxLength value="3"/>
+						<xs:enumeration value="HLT"/>
+						<xs:enumeration value="DEN"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="MemberInformation" type="PolicyMemberType" maxOccurs="unbounded"/>
+			<xs:element name="FinancialInformation" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="FinancialInformationType"/>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="FileInformationType">
+		<xs:sequence>
+			<xs:element name="FileId">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:minLength value="1"/>
+						<xs:maxLength value="50"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="FileCreateDateTime" type="xs:dateTime"/>
+			<xs:element name="TenantId">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:maxLength value="3"/>
+						<xs:minLength value="3"/>
+						<xs:pattern value="CA[0-9]"/>
+						<xs:pattern value="CO[0-9]"/>
+						<xs:pattern value="CT[0-9]"/>
+						<xs:pattern value="DC[0-9]"/>
+						<xs:pattern value="ID[0-9]"/>
+						<xs:pattern value="KY[0-9]"/>
+						<xs:pattern value="MD[0-9]"/>
+						<xs:pattern value="MA[0-9]"/>
+						<xs:pattern value="MN[0-9]"/>
+						<xs:pattern value="NY[0-9]"/>
+						<xs:pattern value="RI[0-9]"/>
+						<xs:pattern value="VT[0-9]"/>
+						<xs:pattern value="WA[0-9]"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="CoverageYear">
+				<xs:simpleType>
+					<xs:restriction base="xs:integer">
+						<xs:minInclusive value="2016"/>
+						<xs:maxInclusive value="2999"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="IssuerFileInformation" minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="IssuerId">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:length value="5"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="IssuerFileSet" minOccurs="0">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="IssuerFileSetId">
+										<xs:simpleType>
+											<xs:restriction base="xs:string">
+												<xs:minLength value="7"/>
+												<xs:maxLength value="10"/>
+											</xs:restriction>
+										</xs:simpleType>
+									</xs:element>
+									<xs:element name="FileNumber">
+										<xs:simpleType>
+											<xs:restriction base="xs:integer">
+												<xs:minInclusive value="1"/>
+												<xs:maxInclusive value="999"/>
+											</xs:restriction>
+										</xs:simpleType>
+									</xs:element>
+									<xs:element name="TotalIssuerFiles">
+										<xs:simpleType>
+											<xs:restriction base="xs:integer">
+												<xs:minInclusive value="1"/>
+												<xs:maxInclusive value="999"/>
+											</xs:restriction>
+										</xs:simpleType>
+									</xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="AmountSimpleType">
+		<xs:restriction base="xs:decimal">
+			<xs:maxInclusive value="99999999.99"/>
+			<xs:fractionDigits value="2"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="ProratedAmountType">
+		<xs:sequence>
+			<xs:element name="PartialMonthEffectiveStartDate" type="xs:date"/>
+			<xs:element name="PartialMonthEffectiveEndDate" type="xs:date"/>
+			<xs:element name="PartialMonthPremiumAmount" type="AmountSimpleType"/>
+			<xs:element name="PartialMonthAPTCAmount" type="AmountSimpleType" minOccurs="0"/>
+			<xs:element name="PartialMonthCSRAmount" type="AmountSimpleType" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>
