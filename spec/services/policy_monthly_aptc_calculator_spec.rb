@@ -107,4 +107,24 @@ describe Services::PolicyMonthlyAptcCalculator, :dbclean => :after_each do
       expect(monthly_aptc_calculator.max_aptc_amount_for(4).round(2)).to eq 100.00
     end
   end
+
+  context 'when a policy terminates on the first of the month has a different end date than its start date' do
+    let(:aptc_prorated_amount) { 3.23 }
+
+    it 'returns the policy prorated amount in the 3rd month of the calendar_year' do
+      policy.update_attributes!(pre_amt_tot: "300", tot_res_amt: "300", tot_emp_res_amt: "0", applied_aptc: "100.00")
+      policy.enrollees.where(rel_code: "self").first.update_attributes!(pre_amt: "300", coverage_end: Date.new(calendar_year, 3, 1), emp_stat: "terminated", coverage_status: "inactive")
+      policy.enrollees.where(rel_code: "child").first.update_attributes!(pre_amt: "200", coverage_end: Date.new(calendar_year, 3, 1), emp_stat: "terminated", coverage_status: "inactive")
+      policy.aasm_state = 'terminated'
+      policy.save
+
+      expect(policy.enrollees.count).to eq 2
+      expect(policy_disposition.as_of(coverage_start).applied_aptc).to eq 100.00
+      expect(policy_disposition.as_of(Date.new(calendar_year, 1, 1)).applied_aptc).to eq 100.00
+      expect(monthly_aptc_calculator.max_aptc_amount_for(1).round(2)).to eq 100.00
+
+      # Prorated amount for 3rd month will be calculated only for 1 day
+      expect(monthly_aptc_calculator.max_aptc_amount_for(3).round(2)).to eq aptc_prorated_amount
+    end
+  end
 end

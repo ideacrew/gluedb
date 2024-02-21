@@ -33,15 +33,21 @@ module Services
           premium_dates << (enrollee.coverage_end + 1.day)
         end
       end
+
       sorted_premium_dates = premium_dates.compact.uniq.sort
-      month_premiums = sorted_premium_dates.each_with_index.collect do |date, index|
-        next if date == sorted_premium_dates[-1]
-        {
-          premium_start_date: date,
-          premium_end_date: premium_end_date(sorted_premium_dates, index, calendar_month_end),
-          premium: @policy_disposition.as_of(date, @silver_plan).ehb_premium
-        }
-      end.compact
+      if sorted_premium_dates.count == 1
+        [{premium_start_date: sorted_premium_dates.first, premium_end_date: sorted_premium_dates.first, premium: @policy_disposition.as_of(premium_start_date.first, @silver_plan).ehb_premium}]
+      else
+        month_premiums = sorted_premium_dates.each_with_index.collect do |date, index|
+          next if date == sorted_premium_dates[-1]
+
+          {
+            premium_start_date: date,
+            premium_end_date: premium_end_date(sorted_premium_dates, index, calendar_month_end),
+            premium: @policy_disposition.as_of(date, @silver_plan).ehb_premium
+          }
+        end.compact
+      end
     end
 
     def premium_end_date(sorted_premium_dates, index, calendar_month_end)

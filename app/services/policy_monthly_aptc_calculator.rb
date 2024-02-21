@@ -37,14 +37,19 @@ module Services
       end
 
       max_aptc_dates = aptc_dates.compact.uniq.sort
-      max_aptc_dates.each_with_index.collect do |date, index|
-        next if date == max_aptc_dates[-1]
-        {
-          aptc_start_date: date,
-          aptc_end_date: aptc_end_date(max_aptc_dates, index, calendar_month_end, date),
-          max_aptc: max_aptc_value(date)
-        }
-      end.compact
+      if max_aptc_dates.count == 1
+        [{aptc_start_date: max_aptc_dates.first, aptc_end_date: max_aptc_dates.first, max_aptc: max_aptc_value(max_aptc_dates.first)}]
+      else
+        max_aptc_dates.each_with_index.collect do |date, index|
+          next if date == max_aptc_dates[-1]
+
+          {
+            aptc_start_date: date,
+            aptc_end_date: aptc_end_date(max_aptc_dates, index, calendar_month_end, date),
+            max_aptc: max_aptc_value(date)
+          }
+        end.compact
+      end
     end
 
     def aptc_end_date(sorted_aptc_dates, index, calendar_month_end, span_start_date)

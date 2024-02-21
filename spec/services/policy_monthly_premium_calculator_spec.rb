@@ -70,4 +70,24 @@ describe Services::PolicyMonthlyPremiumCalculator do
       expect(prem_amount_calculator.ehb_premium_for(4).round(2)).to eq 250.00
     end
   end
+
+  context 'when a policy terminates on the first of the month has a different end date than its start date' do
+    let(:prorated_amount) { 9.68 }
+
+    it 'returns the policy prorated amount in the 3rd month of the calendar_year' do
+      policy.update_attributes!(pre_amt_tot: "300", tot_res_amt: "300", tot_emp_res_amt: "0", allocated_aptc: "0", elected_aptc: "0", applied_aptc: "0")
+      policy.enrollees.where(rel_code: "self").first.update_attributes!(pre_amt: "300", coverage_end: Date.new(calendar_year, 3, 1), emp_stat: "terminated", coverage_status: "inactive")
+      policy.enrollees.where(rel_code: "child").first.update_attributes!(pre_amt: "200", coverage_end: Date.new(calendar_year, 3, 1), emp_stat: "terminated", coverage_status: "inactive")
+      policy.aasm_state = 'terminated'
+      policy.save
+
+      expect(policy.enrollees.count).to eq 2
+      expect((policy_disposition.as_of(coverage_start).ehb_premium).to_f).to eq 300.00
+      expect(prem_amount_calculator.ehb_premium_for(1).round(2)).to eq 300.00
+      expect(prem_amount_calculator.ehb_premium_for(2).round(2)).to eq 300.00
+
+      # Prorated amount for 3rd month will be calculated only for 1 day
+      expect(prem_amount_calculator.ehb_premium_for(3).round(2)).to eq prorated_amount
+    end
+  end
 end
