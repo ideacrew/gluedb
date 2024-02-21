@@ -37,7 +37,7 @@ module Services
       end
 
       max_aptc_dates = aptc_dates.compact.uniq.sort
-      if max_aptc_dates.count == 1
+      if max_aptc_dates.count == 1 && max_aptc_dates.first != policy.policy_start
         [{aptc_start_date: max_aptc_dates.first, aptc_end_date: max_aptc_dates.first, max_aptc: max_aptc_value(max_aptc_dates.first)}]
       else
         max_aptc_dates.each_with_index.collect do |date, index|

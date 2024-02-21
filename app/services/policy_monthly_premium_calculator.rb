@@ -35,7 +35,7 @@ module Services
       end
 
       sorted_premium_dates = premium_dates.compact.uniq.sort
-      if sorted_premium_dates.count == 1
+      if sorted_premium_dates.count == 1 && sorted_premium_dates.first != policy.policy_start
         [{premium_start_date: sorted_premium_dates.first, premium_end_date: sorted_premium_dates.first, premium: @policy_disposition.as_of(premium_start_date.first, @silver_plan).ehb_premium}]
       else
         month_premiums = sorted_premium_dates.each_with_index.collect do |date, index|
