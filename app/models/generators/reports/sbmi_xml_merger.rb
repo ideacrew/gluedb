@@ -1,13 +1,13 @@
 require 'nokogiri'
 
-module Generators::Reports  
+module Generators::Reports
   class SbmiXmlMerger
 
     attr_reader :xml_docs
     attr_accessor :sbmi_folder_path, :calendar_year, :hios_prefix, :settings
 
 
-    NS = { 
+    NS = {
       "xmlns" => "http://sbmi.dsh.cms.gov",
       "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance",
     }
@@ -40,12 +40,12 @@ module Generators::Reports
       consolidated_xml = Nokogiri::XML::Builder.new do |xml|
         xml.Enrollment(NS) do |xml|
 
-          xml.FileInformation do 
+          xml.FileInformation do
             xml.FileId "#{Time.now.utc.strftime('%Y%m%d%H%M%S')}#{hios_prefix}"
             xml.FileCreateDateTime Time.now.utc.iso8601
             xml.TenantId Settings.site.source_exchange_code
             xml.CoverageYear calendar_year
-            xml.IssuerFileInformation do 
+            xml.IssuerFileInformation do
               xml.IssuerId hios_prefix
             end
           end
@@ -62,13 +62,13 @@ module Generators::Reports
           node.add_child(new_node.to_xml(:indent => 2) + "\n")
         end
       end
-    
-      consolidated_doc       
+
+      consolidated_doc
     end
 
     def merge
       cms_pbp_source_sbm_id = settings[:cms_pbp_generation][:cms_pbp_source_sbm_id]
-      file_name = "#{cms_pbp_source_sbm_id}.EPS.SBMI.D#{Time.now.utc.strftime('%y%m%d')}.T#{Time.now.utc.strftime('%H%M%S')}000.P.IN"
+      file_name = "#{cms_pbp_source_sbm_id}.EPS.SBMI.D#{Time.now.utc.strftime('%y%m%d')}.T#{Time.now.utc.strftime('%H%M%S')}000.P"
       @data_file_path = "#{sbmi_folder_path}/#{file_name}"
 
       File.open(@data_file_path, 'w') do |file|
@@ -111,7 +111,7 @@ module Generators::Reports
     #     update_ssn = Maybe.new(ssn_node.content).strip.gsub("-","").value
     #     ssn_node.content = update_ssn
     #   end
-      
+
     #   ["PersonFirstName", "PersonMiddleName", "PersonLastName"].each do |ele|
     #     node.xpath("//#{ele}", NS).each do |xml_tag|
     #       update_ele = Maybe.new(xml_tag.content).strip.gsub(/(\-{2}|\'|\#|\"|\&|\<|\>)/,"").value

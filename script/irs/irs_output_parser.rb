@@ -36,7 +36,7 @@ module Irs
     def folder_name(timestamp)
      year = timestamp.match(/^\d{4}/)[0]
      match_obj = timestamp.to_s.gsub(/^\d{4}/, year[2..3]).match(/(.*)T(.*)/)
-     "FEP0020DC.DSH.EOYIN.D#{match_obj[1].gsub('-', '')}.T#{match_obj[2].gsub(':', '').chop}000.P.IN"
+     "FEP0020DC.DSH.EOYIN.D#{match_obj[1].gsub('-', '')}.T#{match_obj[2].gsub(':', '').chop}000.P"
    end
 
     def build_file_hash

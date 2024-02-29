@@ -12,9 +12,9 @@ class XmlValidator
       puts "processing...#{filename.inspect}"
 
     # H41
-    # xsd = Nokogiri::XML::Schema(File.open("#{Rails.root.to_s}/ACA_AIR_5_0_1095A_Schema_Marketplace/MSG/IRS-Form1095ATransmissionUpstreamMessage.xsd")) 
+    # xsd = Nokogiri::XML::Schema(File.open("#{Rails.root.to_s}/ACA_AIR_5_0_1095A_Schema_Marketplace/MSG/IRS-Form1095ATransmissionUpstreamMessage.xsd"))
 
-    # doc = Nokogiri::XML(File.open("#{Rails.root.to_s}/irs_h41/FEP0020DC.DSH.EOYIN.D150127.T180947000.P.IN/EOY_Request_00001_20150127T203309Z.xml"))
+    # doc = Nokogiri::XML(File.open("#{Rails.root.to_s}/irs_h41/FEP0020DC.DSH.EOYIN.D150127.T180947000.P/EOY_Request_00001_20150127T203309Z.xml"))
     # filename = "#{Rails.root.to_s}/HHS_ACA_XML_LIBRARY_8.6_for_Marketplace_Reporting/XML_LIBRARY_8.6/MSG/HHS-IRS-IndividualExchangePeriodicData.xml"
     # xsd = Nokogiri::XML::Schema(File.open("#{Rails.root.to_s}/HHS_ACA_XML_LIBRARY_8.6_for_Marketplace_Reporting/XML_LIBRARY_8.6/MSG/HHS-IRS-MonthlyExchangePeriodicDataMessage-1.0.xsd"))
     # doc = Nokogiri::XML(File.open(filename))
@@ -29,7 +29,7 @@ class XmlValidator
     if type == :h41
       xsd = Nokogiri::XML::Schema(File.open("#{Rails.root.to_s}/ACA_AIR5_1095-ASchema-Marketplace/MSG/IRS-Form1095ATransmissionUpstreamMessage.xsd"))
     end
-    
+
     if type == :h36
       xsd = Nokogiri::XML::Schema(File.open("#{Rails.root.to_s}/XML_LIBRARY_8_18/MSG/HHS-IRS-MonthlyExchangePeriodicDataMessage-1.0.xsd")) # IRS 2016
     end
