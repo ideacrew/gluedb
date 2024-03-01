@@ -1,12 +1,12 @@
 class SubscriberInventory
-  def self.subscriber_ids_for(carrier_hios, year)
-    plans = plans_for(carrier_hios, year)
-    aggregate_query_for_subscribers_under_plans(plans)
+  def self.subscriber_ids_for(filters)
+    plan_ids = select_filtered_plan_ids(filters)
+    aggregate_query_for_subscribers_under_plans(plan_ids)
   end
 
-  def self.aggregate_query_for_subscribers_under_plans(plans)
+  def self.aggregate_query_for_subscribers_under_plans(plan_ids)
     Policy.collection.raw_aggregate([
-      {"$match" => {"plan_id" => {"$in" => plans.map(&:_id)}}},
+      {"$match" => {"plan_id" => {"$in" => plan_ids}}},
       {"$unwind" => "$enrollees"},
       {"$match" => {"enrollees.rel_code" => "self"}},
       {"$group" => {"_id" => "$enrollees.m_id"}}
@@ -37,7 +37,7 @@ class SubscriberInventory
     if filters.has_key?(:year)
       filter_criteria[:year] = filters[:year]
     end
-    return nil if filter_criteria.empty?
+    return [] if filter_criteria.empty?
 
     Rails.cache.fetch("plan-ids-#{filter_criteria[:hios_plan_id]}-#{filter_criteria[:year]}", expires_in: 24.hour) do
       plans = Plan.where(filter_criteria)
