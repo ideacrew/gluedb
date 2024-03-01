@@ -103,8 +103,10 @@ Gluedb::Application.routes.draw do
     member do
       get :cancelterminate
       post :transmit
+      put :change_npt_indicator
       get :generate_tax_document_form
       post :generate_tax_document
+      post :trigger_1095A_H41
       get :download_tax_document
       post :upload_tax_document_to_S3
       delete :delete_local_generated_tax_document

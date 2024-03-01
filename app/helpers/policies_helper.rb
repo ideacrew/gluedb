@@ -1,11 +1,11 @@
 module PoliciesHelper
 
   def show_1095A_document_button?(policy)
-    if policy.subscriber
-      Time.now.in_time_zone('Eastern Time (US & Canada)').year > policy.subscriber.coverage_start.year
-    else
-      false
-    end
+    is_policy_not_eligible_to_notify?(policy) ? false : true
+  end
+
+  def is_policy_not_eligible_to_notify?(policy)
+    policy.kind == 'coverall' || policy.is_shop? || policy.plan.metal_level == "catastrophic" || policy.coverage_type.to_s.downcase != "health" || policy.coverage_year.first.year >= Time.now.year
   end
 
   def disable_radio_button?(policy)

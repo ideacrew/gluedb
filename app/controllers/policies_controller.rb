@@ -56,6 +56,23 @@ class PoliciesController < ApplicationController
 
   end
 
+  # Handles a PUT request
+  # @note This method may modify our termination reason on policy
+  # @param request [Request] the request object
+  # @return [String] the resulting webpage
+  def change_npt_indicator
+    altered_npt_indicator = params[:policy][:npt_indicator]
+    policy = Policy.find(params[:policy][:id])
+    response = policy.change_npt_indicator(policy, altered_npt_indicator, current_user.email)
+    if response
+      message = {notice: "The NPT Indicator was successfully updated to '#{altered_npt_indicator.capitalize}'."}
+    else
+      message = {error: "An error occurred: The NPT Indicator was unable to be updated with the new value selected."}
+    end
+    person = Policy.find(params[:policy][:id]).subscriber.person
+    redirect_to person_path(person), flash: message
+  end
+
   def index
     @q = params[:q]
     @qf = params[:qf]
@@ -68,9 +85,9 @@ class PoliciesController < ApplicationController
     end
 
     respond_to do |format|
-	    format.html # index.html.erb
-	    format.json { render json: @policies }
-	  end
+      format.html # index.html.erb
+      format.json { render json: @policies }
+    end
   end
 
   def generate_tax_document
@@ -161,6 +178,12 @@ class PoliciesController < ApplicationController
     rescue Exception => e
       redirect_to person_path(person), :flash => { :error=> "Could not delete 1095A PDF #{e.message}" }
     end
+  end
+
+  def trigger_1095A_H41
+    policy = Policy.find(params[:id])
+    Observers::PolicyUpdated.notify(policy)
+    redirect_to generate_tax_document_form_policy_path(Policy.find(params[:id]), {person_id: Person.find(params[:person_id])}), :flash => { :notice=> "Triggered 1095A and H41 for policy_id: #{policy.id}" }
   end
 
   private

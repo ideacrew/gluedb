@@ -4,10 +4,23 @@ module Parsers::Xml::Enrollment
       super(xml)
       @enrollment_group = @payload.at_xpath('./ins:individual_market_enrollment_group', @namespaces)
       @plan = @enrollment_group.at_xpath('./ins:plan', @namespaces)
+      @carrier = @enrollment_group.at_xpath('./ins:carrier', @namespaces)
+    end
+
+    def eg_id
+      @enrollment_group.at_xpath('./ins:exchange_policy_id', @namespaces).text
     end
 
     def hios_plan_id
       @plan.at_xpath('./pln:plan/pln:hios_plan_id', @namespaces).text
+    end
+
+    def hbx_carrier_id
+      @carrier.at_xpath('./car:carrier/car:exchange_carrier_id', @namespaces).text
+    end
+
+    def carrier_id
+      @carrier.at_xpath('./ins:carrier_id', @namespaces).text
     end
 
     def plan_year
@@ -17,6 +30,15 @@ module Parsers::Xml::Enrollment
       rescue
         subscriber.rate_period_date.year
       end
+    end
+
+    def begin_date
+      begin_date = @enrollment_group.at_xpath('./ins:subscriber/ins:coverage/ins:benefit_begin_date', @namespaces).text
+      Date.strptime(begin_date.to_s, '%Y%m%d')
+    end
+
+    def plan_id
+      @plan.at_xpath('./ins:plan_id', @namespaces).text
     end
 
     def premium_amount_total

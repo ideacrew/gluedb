@@ -74,7 +74,7 @@
 		<%= link_to "Cancel / Term", cancelterminate_policy_path(p), :class => "btn btn-inverse" %>
     <p></p>
     <% if show_1095A_document_button?(p) %>
-      <%= link_to "1095A Document", generate_tax_document_form_policy_path(p, {person_id: @person.id}), :class => "btn btn-primary" %>
+      <%= link_to "1095A Document ", generate_tax_document_form_policy_path(p, {person_id: @person.id}), :class => "btn btn-primary" %>
     <% end %>
   </div>
 	<% end %>

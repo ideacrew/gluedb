@@ -31,7 +31,8 @@ describe EndCoverage, :dbclean => :after_each do
   let(:operation) { 'terminate' }
   let(:current_user) { 'joe.kramer@dc.gov' }
   let(:policy_repo) { double(find: policy) }
-  let(:policy) { Policy.create!(eg_id: '1', enrollees: enrollees, pre_amt_tot: premium_total, plan_id: "1", plan: plan) }
+  let(:policy) { Policy.create!(eg_id: '1', enrollees: enrollees, pre_amt_tot: premium_total, plan_id: "1", plan: plan, carrier: carrier) }
+  let!(:carrier) {create(:carrier, hbx_carrier_id: '116000')}
   let(:plan) { Plan.create!(coverage_type: 'health', year: 2015, premium_tables: premium_tables) }
   let(:premium_tables) { [premium_table_for_subscriber, premium_table_for_member, premium_table_for_inactive_member]}
   let(:premium_total) { 300.00 }
@@ -61,7 +62,6 @@ describe EndCoverage, :dbclean => :after_each do
     allow(member).to receive(:member) { member_member }
     allow(Observers::PolicyUpdated).to receive(:notify).with(policy)
   end
-
 
   shared_examples_for "coverage ended with correct responsible amount" do
     describe "when a shop enrollment" do
