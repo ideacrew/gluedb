@@ -64,16 +64,20 @@ end
 all_policies_with_no_families = Queries::PoliciesWithNoFamilies.new.execute
 @logger.info "Total policies_with_no_families: #{all_policies_with_no_families.length}"
 
-policy_groups = all_policies_with_no_families.where(:enrollees => {
+policy_groups = all_policies_with_no_families.no_timeout.where(:enrollees => {
   "$elemMatch" => { :rel_code => "self", :coverage_start.gte => @begin_date, :coverage_start.lte => @end_date }
   }).group_by do |policy|
-  policy.subscriber.person.id
+  policy.subscriber.person.try(:id)
 end
 
 @logger.info "In given daterange: subscribers with policies not mapped to a family: #{policy_groups.length}"
 @logger.info "policy_groups: #{policy_groups.length}"
 
-policy_groups.each do |person_id, policies|  
+policy_groups.each do |person_id, policies|
+  if person_id.nil?
+    @logger.info "nil person_id with policies name info #{policies.flatten.map(&:id)}" if policies.count > 0
+    next
+  end
   begin
     start = Time.now
     person = Person.find(person_id)
@@ -107,6 +111,10 @@ end
 @logger.info "policy_groups remaing to create families: #{policy_groups.length}"
 
 policy_groups.each do |person_id, policies|
+  if person_id.nil?
+    @logger.info "nil person_id with policies name info #{policies.flatten.map(&:id)}" if policies.count > 0
+    next
+  end
   begin
     person = Person.find(person_id)
     family_from_policy_subscriber = FamilyFromPolicySubscriber.new(person, policies)
