@@ -434,7 +434,7 @@ module Generators::Reports
     end
 
     def create_manifest
-      Generators::Reports::IrsYearlyManifest.new.create("#{@irs_xml_path}/transmission")
+      Generators::Reports::IrsYearlyManifest.new.create("#{@irs_xml_path}/transmission", calendar_year)
     end
 
     def rejected_policy?(policy)
