@@ -1,7 +1,7 @@
 module Generators::Reports  
   class IrsYearlyManifest
 
-    CALENDAR_YEAR = 2022
+    attr_accessor :folder, :calendar_year
 
     NS = {
       "xmlns"  => "http://birsrep.dsh.cms.gov/exchange/1.0",
@@ -12,7 +12,8 @@ module Generators::Reports
       # "xmlns:wsa"  => "http://www.w3.org/2005/08/addressing"      
     }
 
-    def create(folder)
+    def create(folder, calendar_year)
+      @calendar_year = calendar_year
       @folder = folder
       @manifest = OpenStruct.new({
         file_count: Dir.glob(@folder+'/*.xml').count,
@@ -49,25 +50,25 @@ module Generators::Reports
 
     def serialize_batch_data(xml)
       xml['ns3'].BatchMetadata do |xml|
-        xml.BatchID Time.now.utc.iso8601
-        xml.BatchPartnerID '02.DC*.SBE.001.001'
-        xml.BatchAttachmentTotalQuantity @manifest.file_count
+        xml['ns3'].BatchID Time.now.utc.iso8601
+        xml['ns3'].BatchPartnerID '02.DC*.SBE.001.001'
+        xml['ns3'].BatchAttachmentTotalQuantity @manifest.file_count
         xml['ns4'].BatchCategoryCode 'IRS_EOY_REQ'
-        xml.BatchTransmissionQuantity 1
+        xml['ns3'].BatchTransmissionQuantity 1
       end
     end
 
     def serialize_transmission_data(xml)
       xml['ns3'].TransmissionMetadata do |xml|
-        xml.TransmissionAttachmentQuantity @manifest.file_count
-        xml.TransmissionSequenceID 1
+        xml['ns3'].TransmissionAttachmentQuantity @manifest.file_count
+        xml['ns3'].TransmissionSequenceID 1
       end
     end
 
     def serialize_service_data(xml)
       xml['ns4'].ServiceSpecificData do |xml|
-        xml.ReportPeriod do |xml|
-          xml['ns5'].Year CALENDAR_YEAR
+        xml['ns4'].ReportPeriod do |xml|
+          xml['ns5'].Year calendar_year
         end
       end
     end
