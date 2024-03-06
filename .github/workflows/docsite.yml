@@ -1,15 +1,24 @@
 name: Docs
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - 'me_carrier_boarding'
 
 jobs:
   docs:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Get Packages for Ruby Prerequisites
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install git curl libssl1.0-dev libreadline-dev zlib1g-dev autoconf bison build-essential libyaml-dev libreadline-dev libncurses5-dev libffi-dev libgdbm-dev
+          sudo apt-get -y install git libntirpc-dev libxml2 libxml2-dev curl libreadline-dev zlib1g-dev autoconf bison build-essential libyaml-dev libreadline-dev libncurses5-dev libffi-dev libgdbm-dev
+      - name: Install libssl1.0-dev from bionic sources
+        run: |
+          echo 'deb http://security.ubuntu.com/ubuntu bionic-security main' | sudo tee -a /etc/apt/sources.list.d/bionic-security.list
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
+          sudo apt update && apt-cache policy libssl1.0-dev
+          sudo apt-get -y install libssl1.0-dev
       - name: Install Ruby
         run: |
           curl -O https://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.10.tar.bz2
@@ -20,7 +29,7 @@ jobs:
         uses: actions/setup-node@v2.1.2
         with:
           # Version Spec of the version to use.  Examples: 10.x, 10.15.1, >=10.15.0, lts
-          node-version: "12"
+          node-version: "14"
       - name: install hugo
         run: sudo snap install hugo --channel=extended
       - uses: actions/setup-java@v1
@@ -30,8 +39,6 @@ jobs:
       - name: Setup Graphviz
         uses: ts-graphviz/setup-graphviz@v1
       - uses: actions/checkout@v2
-        with:
-          submodules: recursive
       - name: Cache Gems
         uses: actions/cache@v1
         with:
@@ -54,9 +61,19 @@ jobs:
           cd hugo && npm install && ./build_hugo.sh
       - uses: nelonoel/branch-name@v1.0.1
       - uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read
         env:
-          AWS_S3_BUCKET: ${{ secrets.YARD_S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.YARD_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.YARD_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.IC_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.IC_AWS_SECRET_ACCESS_KEY }}
           SOURCE_DIR: hugo/public
           DEST_DIR: ${{ env.BRANCH_NAME }}
+      - name: Invalidate CloudFront
+        uses: chetan/invalidate-cloudfront-action@v2
+        env:
+          DISTRIBUTION: ${{ secrets.DISTRIBUTION }}
+          PATHS: "/*"
+          AWS_REGION: "us-east-1"
+          AWS_ACCESS_KEY_ID: ${{ secrets.IC_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.IC_AWS_SECRET_ACCESS_KEY }}

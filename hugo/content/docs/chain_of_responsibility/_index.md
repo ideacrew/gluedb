@@ -80,7 +80,7 @@ The overall flow of the chain of responsibility is managed by a series of handle
 
 ## Business Process Handlers
 
-{{<mermaid>}}
+```mermaid
 stateDiagram-v2
   state "Handlers::EnrollmentEventReduceHandler" as a
   state "Handlers::EnrollmentEventEnrichHandler" as b
@@ -91,4 +91,4 @@ stateDiagram-v2
   b --> c
   c --> d
   d --> [*]
-{{< /mermaid >}}
+```
