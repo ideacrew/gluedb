@@ -235,7 +235,7 @@ module Generators::Reports
 
     def change_directory_name(old_dir, directory_timestamp)
       if Dir.exist?(old_dir)
-        irs_h36_source_sbm_id = settings[:irs_h36_generation][:irs_36_source_sbm_id]
+        irs_h36_source_sbm_id = settings[:irs_h36_generation][:irs_h36_source_sbm_id]
         h36_directory_sub_prefix = settings[:irs_h36_generation][:h36_directory_sub_prefix]
         new_dir = "#{irs_h36_source_sbm_id}.#{h36_directory_sub_prefix}.#{directory_timestamp}.P"
         # Rename the directory
