@@ -1,6 +1,8 @@
 module Generators::Reports  
   class IrsMonthlyManifest
 
+    attr_reader :batch_id
+
     NS = {
       "xmlns:ns1" => "http://niem.gov/niem/structures/2.0",
       "xmlns:ns2" => "http://hix.cms.gov/0.1/hix-core",
@@ -45,8 +47,9 @@ module Generators::Reports
     end
 
     def serialize_batch_data(xml)
+      @batch_id = Time.now.utc.iso8601
       xml['ns2'].BatchMetadata do |xml|
-        xml.BatchID Time.now.utc.iso8601
+        xml.BatchID @batch_id
         xml.BatchPartnerID '02.DC*.SBE.001.001'
         xml.BatchAttachmentTotalQuantity @manifest.file_count
         xml['ns4'].BatchCategoryCode 'IRS_EOM_IND_REQ'

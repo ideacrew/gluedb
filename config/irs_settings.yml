@@ -118,5 +118,9 @@ irs_h41_generation:
   subdirectory_prefix: 'DCHBX_H41'
   irs_h41_source_sbm_id: 'FEP0020DC'
 
+irs_h36_generation:
+  irs_h36_source_sbm_id: 'FEP0020DC'
+  h36_directory_sub_prefix: 'DSH.EOMIN'
+
 irs_1095A:
   subdirectory_prefix: 'DCEXCHANGE'
