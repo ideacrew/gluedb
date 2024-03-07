@@ -127,7 +127,29 @@ module Generators::Reports
 
       if @xml_output
         merge_and_validate_xmls(@folder_count)
-        create_manifest
+        manifest = create_manifest
+        batch_id = manifest.batch_id
+        directory_timestamp = convert_batch_id(batch_id)
+        old_dir = "#{@irs_xml_path}/transmission"
+        change_directory_name(old_dir, directory_timestamp)
+      end
+    end
+
+    def convert_batch_id(batch_id)
+      time = Time.parse(batch_id)
+      formatted_time = time.strftime("D%y%m%d.T%H%M%S")
+      formatted_time + '000'
+    end
+
+    def change_directory_name(old_dir, directory_timestamp)
+      if Dir.exist?(old_dir)
+        irs_h36_source_sbm_id = settings[:irs_h41_generation][:irs_h41_source_sbm_id]
+        h41_directory_sub_prefix = settings[:irs_h41_generation][:h41_directory_sub_prefix]
+        new_dir = "#{irs_h41_source_sbm_id}.#{h41_directory_sub_prefix}.#{directory_timestamp}.P"
+        # Rename the directory
+        File.rename(old_dir, new_dir)
+      else
+        puts "Directory #{old_dir} does not exist."
       end
     end
 

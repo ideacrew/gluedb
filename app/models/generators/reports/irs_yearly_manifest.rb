@@ -1,7 +1,7 @@
 module Generators::Reports  
   class IrsYearlyManifest
 
-    attr_accessor :folder, :calendar_year
+    attr_accessor :folder, :calendar_year, :batch_id
 
     NS = {
       "xmlns"  => "http://birsrep.dsh.cms.gov/exchange/1.0",
@@ -49,8 +49,9 @@ module Generators::Reports
     end
 
     def serialize_batch_data(xml)
+      @batch_id = Time.now.utc.iso8601
       xml['ns3'].BatchMetadata do |xml|
-        xml['ns3'].BatchID Time.now.utc.iso8601
+        xml['ns3'].BatchID @batch_id
         xml['ns3'].BatchPartnerID '02.DC*.SBE.001.001'
         xml['ns3'].BatchAttachmentTotalQuantity @manifest.file_count
         xml['ns4'].BatchCategoryCode 'IRS_EOY_REQ'

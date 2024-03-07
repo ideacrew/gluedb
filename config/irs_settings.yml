@@ -117,6 +117,7 @@ cms_pbp_generation:
 irs_h41_generation:
   subdirectory_prefix: 'DCHBX_H41'
   irs_h41_source_sbm_id: 'FEP0020DC'
+  h41_directory_sub_prefix: 'DSH.EOYIN'
 
 irs_1095A:
   subdirectory_prefix: 'DCEXCHANGE'
