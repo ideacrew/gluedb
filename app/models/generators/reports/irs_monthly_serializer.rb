@@ -4,7 +4,7 @@ module Generators::Reports
   class IrsMonthlySerializer
   # To generate irs yearly policies need to send a run time calendar_year params i.e. Generators::Reports::IrsMonthlySerializer.new({calendar_year: 2021}) instead of sending hard coded year
 
-    attr_accessor :calendar_year, :settings
+    attr_accessor :calendar_year, :settings, :batch_id
 
     def initialize(options = {})
       @logger = Logger.new("#{Rails.root}/log/h36_exceptions.log")
@@ -205,8 +205,7 @@ module Generators::Reports
       # print_families_with_samepolicy
 
       merge_and_validate_xmls(folder_count)
-      manifest = create_manifest
-      batch_id = manifest.batch_id
+      create_manifest
       directory_timestamp = convert_batch_id(batch_id)
       old_dir = "#{@h36_root_folder}/transmission"
       change_directory_name(old_dir, directory_timestamp)
@@ -238,8 +237,9 @@ module Generators::Reports
         irs_h36_source_sbm_id = settings[:irs_h36_generation][:irs_h36_source_sbm_id]
         h36_directory_sub_prefix = settings[:irs_h36_generation][:h36_directory_sub_prefix]
         new_dir = "#{irs_h36_source_sbm_id}.#{h36_directory_sub_prefix}.#{directory_timestamp}.P"
+        new_dir = File.join(File.dirname(old_dir), new_dir)
         # Rename the directory
-        File.rename(old_dir, new_dir)
+        FileUtils.mv(old_dir, new_dir)
       else
         puts "Directory #{old_dir} does not exist."
       end
@@ -283,7 +283,9 @@ module Generators::Reports
     end
 
     def create_manifest
-      Generators::Reports::IrsMonthlyManifest.new.create("#{@h36_root_folder}/transmission")
+      manifest_generator = Generators::Reports::IrsMonthlyManifest.new
+      manifest_generator.create("#{@h36_root_folder}/transmission")
+      @batch_id = manifest_generator.batch_id
     end
 
     private
