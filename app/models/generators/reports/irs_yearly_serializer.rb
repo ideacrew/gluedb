@@ -10,7 +10,7 @@ module Generators::Reports
     IRS_XML_PATH = "#{@irs_path}/h41/"
     IRS_PDF_PATH = "#{@irs_path}/irs1095a/"
 
-    attr_accessor :notice_params, :calendar_year, :qhp_type, :notice_absolute_path, :xml_output, :settings, :generate_pdf
+    attr_accessor :notice_params, :calendar_year, :qhp_type, :notice_absolute_path, :xml_output, :settings, :generate_pdf, :batch_id
 
     def initialize(options = {})
       @count = 0
@@ -127,8 +127,7 @@ module Generators::Reports
 
       if @xml_output
         merge_and_validate_xmls(@folder_count)
-        manifest = create_manifest
-        batch_id = manifest.batch_id
+        create_manifest
         directory_timestamp = convert_batch_id(batch_id)
         old_dir = "#{@irs_xml_path}/transmission"
         change_directory_name(old_dir, directory_timestamp)
@@ -146,8 +145,9 @@ module Generators::Reports
         irs_h36_source_sbm_id = settings[:irs_h41_generation][:irs_h41_source_sbm_id]
         h41_directory_sub_prefix = settings[:irs_h41_generation][:h41_directory_sub_prefix]
         new_dir = "#{irs_h41_source_sbm_id}.#{h41_directory_sub_prefix}.#{directory_timestamp}.P"
+        new_dir = File.join(File.dirname(old_dir), new_dir)
         # Rename the directory
-        File.rename(old_dir, new_dir)
+        FileUtils.mv(old_dir, new_dir)
       else
         puts "Directory #{old_dir} does not exist."
       end
@@ -456,7 +456,9 @@ module Generators::Reports
     end
 
     def create_manifest
-      Generators::Reports::IrsYearlyManifest.new.create("#{@irs_xml_path}/transmission", calendar_year)
+      manifest_generator = Generators::Reports::IrsYearlyManifest.new
+      manifest_generator.create("#{@irs_xml_path}/transmission", calendar_year)
+      @batch_id = manifest_generator.batch_id
     end
 
     def rejected_policy?(policy)
