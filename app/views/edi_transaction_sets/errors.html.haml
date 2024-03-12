@@ -1,6 +1,8 @@
 .row
-  .col-md-offset-3.col-md-9
+  .col-md-offset-1.col-md-10
     = render 'shared/search', url: errors_edi_transaction_sets_path, q: @q, range_search: true, carriers: @carriers, carrier: @carrier, from_date: @from_date, to_date: @to_date, placeholder: "Error List, Policy ID"
+
+    %input#erroCheckbox{:onclick => "errorMessage()", :type => "checkbox"}Show Reinstate error messages
 
 %table.table.margin-top-error.table-condensed
   %thead
@@ -14,7 +16,7 @@
   %tbody
     = table_empty_to_human if @transactions.count < 1
     - @transactions.each do |t|
-      %tr
+      %tr.error-list
         %td.col-md-1
           = t.try(:policy).try(:eg_id)
         %td.col-md-1
@@ -41,3 +43,21 @@
     %p
       = "#{number_with_delimiter(@transactions.to_a.count)} / #{number_with_delimiter(@result_set.count)} "
       %small (transactions selected / total)
+
+:javascript
+  $(document).ready( function () {
+    errorMessage();
+  });
+
+  function errorMessage() {
+   var error_lists = document.getElementsByClassName("error-list");
+    for (var i = 0; i < error_lists.length; i++) {
+       if(error_lists[i].innerText.includes('inbound reinstatements are blocked for legacy imports')){
+         if(document.getElementById('erroCheckbox').checked == true) {
+          error_lists[i].style.display = 'table-row';
+         }else{
+           error_lists[i].style.display = 'none';
+         }
+       }
+    }
+  }
