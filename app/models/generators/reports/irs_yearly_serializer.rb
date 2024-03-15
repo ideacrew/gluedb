@@ -144,7 +144,11 @@ module Generators::Reports
       if Dir.exist?(old_dir)
         irs_h36_source_sbm_id = settings[:irs_h41_generation][:irs_h41_source_sbm_id]
         h41_directory_sub_prefix = settings[:irs_h41_generation][:h41_directory_sub_prefix]
-        new_dir = "#{irs_h41_source_sbm_id}.#{h41_directory_sub_prefix}.#{directory_timestamp}.P"
+        if settings[:irs_reports_generation][:cms_eft_serverless]
+          new_dir = "#{irs_h41_source_sbm_id}.#{h41_directory_sub_prefix}.#{directory_timestamp}.P"
+        else
+          new_dir = "#{irs_h41_source_sbm_id}.#{h41_directory_sub_prefix}.#{directory_timestamp}.P.IN"
+        end
         new_dir = File.join(File.dirname(old_dir), new_dir)
         # Rename the directory
         FileUtils.mv(old_dir, new_dir)

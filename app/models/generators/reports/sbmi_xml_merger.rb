@@ -68,7 +68,11 @@ module Generators::Reports
 
     def merge
       cms_pbp_source_sbm_id = settings[:cms_pbp_generation][:cms_pbp_source_sbm_id]
-      file_name = "#{cms_pbp_source_sbm_id}.EPS.SBMI.D#{Time.now.utc.strftime('%y%m%d')}.T#{Time.now.utc.strftime('%H%M%S')}000.P"
+      if settings[:irs_reports_generation][:cms_eft_serverless]
+        file_name = "#{cms_pbp_source_sbm_id}.EPS.SBMI.D#{Time.now.utc.strftime('%y%m%d')}.T#{Time.now.utc.strftime('%H%M%S')}000.P"
+      else
+        file_name = "#{cms_pbp_source_sbm_id}.EPS.SBMI.D#{Time.now.utc.strftime('%y%m%d')}.T#{Time.now.utc.strftime('%H%M%S')}000.P.IN"
+      end
       @data_file_path = "#{sbmi_folder_path}/#{file_name}"
 
       File.open(@data_file_path, 'w') do |file|
