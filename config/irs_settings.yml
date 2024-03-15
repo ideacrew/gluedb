@@ -125,3 +125,8 @@ irs_h36_generation:
 
 irs_1095A:
   subdirectory_prefix: 'DCEXCHANGE'
+
+irs_reports_generation:
+  cms_eft_tibco: false
+  cms_eft_serverless: true
+
