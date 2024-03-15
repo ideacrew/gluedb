@@ -119,5 +119,9 @@ irs_h41_generation:
   irs_h41_source_sbm_id: 'FEP0020DC'
   h41_directory_sub_prefix: 'DSH.EOYIN'
 
+irs_h36_generation:
+  irs_h36_source_sbm_id: 'FEP0020DC'
+  h36_directory_sub_prefix: 'DSH.EOMIN'
+
 irs_1095A:
   subdirectory_prefix: 'DCEXCHANGE'

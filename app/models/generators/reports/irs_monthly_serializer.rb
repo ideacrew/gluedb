@@ -4,7 +4,7 @@ module Generators::Reports
   class IrsMonthlySerializer
   # To generate irs yearly policies need to send a run time calendar_year params i.e. Generators::Reports::IrsMonthlySerializer.new({calendar_year: 2021}) instead of sending hard coded year
 
-    attr_accessor :calendar_year
+    attr_accessor :calendar_year, :settings, :batch_id
 
     def initialize(options = {})
       @logger = Logger.new("#{Rails.root}/log/h36_exceptions.log")
@@ -206,7 +206,9 @@ module Generators::Reports
 
       merge_and_validate_xmls(folder_count)
       create_manifest
-
+      directory_timestamp = convert_batch_id(batch_id)
+      old_dir = "#{@h36_root_folder}/transmission"
+      change_directory_name(old_dir, directory_timestamp)
       # workbook.write "#{Rails.root.to_s}/2016_H36_QHP_DATA_EXPORT#{Time.now.strftime("%m_%d_%Y_%H_%M")}.xls"
 
       puts count
@@ -222,6 +224,25 @@ module Generators::Reports
       # puts non_auth_pols
       # puts families_with_no_coverage
       # puts missing_active_enrollments
+    end
+
+    def convert_batch_id(batch_id)
+      time = Time.parse(batch_id)
+      formatted_time = time.strftime("D%y%m%d.T%H%M%S")
+      formatted_time + '000'
+    end
+
+    def change_directory_name(old_dir, directory_timestamp)
+      if Dir.exist?(old_dir)
+        irs_h36_source_sbm_id = settings[:irs_h36_generation][:irs_h36_source_sbm_id]
+        h36_directory_sub_prefix = settings[:irs_h36_generation][:h36_directory_sub_prefix]
+        new_dir = "#{irs_h36_source_sbm_id}.#{h36_directory_sub_prefix}.#{directory_timestamp}.P"
+        new_dir = File.join(File.dirname(old_dir), new_dir)
+        # Rename the directory
+        FileUtils.mv(old_dir, new_dir)
+      else
+        puts "Directory #{old_dir} does not exist."
+      end
     end
 
     def build_irs_group(family)
@@ -262,7 +283,9 @@ module Generators::Reports
     end
 
     def create_manifest
-      Generators::Reports::IrsMonthlyManifest.new.create("#{@h36_root_folder}/transmission")
+      manifest_generator = Generators::Reports::IrsMonthlyManifest.new
+      manifest_generator.create("#{@h36_root_folder}/transmission")
+      @batch_id = manifest_generator.batch_id
     end
 
     private
