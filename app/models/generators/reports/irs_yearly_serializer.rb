@@ -546,8 +546,9 @@ module Generators::Reports
       if Dir.exists?(path)
         FileUtils.rm_rf(path)
       end
-      Dir.mkdir path
-      # FileUtils.mkdir_p(path)
+
+      # Dir.mkdir path
+      FileUtils.mkdir_p(path)
     end
 
     def prepend_zeros(number, n)
