@@ -124,7 +124,7 @@ fi
 echo "bringing down listeners: "$(date)
 kubectl scale --replicas=0  deployment/edidb-enrollment-validator deployment/edidb-broker-updated-listener \
                             deployment/edidb-policy-id-list-listener deployment/edidb-enrollment-event-listener \
-                            deployment/edidb-enrollment-event-handler
+                            deployment/edidb-enrollment-event-handler deployment/edidb-enrollment-event-batch-processor
 sleep 60
 kubectl scale --replicas=0 deployment/edidb-enroll-query-result-handler
 sleep 120
@@ -189,6 +189,7 @@ if [ "$update_status" -eq 1 ]; then
   kubectl scale --replicas=2 deployment/edidb-enrollment-validator deployment/edidb-broker-updated-listener \
                              deployment/edidb-policy-id-list-listener deployment/edidb-enrollment-event-listener \
                              deployment/edidb-enrollment-event-handler
+                             deployment/edidb-enrollment-event-batch-processor
   sleep 120
   kubectl patch cronjobs edidb-glue-batch -p "{\"spec\" : {\"suspend\" : false }}"
   kubectl rollout restart deployment edidb-$ENV_NAME
