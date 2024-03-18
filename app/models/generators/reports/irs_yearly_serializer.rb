@@ -26,18 +26,16 @@ module Generators::Reports
       @notice_params = options
       @generate_pdf = @notice_params[:generate_pdf]
 
-      if options.empty?
-        irs_path = "#{Rails.root.to_s}/irs/irs_EOY_#{Time.now.strftime('%m_%d_%Y_%H_%M')}"
-        create_directory irs_path
+      irs_path = "#{Rails.root.to_s}/irs/irs_EOY_#{Time.now.strftime('%m_%d_%Y_%H_%M')}"
+      create_directory irs_path
 
-        if @xml_output
-          @irs_xml_path = irs_path + "/h41/"
-          create_directory @irs_xml_path
-          create_directory @irs_xml_path + "/transmission"
-        else
-          @irs_pdf_path = irs_path + "/irs1095a/"
-          create_directory @irs_pdf_path
-        end
+      if @xml_output
+        @irs_xml_path = irs_path + "/h41/"
+        create_directory @irs_xml_path
+        create_directory @irs_xml_path + "/transmission"
+      else
+        @irs_pdf_path = irs_path + "/irs1095a/"
+        create_directory @irs_pdf_path
       end
 
       @carriers = Carrier.all.inject({}) { |hash, carrier| hash[carrier.id] = carrier.name; hash }
@@ -142,7 +140,7 @@ module Generators::Reports
 
     def change_directory_name(old_dir, directory_timestamp)
       if Dir.exist?(old_dir)
-        irs_h36_source_sbm_id = settings[:irs_h41_generation][:irs_h41_source_sbm_id]
+        irs_h41_source_sbm_id = settings[:irs_h41_generation][:irs_h41_source_sbm_id]
         h41_directory_sub_prefix = settings[:irs_h41_generation][:h41_directory_sub_prefix]
         if settings[:irs_reports_generation][:cms_eft_serverless]
           new_dir = "#{irs_h41_source_sbm_id}.#{h41_directory_sub_prefix}.#{directory_timestamp}.P"
