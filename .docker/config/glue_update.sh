@@ -125,6 +125,7 @@ update=$(echo -n ${update#*"db ${EDIDB_DB_NAME}_dev"})
 update=$(echo -n ${update#*"db ${EDIDB_DB_NAME}_dev"})
 update=$(echo -n ${update#*"db ${EDIDB_DB_NAME}"})
 update=$(echo -n ${update%bye*})
+update=$(echo -n ${update#*clone})
 update_status=`echo $update | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["'ok'"]'`
 if [ "$update_status" -eq 1 ]; then
   echo "Prod copy to dev successful..."
@@ -154,6 +155,7 @@ update=`mongo --host $EDIDB_DB_HOST --authenticationDatabase 'admin' -u 'admin' 
 echo $update
 update=$(echo -n ${update#*"db ${EDIDB_DB_NAME}_dev"})
 update=$(echo -n ${update%bye*})
+update=$(echo -n ${update#*clone})
 update_status=`echo $update | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["'ok'"]'`
 
 sleep 60
