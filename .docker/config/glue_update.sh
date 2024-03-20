@@ -188,7 +188,7 @@ if [ "$update_status" -eq 1 ]; then
   sleep 120
   kubectl scale --replicas=2 deployment/edidb-enrollment-validator deployment/edidb-broker-updated-listener \
                              deployment/edidb-policy-id-list-listener deployment/edidb-enrollment-event-listener \
-                             deployment/edidb-enrollment-event-handler
+                             deployment/edidb-enrollment-event-handler \
                              deployment/edidb-enrollment-event-batch-processor
   sleep 120
   kubectl patch cronjobs edidb-glue-batch -p "{\"spec\" : {\"suspend\" : false }}"
