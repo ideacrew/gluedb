@@ -168,7 +168,7 @@ module Generators::Reports
     end
 
     def policies_to_skip
-      # no policies to skip
+      ["208128","208671","212304","214429","214807","208674","246907","263444","263496","296902","300021"]
     end
   end
 end
