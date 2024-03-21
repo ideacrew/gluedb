@@ -106,5 +106,7 @@ tax_document:
         active_false: '2023-1095A-VOID-ACTIVE-FALSE.pdf'
         active_true: '2023-1095A-VOID-ACTIVE-TRUE.pdf'
     coverage_page_no: 3
+  2024:
+    slcsp: "94506DC0390005-01"
   documents_root_path: '/tmp/'
   documents_folder: 'irs_notices'
