@@ -47,8 +47,11 @@ module Listeners
           resource_event_broadcast("info", "batch_not_found", "404", body, properties.headers)
         end
       rescue => error
+        error_headers = (properties.headers || {}).dup
+        error_headers["error_class"] = error.class.name.to_s
+        error_headers["error_message"] = error.message.to_s.encode('UTF-8', undef: :replace, replace: '')
         batch.exception! if batch.present? && batch.may_exception?
-        resource_error_broadcast("exception", "500", error.backtrace, properties.headers)
+        resource_error_broadcast("exception", "500", error.backtrace, error_headers)
       end
       channel.ack(delivery_info.delivery_tag, false)
     end

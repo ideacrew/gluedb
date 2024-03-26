@@ -124,6 +124,8 @@ describe Listeners::EnrollmentEventBatchProcessor, :dbclean => :after_each do
                                                                    :batch_id => batch.id,
                                                                    :return_status => "500",
                                                                    :submitted_timestamp=> @time_now,
+                                                                   "error_class" => "StandardError",
+                                                                   "error_message"=>"StandardError"
                                                                }
                                                            }, body)
     end
@@ -139,7 +141,9 @@ describe Listeners::EnrollmentEventBatchProcessor, :dbclean => :after_each do
                                                                 :headers=> {
                                                                     :batch_id => batch.id,
                                                                     :return_status => "500",
-                                                                    :submitted_timestamp=> @time_now
+                                                                    :submitted_timestamp=> @time_now,
+                                                                    "error_class" => "StandardError",
+                                                                    "error_message"=>"StandardError"
                                                                 }
                                                             }, body)
       subject.on_message(delivery_info, properties, body)
