@@ -12,6 +12,12 @@ module ExternalEvents
 
     include Handlers::EnrollmentEventXmlHelper
 
+    COVERAGE_START_EVENTS = [
+      "urn:openhbx:terms:v1:enrollment#initial",
+      "urn:openhbx:terms:v1:enrollment#auto_renew",
+      "urn:openhbx:terms:v1:enrollment#active_renew"
+    ]
+
     def initialize(e_responder, m_tag, t_stamp, e_xml, headers)
       @business_process_history = Array.new
       @errors = ActiveModel::Errors.new(self)
@@ -62,7 +68,7 @@ module ExternalEvents
     def drop_if_already_processed!
       found_event = ::EnrollmentAction::EnrollmentActionIssue.where(
         :hbx_enrollment_id => hbx_enrollment_id,
-        :enrollment_action_uri => enrollment_action
+        :enrollment_action_uri => {"$in" => event_search_uri}
       )
       if found_event.any?
         if is_reterm_with_earlier_date?
@@ -75,6 +81,11 @@ module ExternalEvents
       else
         false
       end
+    end
+
+    def event_search_uri
+      return COVERAGE_START_EVENTS if is_coverage_starter?
+      ["urn:openhbx:terms:v1:enrollment#terminate_enrollment"]
     end
 
     def drop_if_bogus_term!
@@ -203,11 +214,7 @@ module ExternalEvents
     end
 
     def is_coverage_starter?
-      [
-        "urn:openhbx:terms:v1:enrollment#initial",
-        "urn:openhbx:terms:v1:enrollment#auto_renew",
-        "urn:openhbx:terms:v1:enrollment#active_renew"
-      ].include?(enrollment_action)
+      COVERAGE_START_EVENTS.include?(enrollment_action)
     end
 
     def edge_for(graph, other)
