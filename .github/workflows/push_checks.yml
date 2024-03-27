@@ -5,6 +5,7 @@ jobs:
   rspec:
     runs-on: ubuntu-22.04
     steps:
+      - uses: actions/checkout@v3
       - name: Get Packages for Ruby Prerequisites
         run: |
           sudo apt-get -y update
@@ -15,11 +16,26 @@ jobs:
           sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
           sudo apt update && apt-cache policy libssl1.0-dev
           sudo apt-get -y install libssl1.0-dev
-      - name: Install Ruby
+      - uses: actions/checkout@v3
+      - name: Download Ruby
         run: |
           curl -O https://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.10.tar.bz2
+      - name: Cache Ruby
+        id: cache-ruby
+        uses: actions/cache@v3
+        with:
+          path: ruby-2.1.10
+          key: ${{ runner.os }}-gluedb-ruby-${{ hashFiles('**/Gemfile.lock', 'ruby-2.1.10.tar.bz2', '/usr/local/bin/ruby') }}
+          restore-keys: |
+            ${{ runner.os }}-gluedb-ruby-${{ hashFiles('**/Gemfile.lock', 'ruby-2.1.10.tar.bz2', '/usr/local/bin/ruby') }}
+      - name: Build Ruby
+        if: steps.cache-ruby.outputs.cache-hit != 'true'
+        run: |
           tar xjf ruby-2.1.10.tar.bz2
-          cd ruby-2.1.10 && ./configure && make -j 2
+          cd ruby-2.1.10 && ./configure --disable-install-doc && make -j 2
+      - name: Install Ruby
+        run: |
+          cd ruby-2.1.10
           sudo make install
       - name: Launch MongoDB
         uses: wbari/start-mongoDB@v0.2
@@ -30,7 +46,6 @@ jobs:
         with:
           # Version Spec of the version to use.  Examples: 10.x, 10.15.1, >=10.15.0, lts
           node-version: 9.11.1
-      - uses: actions/checkout@v3
       - name: Cache Gems
         uses: actions/cache@v3
         with:

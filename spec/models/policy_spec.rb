@@ -384,6 +384,10 @@ describe Policy, :dbclean => :after_each do
       expect(params_hash_array.any? { |hash| hash['eg_id'] == /1234/i }).to be_true
     end
 
+    it "should be matching on hbx enrollment ids" do
+      expect(params_hash_array.any? { |hash| hash['hbx_enrollment_ids'] == /1234/i }).to be_true
+    end
+
     it "should be matching on policy id" do
       expect(params_hash_array.any? { |hash| hash['id'] == "1234" }).to be_true
     end
@@ -824,7 +828,7 @@ describe "#cancel_renewal", :dbclean => :after_each do
     policy
   }
   let!(:renewal_policy) {
-    policy = FactoryGirl.create(:policy, enrollment_group_id: eg_id,
+    policy = FactoryGirl.create(:policy, enrollment_group_id: "12",
                                  employer: employer, carrier: carrier, plan: plan,
                                  coverage_start: Date.today.next_year.beginning_of_year,
                                  coverage_end: coverage_end, kind: kind)
